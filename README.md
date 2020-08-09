@@ -1,6 +1,10 @@
 # FaceDetection.jl
 
 
-## Setting Up Virtual Environment
+## Setting Up
 
-### 
+Run in Terminal
+```
+chmod u+x setup.sh
+./setup.sh
+```
