@@ -14,40 +14,7 @@ Original    Integral
 """
 
 
-using FileIO # for loading images
-using QuartzImageIO, ImageMagick, ImageSegmentation, ImageFeatures # for reading images
-using Colors # for making images greyscale
-using Images # for channelview; converting images to matrices
-using ImageTransformations # for scaling high-quality images down
-
-
-
-function getImageMatrix()
-    imageDir = joinpath(dirname(dirname(@__FILE__)), "test", "images")
-
-    img = load(joinpath(imageDir, "face.jpg"))
-    img = imresize(img, ratio=1/8)
-
-    # imgArr = convert(Array{Float64}, channelview(img)) # for coloured images
-    imgArr = convert(Array{Float64}, Colors.Gray.(img))
-    
-    # segments = ImageSegmentation.felzenszwalb(img, 100)
-    # imgArr = ImageSegmentation.imshow(map(i->segment_mean(segments,i), labels_map(segments)))
-    # imgArr = segment_labels(segments)
-    
-    return imgArr
-
-    # print(img)
-
-    # images = []
-    #     for _file in os.listdir(path):
-    #         if _file.endswith('.png'):
-    #             img_arr = np.array(Image.open((os.path.join(path, _file))), dtype=np.float64)
-    #             img_arr /= img_arr.max()
-    #             images.append(img_arr)
-    #     return images
-end
-
+include("Utils.jl")
 
 
 function toIntegralImage(imgArr::AbstractArray)
