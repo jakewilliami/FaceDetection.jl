@@ -4,3 +4,7 @@
     "${BASH_SOURCE[0]}" "$@"
     =#
     
+    
+"""
+Adapted from https://github.com/Simon-Hohberg/Viola-Jones/
+"""

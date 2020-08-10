@@ -144,6 +144,21 @@ end
 
 
 
+function getVote(self::HaarLikeFeature, intImg::AbstractArray)
+    """
+    Get vote of this feature for given integral image.
+    :param int_img: Integral image array
+    :type int_img: numpy.ndarray
+    :return: 1 iff this feature votes positively, otherwise -1
+    :rtype: int
+    """
+    score = self.score(intImg)
+    # return self.weight * (1 if score < self.polarity * self.threshold else -1)
+    return self.weight * ((score < (self.polarity * self.threshold)) ? 1 : -1)
+end
+
+
+
 # imgArr = getImageMatrix()
 # integralImageArr = toIntegralImage(imgArr)
 
