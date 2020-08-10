@@ -1,5 +1,7 @@
-# FaceDetection.jl
+# FaceDetection using Viola-Jones' Robust Algorithm for Object Detection
 
+## IMPORTANT NOTE:
+**This repository is currently under construction.  There is no working algorithm yet.**
 
 ## Setting Up
 
