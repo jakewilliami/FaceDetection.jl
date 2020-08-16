@@ -5,7 +5,9 @@
     =#
     
 
-include("IntegralImage.jl")
+# include("IntegralImage.jl")
+# include("Utils.jl")
+
 
 
 # FeatureType = enum(TWO_VERTICAL=(1, 2), TWO_HORIZONTAL=(2, 1), THREE_HORIZONTAL=(3, 1), THREE_VERTICAL=(1, 3), FOUR=(2, 2))
@@ -96,7 +98,7 @@ struct HaarFeatureFour <: HaarFeatureType end
 
 
 # construct integral image
-intImg = toIntegralImage(getImageMatrix())
+# intImg = toIntegralImage(getImageMatrix())
 
 function score(::HaarFeatureTwoVertical, self::HaarLikeFeature)
     first = sumRegion(intImg, self.top_left, (self.top_left[1] + self.width, Int(self.top_left[2] + self.height / 2)))
@@ -159,11 +161,19 @@ end
 
 
 
+
+
+export score
+export getVote
+
+
+##### TESTING
+
 # imgArr = getImageMatrix()
 # integralImageArr = toIntegralImage(imgArr)
 
 # println(integralImageArr)
 
-output = score(intImg)
-
-println(output)
+# output = score(intImg)
+#
+# println(output)

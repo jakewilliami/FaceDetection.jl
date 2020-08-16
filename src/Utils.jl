@@ -10,9 +10,9 @@ using Colors # for making images greyscale
 using Images # for channelview; converting images to matrices
 using ImageTransformations # for scaling high-quality images down
 
-"""
-include("HaarFeatureSelection.jl")
 
+include("HaarFeatureSelection.jl")
+#=
 ↑ this will create a stack overflow due to circular referencing
 currently we have IntegralImage referencing Utils (present file);
 HaarFeatureSelection referencing IntegralImagel;
@@ -20,7 +20,7 @@ Adaboost referencing HaarFeatureSelection;
 and this is where it all starts.
 
 FDA will reference one of them which will connect everything together.
-"""
+=#
 
 
 function getImageMatrix(imageFile)
@@ -43,8 +43,8 @@ function getImageMatrix(imageFile)
 end
 
 
-function loadImages()
-    imageDir = joinpath(dirname(dirname(@__FILE__)), "test", "images")
+function loadImages(imageDir::AbstractString)
+    # imageDir = joinpath(dirname(dirname(@__FILE__)), "test", "images")
     
     images = []
     
@@ -102,7 +102,7 @@ function ensembleVoteAll(intImgs::AbstractArray, classifiers::AbstractArray)
 end
 
 
-function reconstruct(classifiers, imgSize)
+function reconstruct(classifiers::HaarLikeFeature, imgSize::Tuple)
     """
     Creates an image by putting all given classifiers on top of each other
     producing an archetype of the learned class of object.
@@ -183,8 +183,15 @@ end
 
 
 
+# export getImageMatrix
+export loadImages
+export ensembleVote
+export ensembleVoteAll
+export reconstruct
+
+
 ### TESTING
 
-output = loadImages()
-
-println(output)
+# output = loadImages("/Users/jakeireland/FaceDetection.jl/test/images/")
+#
+# println(output)
