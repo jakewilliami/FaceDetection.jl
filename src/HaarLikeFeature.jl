@@ -1,0 +1,176 @@
+#!/usr/bin/env bash
+    #=
+    exec julia --project="~/FaceDetection.jl/" "${BASH_SOURCE[0]}" "$@" -e 'include(popfirst!(ARGS))' \
+    "${BASH_SOURCE[0]}" "$@"
+    =#
+    
+
+# include("IntegralImage.jl")
+# include("Utils.jl")
+
+
+
+# FeatureType = enum(TWO_VERTICAL=(1, 2), TWO_HORIZONTAL=(2, 1), THREE_HORIZONTAL=(3, 1), THREE_VERTICAL=(1, 3), FOUR=(2, 2))
+# FeatureTypes = Array(FeatureType.TWO_VERTICAL, FeatureType.TWO_HORIZONTAL, FeatureType.THREE_VERTICAL, FeatureType.THREE_HORIZONTAL, FeatureType.FOUR)
+
+FeatureType = Dict{String, Tuple{Int64,Int64}}("two_vertical" => (1, 2), "two_horizontal" => (2, 1), "three_horizontal" => (3,1), "three_vertical" => (1,3), "four" => (2, 2))
+FeatureTypes = [FeatureType["two_vertical"], FeatureType["two_horizontal"], FeatureType["three_horizontal"], FeatureType["three_vertical"], FeatureType["four"]]
+
+        
+abstract type HaarObject end
+abstract type HaarFeatureType end
+
+# make structure
+struct HaarLikeFeature <: HaarFeatureType#struct HaarLikeFeature{T} <: HaarObject where {T <: HaarFeatureType}
+    position::Tuple{Int64, Int64}
+    topLeft::Tuple{Int64, Int64}
+    bottomRight::Tuple{Int64, Int64}
+    width::Int64
+    height::Int64
+    threshold::Int64
+    polarity::Int64
+    weight::Int64
+    
+    # constructor; equivalent of __init__ method within class
+    function HaarLikeFeature(featureType::Tuple{Int64,Int64}, position::Tuple{Int64, Int64}, width::Int64, height::Int64, threshold::Int64, polarity::Int64)
+        topLeft = position
+        bottomRight = (position[1] + width, position[2] + height)
+        weight = 1
+        new(featureType, topLeft, bottomRight, width, height, threshold, polarity)
+    end # end constructor
+end # end structure
+
+
+# define the various Haar like feature types
+struct HaarFeatureTwoVertical <: HaarFeatureType end
+struct HaarFeatureTwoHorizontal <: HaarFeatureType end
+struct HaarFeatureThreeHorizontal <: HaarFeatureType end
+struct HaarFeatureThreeVertical <: HaarFeatureType end
+struct HaarFeatureFour <: HaarFeatureType end
+
+
+# HaarFeatureTwoVertical = (1, 2)
+
+
+# construct integral image
+# intImg = toIntegralImage(getImageMatrix())
+
+# function score(::HaarFeatureTwoVertical, self::HaarLikeFeature)
+#     first = sumRegion(intImg, self.topLeft, (self.topLeft[1] + self.width, Int(self.topLeft[2] + self.height / 2)))
+#     second = sumRegion(intImg, (self.topLeft[1], Int(self.topLeft[2] + self.height / 2)), self.bottomRight)
+#     score = first - second
+#     return score
+# end
+#
+# function score(::HaarFeatureTwoHorizontal, self::HaarLikeFeature)
+#     first = sumRegion(intImg, self.topLeft, (int(self.topLeft[1] + self.width / 3), self.topLeft[2] + self.height))
+#     second = sumRegion(intImg, (Int(self.topLeft[1] + self.width / 3), self.topLeft[1]), (Int(self.topLeft[1] + 2 * self.width / 3), self.topLeft[2] + self.height))
+#     third = sumRegion(intImg, (Int(self.topLeft[1] + 2 * self.width / 3), self.topLeft[2]), self.bottomRight)
+#     score = first - second + third
+#     return score
+# end
+#
+# function score(::HaarFeatureThreeHorizontal, self::HaarLikeFeature)
+#     first = sumRegion(intImg, self.topLeft, (Int(self.topLeft[1] + self.width / 3), self.topLeft[2] + self.height))
+#     second = sumRegion(intImg, (Int(self.topLeft[1] + self.width / 3), self.topLeft[2]), (Int(self.topLeft[1] + 2 * self.width / 3), self.topLeft[2] + self.height))
+#     third = sumRegion(intImg, (Int(self.topLeft[1] + 2 * self.width / 3), self.topLeft[2]), self.bottomRight)
+#     score = first - second + third
+#     return score
+# end
+#
+# function score(::HaarFeatureThreeVertical, self::HaarLikeFeature)
+#     first = sumRegion(intImg, self.topLeft, (self.bottomRight[1], Int(self.topLeft[2] + self.height / 3)))
+#     second = sumRegion(intImg, (self.topLeft[1], Int(self.topLeft[2] + self.height / 3)), (self.bottomRight[1], Int(self.topLeft[2] + 2 * self.height / 3)))
+#     third = sumRegion(intImg, (self.topLeft[1], Int(self.topLeft[2] + 2 * self.height / 3)), self.bottomRight)
+#     score = first - second + third
+#     return score
+# end
+#
+# function score(::HaarFeatureFour, self::HaarLikeFeature)
+#     # top left area
+#     first = sumRegion(intImg, self.topLeft, (Int(self.topLeft[1] + self.width / 2), Int(self.topLeft[2] + self.height / 2)))
+#     # top right area
+#     second = sumRegion(intImg, (Int(self.topLeft[1] + self.width / 2), self.topLeft[2]), (self.bottomRight[1], Int(self.topLeft[2] + self.height / 2)))
+#     # bottom left area
+#     third = sumRegion(intImg, (self.topLeft[1], Int(self.topLeft[2] + self.height / 2)), (Int(self.topLeft[1] + self.width / 2), self.bottomRight[2]))
+#     # bottom right area
+#     fourth = sumRegion(intImg, (Int(self.topLeft[1] + self.width / 2), int(self.topLeft[2] + self.height / 2)), self.bottomRight)
+#     score = first - second - third + fourth
+#     return score
+# end
+
+function score(self::HaarLikeFeature, intImg::Array)
+        """
+        Get score for given integral image array.
+        :param int_img: Integral image array
+        :type int_img: numpy.ndarray
+        :return: Score for given feature
+        :rtype: float
+        """
+        score = 0
+        
+        if self.featureType == FeatureType[1] # two vertical
+            first = sumRegion(intImg, self.topLeft, (self.topLeft[1] + self.width, Int(self.topLeft[2] + self.height / 2)))
+            second = sumRegion(intImg, (self.topLeft[1], Int(self.topLeft[2] + self.height / 2)), self.bottomRight)
+            score = first - second
+        elseif self.featureType == FeatureType[2] # two horizontal
+            first = sumRegion(int_img, self.topLeft, (Int(self.topLeft[1] + self.width / 2), self.topLeft[2] + self.height))
+            second = sumRegion(int_img, (Int(self.topLeft[1] + self.width / 2), self.topLeft[2]), self.bottomRight)
+            score = first - second
+        elseif self.featureType == FeatureType[3] # three horizontal
+            first = sumRegion(intImg, self.topLeft, (Int(self.topLeft[1] + self.width / 3), self.topLeft[2] + self.height))
+            second = sumRegion(intImg, (Int(self.topLeft[1] + self.width / 3), self.topLeft[2]), (Int(self.topLeft[1] + 2 * self.width / 3), self.topLeft[2] + self.height))
+            third = sumRegion(intImg, (Int(self.topLeft[1] + 2 * self.width / 3), self.topLeft[2]), self.bottomRight)
+            score = first - second + third
+        elseif self.featureType == FeatureType[4] # three vertical
+            first = sumRegion(intImg, self.topLeft, (self.bottomRight[1], Int(self.topLeft[2] + self.height / 3)))
+            second = sumRegion(intImg, (self.topLeft[1], Int(self.topLeft[2] + self.height / 3)), (self.bottomRight[1], Int(self.topLeft[2] + 2 * self.height / 3)))
+            third = sumRegion(intImg, (self.topLeft[1], Int(self.topLeft[2] + 2 * self.height / 3)), self.bottomRight)
+            score = first - second + third
+        elseif self.featureType == FeatureType[5] # four
+            # top left area
+            first = sumRegion(intImg, self.topLeft, (Int(self.topLeft[1] + self.width / 2), Int(self.topLeft[2] + self.height / 2)))
+            # top right area
+            second = sumRegion(intImg, (Int(self.topLeft[1] + self.width / 2), self.topLeft[2]), (self.bottomRight[1], Int(self.topLeft[2] + self.height / 2)))
+            # bottom left area
+            third = sumRegion(intImg, (self.topLeft[1], Int(self.topLeft[2] + self.height / 2)), (Int(self.topLeft[1] + self.width / 2), self.bottomRight[2]))
+            # bottom right area
+            fourth = sumRegion(intImg, (Int(self.topLeft[1] + self.width / 2), int(self.topLeft[2] + self.height / 2)), self.bottomRight)
+            score = first - second - third + fourth
+        end
+        return score
+end
+
+
+
+function getVote(self::HaarLikeFeature, intImg::AbstractArray)
+    """
+    Get vote of this feature for given integral image.
+    :param int_img: Integral image array
+    :type int_img: numpy.ndarray
+    :return: 1 iff this feature votes positively, otherwise -1
+    :rtype: int
+    """
+    score = self.score(intImg)
+    # return self.weight * (1 if score < self.polarity * self.threshold else -1)
+    return self.weight * ((score < (self.polarity * self.threshold)) ? 1 : -1)
+end
+
+
+
+
+
+export score
+export getVote
+
+
+##### TESTING
+
+# imgArr = getImageMatrix()
+# integralImageArr = toIntegralImage(imgArr)
+
+# println(integralImageArr)
+
+# output = score(intImg)
+#
+# println(output)

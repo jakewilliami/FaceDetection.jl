@@ -9,7 +9,7 @@
 Adapted from https://github.com/Simon-Hohberg/Viola-Jones/
 """
 
-println("Loading required libraries (it will take a moment to precompile is this is your first time doing this)...")
+println("Loading required libraries (it will take a moment to precompile if it is your first time doing this)...")
 
 include("IntegralImage.jl")
 include("AdaBoost.jl")
@@ -17,9 +17,9 @@ include("Utils.jl")
 
 
 function main()
-      posTrainingPath = "/Users/jakeireland/FaceDetection.jl/test/images/pos/"
-      negTrainingPath = "/Users/jakeireland/FaceDetection.jl/test/images/neg/"
-      posTestingPath = "/Users/jakeireland/FaceDetection.jl/test/images/testing/pos/"
+      posTrainingPath = "/Users/jakeireland/FaceDetection.jl/data/images/pos/"
+      negTrainingPath = "/Users/jakeireland/FaceDetection.jl/data/images/neg/"
+      posTestingPath = "/Users/jakeireland/FaceDetection.jl/data/images/testing/pos/"
       negTestingPath = "/Users/jakeireland/Desktop/Assorted Personal Documents/Wallpapers copy/"
 
       numClassifiers = 2
@@ -38,6 +38,16 @@ function main()
       nonFacesTraining = loadImages(negTrainingPath)
       nonFacesIITraining = map(toIntegralImage, nonFacesTraining) # list(map(...))
       println("...done. ", length(nonFacesTraining), " non-faces loaded.\n")
+      
+      # println("Writing arrays to files for testing...")
+      # rm(joinpath(homedir(), "Desktop", "facesIITraining.txt"))
+      # rm(joinpath(homedir(), "Desktop", "nonFacesIITraining.txt"))
+      # open(joinpath(homedir(), "Desktop", "facesIITraining.txt"), "w") do io
+      #      write(io, string(facesIITraining))
+      # end
+      # open(joinpath(homedir(), "Desktop", "nonFacesIITraining.txt"), "w") do io
+      #      write(io, string(nonFacesIITraining))
+      # end
 
       # classifiers are haar like features
       println("Determining classifiers; this will take a while...")

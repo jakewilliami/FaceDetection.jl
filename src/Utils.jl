@@ -11,24 +11,24 @@ using Images # for channelview; converting images to matrices
 using ImageTransformations # for scaling high-quality images down
 
 
-include("HaarFeatureSelection.jl")
+include("HaarLikeFeature.jl")
 #=
-↑ this will create a stack overflow due to circular referencing
-currently we have IntegralImage referencing Utils (present file);
-HaarFeatureSelection referencing IntegralImagel;
-Adaboost referencing HaarFeatureSelection;
-and this is where it all starts.
+adaboost imports haarlikefeature.jl
 
-FDA will reference one of them which will connect everything together.
+main (fda.jl) imports integralimage.jl, adaboost.jl, and utils.jl
 =#
 
 
-function getImageMatrix(imageFile)
-    # imageDir = joinpath(dirname(dirname(@__FILE__)), "test", "images")
+# for adaboost
+function partial(f,a...) # for ... syntax see https://en.wikibooks.org/wiki/Introducing_Julia/Functions#Functions_with_variable_number_of_arguments
+        ( (b...) -> f(a...,b...) )
+end
 
-    # img = load(joinpath(imageDir, "face.jpg"))
+
+function getImageMatrix(imageFile::AbstractString)
     img = load(imageFile)
-    img = imresize(img, ratio=1/8)
+    # img = imresize(img, ratio=1/8)
+    img = imresize(img, (10,10)) # for standardised size
 
     # imgArr = convert(Array{Float64}, channelview(img)) # for coloured images
     imgArr = convert(Array{Float64}, Colors.Gray.(img))

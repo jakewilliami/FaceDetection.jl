@@ -7,7 +7,7 @@
 using ProgressMeter
 using Distributed # for parallel processing (namely, @everywhere)
 
-include("HaarFeatureSelection.jl")
+include("HaarLikeFeature.jl")
 
 
 
@@ -31,7 +31,7 @@ function learn(positiveIIs, negativeIIs, numClassifiers=-1, minFeatureWidth=1, m
     """
     numPos = length(positiveIIs)
     numNeg = length(negativeIIs)
-    numImgs = numPos + numNeg
+    global numImgs = numPos + numNeg
     imgHeight, imgWidth = size(positiveIIs[1])
     
     # Maximum feature width and height default to image width and height
@@ -48,8 +48,8 @@ function learn(positiveIIs, negativeIIs, numClassifiers=-1, minFeatureWidth=1, m
     weights = hcat((posWeights, negWeights))
     labels = hcat((ones(numPos), ones(numNeg) * -1))
     
-    # images = positiveIIs + negativeIIs
-    images = vcat(positiveIIs, negativeIIs)
+    global images = positiveIIs + negativeIIs
+    # global images = vcat(positiveIIs, negativeIIs)
 
     # Create features for all sizes and locations
     features = _create_features(imgHeight, imgWidth, minFeatureWidth, maxFeatureWidth, minFeatureHeight, maxFeatureHeight)
@@ -63,12 +63,14 @@ function learn(positiveIIs, negativeIIs, numClassifiers=-1, minFeatureWidth=1, m
     
     votes = zeros((numImgs, numFeatures))
     # bar = progressbar.ProgressBar()
+    # @everywhere numImgs begin
     @everywhere begin
         n = numImgs
+        processes = length(numImgs)
         p = Progress(n, 1)   # minimum update interval: 1 second
-        for i in processes
-            # votes[i, :] = np.array(pool.map(partial(_get_feature_vote, image=images[i]), features))
-            votes[i, :] = Array(_get_feature_vote, image=images[i]), features
+        for i in processes # bar(range(num_imgs)):
+            # votes[i, :] = np.array(partial(_get_feature_vote, image=images[i]), features)
+            votes[i, :] = Array(map(partial(_get_feature_vote)(image=images[i])), features)
             next!(p)
         end
     end # end everywhere (end parallel processing)
@@ -131,26 +133,30 @@ end
 
 function _create_features(imgHeight::Int64, imgWidth::Int64, minFeatureWidth::Int64, maxFeatureWidth::Int64, minFeatureHeight::Int64, maxFeatureHeight::Int64)
     println("Creating Haar-like features...")
-    features = Array()
+    # features = Array()
+    features = []
     
-    for feature in FeatureTypes
+    for feature in FeatureTypes # from HaarLikeFeature.jl
+        # FeatureTypes are just tuples
+        println(typeof(feature), " " , feature)
         featureStartWidth = max(minFeatureWidth, feature[1])
         for featureWidth in range(featureStartWidth, stop=maxFeatureWidth, step=feature[1])
-            for x in 1:(imgWidth - featureWidth)
-                for y in 1:(imgHeight - featureHeight)
-                    #=features.append(HaarLikeFeature(feature, (x, y), feature_width, feature_height, 0, 1))
-                    features.append(HaarLikeFeature(feature, (x, y), feature_width, feature_height, 0, -1))=#
-                end # end for y
-            end # end for x
+            featureStartHeight = max(minFeatureHeight, feature[2])
+            for featureHeight in range(featureStartHeight, stop=maxFeatureHeight, step=feature[2])
+                for x in 1:(imgWidth - featureWidth)
+                    for y in 1:(imgHeight - featureHeight)
+                        feature = vcat(feature, HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, 1))
+                        feature = vcat(feature, HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, -1))
+                    end # end for y
+                end # end for x
+            end # end for feature height
         end # end for feature width
     end # end for feature in feature types
     
-    println("...finished processing; ", str(len(features)) + " features created.")
+    println("...finished processing; ", length(features), " features created.")
     
     return features
 end
-
-
 
 
 export learn

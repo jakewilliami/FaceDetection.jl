@@ -13,10 +13,6 @@ Original    Integral
 | . . . .   | . . . . .
 """
 
-
-# include("Utils.jl")
-
-
 function toIntegralImage(imgArr::AbstractArray)
     """
     https://www.ipol.im/pub/art/2014/57/article_lr.pdf, p. 346

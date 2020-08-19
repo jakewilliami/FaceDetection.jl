@@ -10,6 +10,11 @@ trap "exit" INT
 echo "Please ensure FaceDetection.jl is installed in your home directory..."
 sleep 5
 
+mkdir -p ~/FaceDetection.jl/test/images/testing/pos/
+mkdir -p ~/FaceDetection.jl/test/images/testing/neg/
+mkdir -p ~/FaceDetection.jl/test/images/testing/testing/pos/
+mkdir -p ~/FaceDetection.jl/test/images/testing/testing/neg/
+
 brew list > /tmp/brewlist
 if ! grep "^imagemagick$" /tmp/brewlist > /dev/null 2>&1
 then
@@ -39,11 +44,11 @@ cd ~/FaceDetection.jl/ && \
 	mv face-detection-data/pos/ test/images/ && \
 	mv face-detection-data/neg/ test/images/ && \
 	rm -rf face-detection-data/
-# echo "Pruning the positive training images to have the same number as the negative images, or else there will be an array mismatch when constructing the image array in src/Adaboost.jl"
-# for i in $(seq $(ls ~/FaceDetection.jl/test/images/neg/ | wc -l) $(ls ~/FaceDetection.jl/test/images/pos/ | wc -l)); do
-# 	rm ~/FaceDetection.jl/test/images/pos/${i}.pgm
-# 	# echo "${i}"
-# done
+echo "Pruning the positive training images to have the same number as the negative images, or else there will be an array mismatch when constructing the image array in src/Adaboost.jl"
+for i in $(seq $(ls ~/FaceDetection.jl/test/images/neg/ | wc -l) $(($(ls ~/FaceDetection.jl/test/images/pos/ | wc -l)-1)); do
+	rm ~/FaceDetection.jl/test/images/pos/${i}.pgm
+	# echo "${i}"
+done
 
 	
 #### The following step was only for python testing code.  Netpbm.jl is powerful and fixed this.
