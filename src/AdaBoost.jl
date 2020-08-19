@@ -10,6 +10,11 @@ using Distributed # for parallel processing (namely, @everywhere)
 include("HaarFeatureSelection.jl")
 
 
+
+# TODO: select optimal threshold for each feature
+# TODO: attentional cascading
+
+
 function learn(positiveIIs, negativeIIs, numClassifiers=-1, minFeatureWidth=1, maxFeatureWidth=-1, minFeatureHeight=1, maxFeatureHeight=-1)
     """
     Selects a set of classifiers. Iteratively takes the best classifiers based
@@ -43,7 +48,8 @@ function learn(positiveIIs, negativeIIs, numClassifiers=-1, minFeatureWidth=1, m
     weights = hcat((posWeights, negWeights))
     labels = hcat((ones(numPos), ones(numNeg) * -1))
     
-    images = positiveIIs + negativeIIs
+    # images = positiveIIs + negativeIIs
+    images = vcat(positiveIIs, negativeIIs)
 
     # Create features for all sizes and locations
     features = _create_features(imgHeight, imgWidth, minFeatureWidth, maxFeatureWidth, minFeatureHeight, maxFeatureHeight)

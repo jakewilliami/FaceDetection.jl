@@ -9,6 +9,7 @@
 Adapted from https://github.com/Simon-Hohberg/Viola-Jones/
 """
 
+println("Loading required libraries (it will take a moment to precompile is this is your first time doing this)...")
 
 include("IntegralImage.jl")
 include("AdaBoost.jl")
@@ -16,18 +17,17 @@ include("Utils.jl")
 
 
 function main()
-      posTrainingPath = "/Users/jakeireland/FaceDetection.jl/test/images/faces/"
-      negTrainingPath = "/Users/jakeireland/FaceDetection.jl/test/images/nonfaces/"
-      posTestingPath = "/Users/jakeireland/FaceDetection.jl/test/images/faces/test/"
-      negTestingPath = "/Users/jakeireland/FaceDetection.jl/test/images/nonfaces/test/"
+      posTrainingPath = "/Users/jakeireland/FaceDetection.jl/test/images/pos/"
+      negTrainingPath = "/Users/jakeireland/FaceDetection.jl/test/images/neg/"
+      posTestingPath = "/Users/jakeireland/FaceDetection.jl/test/images/testing/pos/"
+      negTestingPath = "/Users/jakeireland/Desktop/Assorted Personal Documents/Wallpapers copy/"
 
-
-      num_classifiers = 2
+      numClassifiers = 2
       # For performance reasons restricting feature size
-      min_feature_height = 8
-      max_feature_height = 10
-      min_feature_width = 8
-      max_feature_width = 10
+      minFeatureHeight = 8
+      maxFeatureHeight = 10
+      minFeatureWidth = 8
+      maxFeatureWidth = 10
 
 
       println("Loading faces...")
@@ -37,9 +37,10 @@ function main()
       println("...done. ", length(facesTraining), " faces loaded.\n\nLoading non-faces...")
       nonFacesTraining = loadImages(negTrainingPath)
       nonFacesIITraining = map(toIntegralImage, nonFacesTraining) # list(map(...))
-      println("./.done. ", length(nonFacesTraining), " non-faces loaded.\n")
+      println("...done. ", length(nonFacesTraining), " non-faces loaded.\n")
 
       # classifiers are haar like features
+      println("Determining classifiers; this will take a while...")
       classifiers = learn(facesIITraining, nonFacesIITraining, numClassifiers, minFeatureHeight, maxFeatureHeight, minFeatureWidth, maxFeatureWidth)
 
       println("Loading test faces...")

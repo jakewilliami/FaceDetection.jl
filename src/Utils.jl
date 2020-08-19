@@ -49,6 +49,9 @@ function loadImages(imageDir::AbstractString)
     images = []
     
     for file in readdir(imageDir, join=true, sort=false) # join true for getImageMatrix to find file
+        if basename(file) == ".DS_Store" # silly macos stuff >:(
+            continue
+        end
         images = push!(images, getImageMatrix(file))
     end
     

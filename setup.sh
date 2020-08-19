@@ -2,31 +2,55 @@
 
 trap "exit" INT
 
-if [[ $(uname -s) != "Darwin" ]]
-then
-	echo "OpenCV has been ported to Julia, but has only been tested on OSX.  Please keep this in mind when using this implementation of Viola-Jone."
-fi
+# if [[ $(uname -s) != "Darwin" ]]
+# then
+# 	echo "OpenCV has been ported to Julia, but has only been tested on OSX.  Please keep this in mind when using this implementation of Viola-Jone."
+# fi
 
 echo "Please ensure FaceDetection.jl is installed in your home directory..."
 sleep 5
 
-if [[ -z $(command -v julia) ]]
+brew list > /tmp/brewlist
+if ! grep "^imagemagick$" /tmp/brewlist > /dev/null 2>&1
 then
-	echo "You do not have Julia installed.  Please rectify this.  Ensure you are using version 0.5 or later.  Version 1.5 is preferrable."
+	echo "Downloading ImageMagick"
+	brew install imagemagick
+fi
+if ! grep "^julia$" /tmp/brewlist > /dev/null 2>&1
+then
+	echo "Downloading Julia"
+	brew install julia
 fi
 
 echo "Downloading dependencies"
 julia -E 'import Pkg; Pkg.activate(joinpath(homedir(), "FaceDetection.jl")); Pkg.instantiate()'
 
-brew list > /tmp/brewlist
-if ! grep "^opencv@3$" /tmp/brewlist > /dev/null 2>&1
+echo "Downloading face detection training data"
+if [[ -d ~/FaceDetection.jl/test/images/pos/ ]]
 then
-	echo "Downloading OpenCV"
-	brew install opencv@3
+	rm -rf ~/FaceDetection.jl/test/images/pos/
 fi
+if [[ -d ~/FaceDetection.jl/test/images/neg/ ]]
+then
+	rm -rf ~/FaceDetection.jl/test/images/neg/
+fi
+cd ~/FaceDetection.jl/ && \
+	git clone https://github.com/OlegTheCat/face-detection-data && \
+	mv face-detection-data/pos/ test/images/ && \
+	mv face-detection-data/neg/ test/images/ && \
+	rm -rf face-detection-data/
+# echo "Pruning the positive training images to have the same number as the negative images, or else there will be an array mismatch when constructing the image array in src/Adaboost.jl"
+# for i in $(seq $(ls ~/FaceDetection.jl/test/images/neg/ | wc -l) $(ls ~/FaceDetection.jl/test/images/pos/ | wc -l)); do
+# 	rm ~/FaceDetection.jl/test/images/pos/${i}.pgm
+# 	# echo "${i}"
+# done
 
-echo "Downloading Cxx.jl"
-julia -E 'cd(joinpath(homedir(), "FaceDetection.jl")); import Pkg; Pkg.add(url="https://github.com/Keno/Cxx.jl"); Pkg.build("Cxx")'
+	
+#### The following step was only for python testing code.  Netpbm.jl is powerful and fixed this.
 
-echo "Installing OpenCV packages for Julia"
-julia -E 'cd(joinpath(homedir(), "FaceDetection.jl")); import Pkg; Pkg.add(url="https://github.com/JuliaOpenCV/CVCore.jl"); Pkg.add(url="https://github.com/JuliaOpenCV/CVCalib3d.jl"); Pkg.add(url="https://github.com/JuliaOpenCV/CVHighGUI.jl"); Pkg.add(url="https://github.com/JuliaOpenCV/CVVideoIO.jl"); Pkg.add(url="https://github.com/JuliaOpenCV/CVImgProc.jl"); Pkg.add(url="https://github.com/JuliaOpenCV/CVImgCodecs.jl"); Pkg.add(url="https://github.com/JuliaOpenCV/LibOpenCV.jl"); Pkg.add(url="https://github.com/JuliaOpenCV/OpenCV.jl"); Pkg.build("LibOpenCV"); Pkg.test("OpenCV")'
+# echo "Converting pgm files to png.  This will take a minute."
+# find ../test/images/ -name "*.pgm" | \
+# while IFS= read -r file; do
+# 	magick "${file}" "${file}.png"
+# done
+	
