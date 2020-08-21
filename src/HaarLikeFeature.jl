@@ -15,7 +15,7 @@
 
 # FeatureType = Dict{String, Tuple{Int64,Int64}}("two_vertical" => (1, 2), "two_horizontal" => (2, 1), "three_horizontal" => (3,1), "three_vertical" => (1,3), "four" => (2, 2))
 # FeatureTypes = [FeatureType["two_vertical"], FeatureType["two_horizontal"], FeatureType["three_horizontal"], FeatureType["three_vertical"], FeatureType["four"]]
-FeatureTypes = Array((1, 2), (2, 1), (3, 1), (1, 3), (2, 2))
+FeatureTypes = [(1, 2), (2, 1), (3, 1), (1, 3), (2, 2)]
 
         
 # abstract type HaarObject end
