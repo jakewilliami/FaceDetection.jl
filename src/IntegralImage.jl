@@ -61,7 +61,7 @@ function toIntegralImage(imgArr::AbstractArray)
 end
     
 
-function sumRegion(integralImageArr::AbstractArray, topLeft::AbstractArray, bottomRight::AbstractArray)
+function sumRegion(integralImageArr::AbstractArray, topLeft::Tuple{Int64,Int64}, bottomRight::Tuple{Int64,Int64})
     """
     Calculates the sum in the rectangle specified by the given tuples
     topLeft: (x, y) of the rectangle's top left corner

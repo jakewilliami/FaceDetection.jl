@@ -150,14 +150,14 @@ function _create_features(imgHeight::Int64, imgWidth::Int64, minFeatureWidth::In
     
     for feature in FeatureTypes # from HaarLikeFeature.jl
         # FeatureTypes are just tuples
-        println("feature: ", typeof(feature), " " , feature)
+        # println("feature: ", typeof(feature), " " , feature)
         featureStartWidth = max(minFeatureWidth, feature[1])
         for featureWidth in range(featureStartWidth, stop=maxFeatureWidth, step=feature[1])
             featureStartHeight = max(minFeatureHeight, feature[2])
             for featureHeight in range(featureStartHeight, stop=maxFeatureHeight, step=feature[2])
                 for x in 1:(imgWidth - featureWidth)
                     for y in 1:(imgHeight - featureHeight)
-                        println("top left: ", typeof((x, y)), " ", (x, y))
+                        # println("top left: ", typeof((x, y)), " ", (x, y))
                         features = push!(features, HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, 1))
                         # features = (features..., HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, 1)) # using splatting to add to a tuple.  see Utils.partial()
                         features = push!(features, HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, -1))
