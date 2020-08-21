@@ -17,7 +17,7 @@ FeatureType = Dict{String, Tuple{Int64,Int64}}("two_vertical" => (1, 2), "two_ho
 FeatureTypes = [FeatureType["two_vertical"], FeatureType["two_horizontal"], FeatureType["three_horizontal"], FeatureType["three_vertical"], FeatureType["four"]]
 
         
-abstract type HaarObject end
+# abstract type HaarObject end
 abstract type HaarFeatureType end
 
 # make structure
@@ -32,6 +32,7 @@ struct HaarLikeFeature <: HaarFeatureType#struct HaarLikeFeature{T} <: HaarObjec
     weight::Int64
     
     # constructor; equivalent of __init__ method within class
+    # function HaarLikeFeature(featureType::Any, position::Tuple{Int64, Int64}, width::Int64, height::Int64, threshold::Int64, polarity::Int64)
     function HaarLikeFeature(featureType::Tuple{Int64,Int64}, position::Tuple{Int64, Int64}, width::Int64, height::Int64, threshold::Int64, polarity::Int64)
         topLeft = position
         bottomRight = (position[1] + width, position[2] + height)
@@ -41,7 +42,7 @@ struct HaarLikeFeature <: HaarFeatureType#struct HaarLikeFeature{T} <: HaarObjec
 end # end structure
 
 
-# define the various Haar like feature types
+# define the various Haar like feature types keeping the featureType parameter inside this object
 struct HaarFeatureTwoVertical <: HaarFeatureType end
 struct HaarFeatureTwoHorizontal <: HaarFeatureType end
 struct HaarFeatureThreeHorizontal <: HaarFeatureType end
@@ -49,12 +50,17 @@ struct HaarFeatureThreeVertical <: HaarFeatureType end
 struct HaarFeatureFour <: HaarFeatureType end
 
 
-# HaarFeatureTwoVertical = (1, 2)
-
-
 # construct integral image
 # intImg = toIntegralImage(getImageMatrix())
 
+# if self.feature_type == FeatureType["two_vertical"] # like this. The value (1,2) or whatever it is, don't really matter.
+# HAAR_FEATURETYPE_TWO_VERTICAL=(1, 2)
+
+# function score(self::HaarLikeFeature)
+#     # and dispatch on it here:
+#     return score(self.feature_type, self)
+# end
+#
 # function score(::HaarFeatureTwoVertical, self::HaarLikeFeature)
 #     first = sumRegion(intImg, self.topLeft, (self.topLeft[1] + self.width, Int(self.topLeft[2] + self.height / 2)))
 #     second = sumRegion(intImg, (self.topLeft[1], Int(self.topLeft[2] + self.height / 2)), self.bottomRight)
@@ -99,7 +105,7 @@ struct HaarFeatureFour <: HaarFeatureType end
 #     return score
 # end
 
-function score(self::HaarLikeFeature, intImg::Array)
+function getScore(self::HaarLikeFeature, intImg::Array)
         """
         Get score for given integral image array.
         :param int_img: Integral image array
@@ -108,7 +114,7 @@ function score(self::HaarLikeFeature, intImg::Array)
         :rtype: float
         """
         score = 0
-        
+
         if self.featureType == FeatureType[1] # two vertical
             first = sumRegion(intImg, self.topLeft, (self.topLeft[1] + self.width, Int(self.topLeft[2] + self.height / 2)))
             second = sumRegion(intImg, (self.topLeft[1], Int(self.topLeft[2] + self.height / 2)), self.bottomRight)
@@ -143,7 +149,9 @@ end
 
 
 
-function getVote(self::HaarLikeFeature, intImg::AbstractArray)
+# function getVote(intImg::AbstractArray)
+function getVote(feature::HaarLikeFeature, intImg::AbstractArray)
+# function getVote(::HaarLikeFeature, self::HaarLikeFeature)
     """
     Get vote of this feature for given integral image.
     :param int_img: Integral image array
@@ -151,16 +159,13 @@ function getVote(self::HaarLikeFeature, intImg::AbstractArray)
     :return: 1 iff this feature votes positively, otherwise -1
     :rtype: int
     """
-    score = self.score(intImg)
+    score = getScore(feature, intImg)
     # return self.weight * (1 if score < self.polarity * self.threshold else -1)
-    return self.weight * ((score < (self.polarity * self.threshold)) ? 1 : -1)
+    return feature.weight * ((score < (feature.polarity * feature.threshold)) ? 1 : -1)
 end
 
 
-
-
-
-export score
+export getScore
 export getVote
 
 
@@ -174,3 +179,55 @@ export getVote
 # output = score(intImg)
 #
 # println(output)
+
+
+
+
+
+
+
+
+
+
+# struct HaarLikeFeature <: HaarType
+#     position::Array{Int64, 2}
+#     topLeft::Array{Int64, 2}
+#     bottomRight::Array{Int64, 2}
+#     width::Int64
+#     height::Int64
+#     threshold::Float64
+#     polarity::Int64
+#     weight::Float64
+#     # constructor; equivalent of __init__ method within class
+#     function HaarLikeFeature(position::Array{Int64, 2}, width::Int64, height::Int64, threshold::Float64, polarity::Int64, weight::Float64)
+#         topLeft = position
+#         bottomRight = (position[1] + width, position[2] + height)
+#         weight = 1
+#         new(feature_type, topLeft, bottomRight, width, height, threshold, polarity)
+#     end # end constructor
+# abstract type HaarFeatureType end
+# struct HaarFeatureTwoVertical <: HaarFeatureType end
+# struct HaarFeatureTwoHorizontal <: HaarFeatureType end
+# function score(::HaarFeatureTwoVertical, self::HaarLikeFeature)
+#     first = ii.sum_region(int_img, self.top_left, (self.top_left[0] + self.width, int(self.top_left[1] + self.height / 2)))
+#     second = ii.sum_region(int_img, (self.top_left[0], int(self.top_left[1] + self.height / 2)), self.bottom_right)
+#     return first - second
+# end
+# function score(::HaarFeatureTwoHoritontal, self::HaarLikeFeature)
+#     first = ii.sum_region(int_img, self.top_left, (int(self.top_left[0] + self.width / 3), self.top_left[1] + self.height))
+#     second = ii.sum_region(int_img, (int(self.top_left[0] + self.width / 3), self.top_left[1]), (int(self.top_left[0] + 2 * self.width / 3), self.top_left[1] + self.height))
+#     third = ii.sum_region(int_img, (int(self.top_left[0] + 2 * self.width / 3), self.top_left[1]), self.bottom_right)
+#     return first - second + third
+# end
+#
+#
+# struct HaarLikeFeature <: HaarType
+#     # keep the feature_type parameter inside this object
+#     feature_type::Union{HaarFeatureTwoVertical, HaarFeatureTwoHorizontal, etc.}
+#     position::Array{Int64, 2}
+#     ...
+# end
+# function score(self::HaarLikeFeature)
+#     # and dispatch on it here:
+#     return score(self.feature_type, self)
+# end

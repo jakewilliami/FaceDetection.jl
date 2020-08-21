@@ -52,7 +52,7 @@ function learn(positiveIIs, negativeIIs, numClassifiers=-1, minFeatureWidth=1, m
     # global images = vcat(positiveIIs, negativeIIs)
 
     # Create features for all sizes and locations
-    features = _create_features(imgHeight, imgWidth, minFeatureWidth, maxFeatureWidth, minFeatureHeight, maxFeatureHeight)
+    global features = _create_features(imgHeight, imgWidth, minFeatureWidth, maxFeatureWidth, minFeatureHeight, maxFeatureHeight)
     numFeatures = length(features)
     # feature_indexes = list(range(num_features))
     featureIndexes = Array(1:numFeatures)
@@ -69,8 +69,9 @@ function learn(positiveIIs, negativeIIs, numClassifiers=-1, minFeatureWidth=1, m
         processes = length(numImgs)
         p = Progress(n, 1)   # minimum update interval: 1 second
         for i in processes # bar(range(num_imgs)):
-            # votes[i, :] = np.array(partial(_get_feature_vote, image=images[i]), features)
-            votes[i, :] = Array(map(partial(_get_feature_vote)(image=images[i])), features)
+            # votes[i, :] = np.array(list(Pool(processes=None).map(partial(_get_feature_vote, image=images[i]), features)))
+            # votes[i, :] = Array(map(partial(getVote, images[i]), features))
+            votes[i, :] = Array(map(feature -> getVote(feature, images[i]), features))
             next!(p)
         end
     end # end everywhere (end parallel processing)
@@ -108,7 +109,8 @@ function learn(positiveIIs, negativeIIs, numClassifiers=-1, minFeatureWidth=1, m
         featureWeight = 0.5 * log((1 - bestError) / bestError)
         bestFeature.weight = featureWeight
 
-        classifiers = vcat(classifiers, bestFeature)
+        # classifiers = vcat(classifiers, bestFeature)
+        classifiers = push!(classifiers, bestFeature)
 
         # update image weights
         # weights = list(map(lambda img_idx: weights[img_idx] * np.sqrt((1-best_error)/best_error) if labels[img_idx] != votes[img_idx, best_feature_idx] else weights[img_idx] * np.sqrt(best_error/(1-best_error)), range(num_imgs)))
@@ -126,9 +128,12 @@ function learn(positiveIIs, negativeIIs, numClassifiers=-1, minFeatureWidth=1, m
 end
 
 
-function _get_feature_vote(feature, image)
-    return vote(image)
-end
+# function _get_feature_vote(feature::HaarLikeFeature, image::Int64)
+#     # return getVote(image)
+#     # return partial(getVote)(image)
+#     # return feature.getVote(image)
+#     return getVote(feature, image)
+# end
 
 
 function _create_features(imgHeight::Int64, imgWidth::Int64, minFeatureWidth::Int64, maxFeatureWidth::Int64, minFeatureHeight::Int64, maxFeatureHeight::Int64)
@@ -136,24 +141,34 @@ function _create_features(imgHeight::Int64, imgWidth::Int64, minFeatureWidth::In
     # features = Array()
     features = []
     
+    # for feature in FeatureTypes # from HaarLikeFeature.jl
+    #     # FeatureTypes are just tuples
+    #     println(typeof(feature), " " , feature)
+    # end # end for feature in feature types
+    
     for feature in FeatureTypes # from HaarLikeFeature.jl
         # FeatureTypes are just tuples
-        println(typeof(feature), " " , feature)
+        # println(typeof(feature), " " , feature)
         featureStartWidth = max(minFeatureWidth, feature[1])
         for featureWidth in range(featureStartWidth, stop=maxFeatureWidth, step=feature[1])
             featureStartHeight = max(minFeatureHeight, feature[2])
             for featureHeight in range(featureStartHeight, stop=maxFeatureHeight, step=feature[2])
                 for x in 1:(imgWidth - featureWidth)
                     for y in 1:(imgHeight - featureHeight)
-                        feature = vcat(feature, HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, 1))
-                        feature = vcat(feature, HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, -1))
+                        # features = vcat(feature, HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, 1))
+                        # features = push!(feature, HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, 1))
+                        features = (features..., HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, 1)) # using splatting to add to a tuple.  see Utils.partial()
+                        # features = vcat(feature, HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, -1))
+                        # features = push!(feature, HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, -1))
+                        features = (features..., HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, 1))
+                        # feature.append(HaarLikeFeature...)
                     end # end for y
                 end # end for x
             end # end for feature height
         end # end for feature width
     end # end for feature in feature types
     
-    println("...finished processing; ", length(features), " features created.")
+    # println("...finished processing; ", length(features), " features created.")
     
     return features
 end
