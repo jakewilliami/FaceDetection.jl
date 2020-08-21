@@ -50,7 +50,7 @@ function main()
       # end
 
       # classifiers are haar like features
-      println("Determining classifiers; this will take a while...")
+      println("Determining classifiers; this may take a while...")
       classifiers = learn(facesIITraining, nonFacesIITraining, numClassifiers, minFeatureHeight, maxFeatureHeight, minFeatureWidth, maxFeatureWidth)
 
       println("Loading test faces...")

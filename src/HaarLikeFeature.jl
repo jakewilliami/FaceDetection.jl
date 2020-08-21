@@ -151,9 +151,7 @@ end
 
 
 
-# function getVote(intImg::AbstractArray)
 function getVote(feature::HaarLikeFeature, intImg::AbstractArray)
-# function getVote(::HaarLikeFeature, self::HaarLikeFeature)
     """
     Get vote of this feature for given integral image.
     :param int_img: Integral image array
@@ -162,7 +160,11 @@ function getVote(feature::HaarLikeFeature, intImg::AbstractArray)
     :rtype: int
     """
     score = getScore(feature, intImg)
-    # return self.weight * (1 if score < self.polarity * self.threshold else -1)
+    
+    
+    # return feature.weight * (1 if score < feature.polarity * feature.threshold else -1)
+    
+    
     return feature.weight * ((score < (feature.polarity * feature.threshold)) ? 1 : -1)
 end
 

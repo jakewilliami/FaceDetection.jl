@@ -69,18 +69,30 @@ function sumRegion(integralImageArr::AbstractArray, topLeft::Tuple{Int64,Int64},
     return The sum of all pixels in the given rectangle
     """
     # swap tuples
-    topLeft = Array(topLeft[2], topLeft[1])
-    bottomRight = Array(bottomRight[2], bottomRight[1])
+    # topLeft = [topLeft[2], topLeft[1]]
+    topLeft = (topLeft[2], topLeft[1])
+    # bottomRight = [bottomRight[2], bottomRight[1]]
+    bottomRight = (bottomRight[2], bottomRight[1])
     
     if isequal(topLeft, bottomRight)
-            return integralImageArr[topLeft]
+            return integralImageArr[topLeft[1], topLeft[2]]
     end
     
     # construct rectangles
-    topRight = Array(bottomRight[1], topLeft[2])
-    bottomLeft = Array(topLeft[1], bottomRight[2])
+    # topRight = [bottomRight[1], topLeft[2]]
+    topRight = (bottomRight[1], topLeft[2])
+    # bottomLeft = [topLeft[1], bottomRight[2]]
+    bottomLeft = (topLeft[1], bottomRight[2])
     
-    return integralImageArr[bottomRight] - integralImageArr[topLeft] - integralImageArr[bottomLeft] + integralImageArr[topLeft]
+    topLeftVal = integralImageArr[topLeft[1], topLeft[2]]
+    bottomRightVal = integralImageArr[bottomRight[1], bottomRight[2]]
+    topRightVal = integralImageArr[topRight[1], topRight[2]]
+    bottomLeftVal = integralImageArr[bottomLeft[1], bottomLeft[2]]
+    
+    # println(typeof(bottomRightVal - topRightVal - bottomLeftVal + topLeftVal))
+    # return integralImageArr[bottomRight] - integralImageArr[topRight] - integralImageArr[bottomLeft] + integralImageArr[topLeft]
+    return bottomRightVal - topRightVal - bottomLeftVal + topLeftVal
+    # return integral_img_arr[bottom_right] - integral_img_arr[top_right] - integral_img_arr[bottom_left] + integral_img_arr[top_left]
 end
 
 
