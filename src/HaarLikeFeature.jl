@@ -13,8 +13,9 @@
 # FeatureType = enum(TWO_VERTICAL=(1, 2), TWO_HORIZONTAL=(2, 1), THREE_HORIZONTAL=(3, 1), THREE_VERTICAL=(1, 3), FOUR=(2, 2))
 # FeatureTypes = Array(FeatureType.TWO_VERTICAL, FeatureType.TWO_HORIZONTAL, FeatureType.THREE_VERTICAL, FeatureType.THREE_HORIZONTAL, FeatureType.FOUR)
 
-FeatureType = Dict{String, Tuple{Int64,Int64}}("two_vertical" => (1, 2), "two_horizontal" => (2, 1), "three_horizontal" => (3,1), "three_vertical" => (1,3), "four" => (2, 2))
-FeatureTypes = [FeatureType["two_vertical"], FeatureType["two_horizontal"], FeatureType["three_horizontal"], FeatureType["three_vertical"], FeatureType["four"]]
+# FeatureType = Dict{String, Tuple{Int64,Int64}}("two_vertical" => (1, 2), "two_horizontal" => (2, 1), "three_horizontal" => (3,1), "three_vertical" => (1,3), "four" => (2, 2))
+# FeatureTypes = [FeatureType["two_vertical"], FeatureType["two_horizontal"], FeatureType["three_horizontal"], FeatureType["three_vertical"], FeatureType["four"]]
+FeatureTypes = Array((1, 2), (2, 1), (3, 1), (1, 3), (2, 2))
 
         
 # abstract type HaarObject end
@@ -22,6 +23,7 @@ abstract type HaarFeatureType end
 
 # make structure
 struct HaarLikeFeature <: HaarFeatureType#struct HaarLikeFeature{T} <: HaarObject where {T <: HaarFeatureType}
+    featureType::Tuple{Int64, Int64}
     position::Tuple{Int64, Int64}
     topLeft::Tuple{Int64, Int64}
     bottomRight::Tuple{Int64, Int64}
@@ -31,23 +33,23 @@ struct HaarLikeFeature <: HaarFeatureType#struct HaarLikeFeature{T} <: HaarObjec
     polarity::Int64
     weight::Int64
     
-    # constructor; equivalent of __init__ method within class
-    # function HaarLikeFeature(featureType::Any, position::Tuple{Int64, Int64}, width::Int64, height::Int64, threshold::Int64, polarity::Int64)
+    # constructor; equivalent of __init__ method within class # ::CartesianIndex
     function HaarLikeFeature(featureType::Tuple{Int64,Int64}, position::Tuple{Int64, Int64}, width::Int64, height::Int64, threshold::Int64, polarity::Int64)
         topLeft = position
         bottomRight = (position[1] + width, position[2] + height)
         weight = 1
-        new(featureType, topLeft, bottomRight, width, height, threshold, polarity)
+        
+        new(featureType, position, topLeft, bottomRight, width, height, threshold, polarity)
     end # end constructor
 end # end structure
 
 
 # define the various Haar like feature types keeping the featureType parameter inside this object
-struct HaarFeatureTwoVertical <: HaarFeatureType end
-struct HaarFeatureTwoHorizontal <: HaarFeatureType end
-struct HaarFeatureThreeHorizontal <: HaarFeatureType end
-struct HaarFeatureThreeVertical <: HaarFeatureType end
-struct HaarFeatureFour <: HaarFeatureType end
+# struct HaarFeatureTwoVertical <: HaarFeatureType end
+# struct HaarFeatureTwoHorizontal <: HaarFeatureType end
+# struct HaarFeatureThreeHorizontal <: HaarFeatureType end
+# struct HaarFeatureThreeVertical <: HaarFeatureType end
+# struct HaarFeatureFour <: HaarFeatureType end
 
 
 # construct integral image
@@ -105,7 +107,7 @@ struct HaarFeatureFour <: HaarFeatureType end
 #     return score
 # end
 
-function getScore(self::HaarLikeFeature, intImg::Array)
+function getScore(feature::HaarLikeFeature, intImg::Array)
         """
         Get score for given integral image array.
         :param int_img: Integral image array
@@ -115,33 +117,33 @@ function getScore(self::HaarLikeFeature, intImg::Array)
         """
         score = 0
 
-        if self.featureType == FeatureType[1] # two vertical
-            first = sumRegion(intImg, self.topLeft, (self.topLeft[1] + self.width, Int(self.topLeft[2] + self.height / 2)))
-            second = sumRegion(intImg, (self.topLeft[1], Int(self.topLeft[2] + self.height / 2)), self.bottomRight)
+        if feature.featureType == FeatureType[1] # two vertical
+            first = sumRegion(intImg, feature.topLeft, (feature.topLeft[1] + feature.width, Int(feature.topLeft[2] + feature.height / 2)))
+            second = sumRegion(intImg, (feature.topLeft[1], Int(feature.topLeft[2] + feature.height / 2)), feature.bottomRight)
             score = first - second
-        elseif self.featureType == FeatureType[2] # two horizontal
-            first = sumRegion(int_img, self.topLeft, (Int(self.topLeft[1] + self.width / 2), self.topLeft[2] + self.height))
-            second = sumRegion(int_img, (Int(self.topLeft[1] + self.width / 2), self.topLeft[2]), self.bottomRight)
+        elseif feature.featureType == FeatureType[2] # two horizontal
+            first = sumRegion(int_img, feature.topLeft, (Int(feature.topLeft[1] + feature.width / 2), feature.topLeft[2] + feature.height))
+            second = sumRegion(int_img, (Int(feature.topLeft[1] + feature.width / 2), feature.topLeft[2]), feature.bottomRight)
             score = first - second
-        elseif self.featureType == FeatureType[3] # three horizontal
-            first = sumRegion(intImg, self.topLeft, (Int(self.topLeft[1] + self.width / 3), self.topLeft[2] + self.height))
-            second = sumRegion(intImg, (Int(self.topLeft[1] + self.width / 3), self.topLeft[2]), (Int(self.topLeft[1] + 2 * self.width / 3), self.topLeft[2] + self.height))
-            third = sumRegion(intImg, (Int(self.topLeft[1] + 2 * self.width / 3), self.topLeft[2]), self.bottomRight)
+        elseif feature.featureType == FeatureType[3] # three horizontal
+            first = sumRegion(intImg, feature.topLeft, (Int(feature.topLeft[1] + feature.width / 3), feature.topLeft[2] + feature.height))
+            second = sumRegion(intImg, (Int(feature.topLeft[1] + feature.width / 3), feature.topLeft[2]), (Int(feature.topLeft[1] + 2 * feature.width / 3), feature.topLeft[2] + feature.height))
+            third = sumRegion(intImg, (Int(feature.topLeft[1] + 2 * feature.width / 3), feature.topLeft[2]), feature.bottomRight)
             score = first - second + third
-        elseif self.featureType == FeatureType[4] # three vertical
-            first = sumRegion(intImg, self.topLeft, (self.bottomRight[1], Int(self.topLeft[2] + self.height / 3)))
-            second = sumRegion(intImg, (self.topLeft[1], Int(self.topLeft[2] + self.height / 3)), (self.bottomRight[1], Int(self.topLeft[2] + 2 * self.height / 3)))
-            third = sumRegion(intImg, (self.topLeft[1], Int(self.topLeft[2] + 2 * self.height / 3)), self.bottomRight)
+        elseif feature.featureType == FeatureType[4] # three vertical
+            first = sumRegion(intImg, feature.topLeft, (feature.bottomRight[1], Int(feature.topLeft[2] + feature.height / 3)))
+            second = sumRegion(intImg, (feature.topLeft[1], Int(feature.topLeft[2] + feature.height / 3)), (feature.bottomRight[1], Int(feature.topLeft[2] + 2 * feature.height / 3)))
+            third = sumRegion(intImg, (feature.topLeft[1], Int(feature.topLeft[2] + 2 * feature.height / 3)), feature.bottomRight)
             score = first - second + third
-        elseif self.featureType == FeatureType[5] # four
+        elseif feature.featureType == FeatureType[5] # four
             # top left area
-            first = sumRegion(intImg, self.topLeft, (Int(self.topLeft[1] + self.width / 2), Int(self.topLeft[2] + self.height / 2)))
+            first = sumRegion(intImg, feature.topLeft, (Int(feature.topLeft[1] + feature.width / 2), Int(feature.topLeft[2] + feature.height / 2)))
             # top right area
-            second = sumRegion(intImg, (Int(self.topLeft[1] + self.width / 2), self.topLeft[2]), (self.bottomRight[1], Int(self.topLeft[2] + self.height / 2)))
+            second = sumRegion(intImg, (Int(feature.topLeft[1] + feature.width / 2), feature.topLeft[2]), (feature.bottomRight[1], Int(feature.topLeft[2] + feature.height / 2)))
             # bottom left area
-            third = sumRegion(intImg, (self.topLeft[1], Int(self.topLeft[2] + self.height / 2)), (Int(self.topLeft[1] + self.width / 2), self.bottomRight[2]))
+            third = sumRegion(intImg, (feature.topLeft[1], Int(feature.topLeft[2] + feature.height / 2)), (Int(feature.topLeft[1] + feature.width / 2), feature.bottomRight[2]))
             # bottom right area
-            fourth = sumRegion(intImg, (Int(self.topLeft[1] + self.width / 2), int(self.topLeft[2] + self.height / 2)), self.bottomRight)
+            fourth = sumRegion(intImg, (Int(feature.topLeft[1] + feature.width / 2), int(feature.topLeft[2] + feature.height / 2)), feature.bottomRight)
             score = first - second - third + fourth
         end
         return score

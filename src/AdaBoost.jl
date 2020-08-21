@@ -95,7 +95,8 @@ function learn(positiveIIs, negativeIIs, numClassifiers=-1, minFeatureWidth=1, m
             # classifier error is the sum of image weights where the classifier
             # is right
             # error = sum(map(lambda img_idx: weights[img_idx] if labels[img_idx] != votes[img_idx, f_idx] else 0, range(num_imgs)))
-            error = sum(imgIDX -> (labels[imgIDX] ≠ votes[imgIDX, fIDX]) ? weights[imgIDX] : 0, 1:numImgs)
+            # error = sum(imgIDX -> (labels[imgIDX] ≠ votes[imgIDX, fIDX]) ? weights[imgIDX] : 0, 1:numImgs)
+            error = sum(map(imgIDX -> (labels[imgIDX] ≠ votes[imgIDX, fIDX]) ? weights[imgIDX] : 0, 1:numImgs))
             classificationErrors[f] = error
         end
 
@@ -114,7 +115,8 @@ function learn(positiveIIs, negativeIIs, numClassifiers=-1, minFeatureWidth=1, m
 
         # update image weights
         # weights = list(map(lambda img_idx: weights[img_idx] * np.sqrt((1-best_error)/best_error) if labels[img_idx] != votes[img_idx, best_feature_idx] else weights[img_idx] * np.sqrt(best_error/(1-best_error)), range(num_imgs)))
-        weights = (imgIDX -> (labels[imgIDX] ≠ votes[imgIDX, bestFeatureIDX]) ? weights[imgIDX]*sqrt((1-bestError)/bestError) : weights[imgIDX]*sqrt(bestError/(1-bestError)), 1:numImgs)
+        # weights = (imgIDX -> (labels[imgIDX] ≠ votes[imgIDX, bestFeatureIDX]) ? weights[imgIDX]*sqrt((1-bestError)/bestError) : weights[imgIDX]*sqrt(bestError/(1-bestError)), 1:numImgs)
+        weights = map(imgIDX -> (labels[imgIDX] ≠ votes[imgIDX, bestFeatureIDX]) ? weights[imgIDX]*sqrt((1-bestError)/bestError) : weights[imgIDX]*sqrt(bestError/(1-bestError)), 1:numImgs)
 
         # remove feature (a feature can't be selected twice)
         # feature_indexes.remove(best_feature_idx)
@@ -148,19 +150,18 @@ function _create_features(imgHeight::Int64, imgWidth::Int64, minFeatureWidth::In
     
     for feature in FeatureTypes # from HaarLikeFeature.jl
         # FeatureTypes are just tuples
-        # println(typeof(feature), " " , feature)
+        println("feature: ", typeof(feature), " " , feature)
         featureStartWidth = max(minFeatureWidth, feature[1])
         for featureWidth in range(featureStartWidth, stop=maxFeatureWidth, step=feature[1])
             featureStartHeight = max(minFeatureHeight, feature[2])
             for featureHeight in range(featureStartHeight, stop=maxFeatureHeight, step=feature[2])
                 for x in 1:(imgWidth - featureWidth)
                     for y in 1:(imgHeight - featureHeight)
-                        # features = vcat(feature, HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, 1))
-                        # features = push!(feature, HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, 1))
-                        features = (features..., HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, 1)) # using splatting to add to a tuple.  see Utils.partial()
-                        # features = vcat(feature, HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, -1))
-                        # features = push!(feature, HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, -1))
-                        features = (features..., HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, 1))
+                        println("top left: ", typeof((x, y)), " ", (x, y))
+                        features = push!(features, HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, 1))
+                        # features = (features..., HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, 1)) # using splatting to add to a tuple.  see Utils.partial()
+                        features = push!(features, HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, -1))
+                        # features = (features..., HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, -1))
                         # feature.append(HaarLikeFeature...)
                     end # end for y
                 end # end for x
