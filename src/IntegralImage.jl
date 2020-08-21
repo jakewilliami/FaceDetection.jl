@@ -91,6 +91,7 @@ function sumRegion(integralImageArr::AbstractArray, topLeft::Tuple{Int64,Int64},
     
     # println(typeof(bottomRightVal - topRightVal - bottomLeftVal + topLeftVal))
     # return integralImageArr[bottomRight] - integralImageArr[topRight] - integralImageArr[bottomLeft] + integralImageArr[topLeft]
+    # println(bottomRightVal)
     return bottomRightVal - topRightVal - bottomLeftVal + topLeftVal
     # return integral_img_arr[bottom_right] - integral_img_arr[top_right] - integral_img_arr[bottom_left] + integral_img_arr[top_left]
 end

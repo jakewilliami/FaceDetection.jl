@@ -118,35 +118,70 @@ function getScore(feature::HaarLikeFeature, intImg::Array)
         score = 0
 
         if feature.featureType == FeatureTypes[1] # two vertical
-            first = sumRegion(intImg, feature.topLeft, (feature.topLeft[1] + feature.width, Int(feature.topLeft[2] + feature.height / 2)))
-            second = sumRegion(intImg, (feature.topLeft[1], Int(feature.topLeft[2] + feature.height / 2)), feature.bottomRight)
+            # println((feature.topLeft[1] + feature.width, round(feature.topLeft[2] + feature.height / 2)))
+            first = sumRegion(intImg, feature.topLeft, (feature.topLeft[1] + feature.width, Int(round(feature.topLeft[2] + feature.height / 2))))
+            second = sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 2))), feature.bottomRight)
             score = first - second
         elseif feature.featureType == FeatureTypes[2] # two horizontal
-            first = sumRegion(int_img, feature.topLeft, (Int(feature.topLeft[1] + feature.width / 2), feature.topLeft[2] + feature.height))
-            second = sumRegion(int_img, (Int(feature.topLeft[1] + feature.width / 2), feature.topLeft[2]), feature.bottomRight)
+            first = sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2] + feature.height))
+            second = sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2]), feature.bottomRight)
             score = first - second
         elseif feature.featureType == FeatureTypes[3] # three horizontal
-            first = sumRegion(intImg, feature.topLeft, (Int(feature.topLeft[1] + feature.width / 3), feature.topLeft[2] + feature.height))
-            second = sumRegion(intImg, (Int(feature.topLeft[1] + feature.width / 3), feature.topLeft[2]), (Int(feature.topLeft[1] + 2 * feature.width / 3), feature.topLeft[2] + feature.height))
-            third = sumRegion(intImg, (Int(feature.topLeft[1] + 2 * feature.width / 3), feature.topLeft[2]), feature.bottomRight)
+            first = sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 3)), feature.topLeft[2] + feature.height))
+            second = sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 3)), feature.topLeft[2]), (Int(round(feature.topLeft[1] + 2 * feature.width / 3)), feature.topLeft[2] + feature.height))
+            third = sumRegion(intImg, (Int(round(feature.topLeft[1] + 2 * feature.width / 3)), feature.topLeft[2]), feature.bottomRight)
             score = first - second + third
         elseif feature.featureType == FeatureTypes[4] # three vertical
-            first = sumRegion(intImg, feature.topLeft, (feature.bottomRight[1], Int(feature.topLeft[2] + feature.height / 3)))
-            second = sumRegion(intImg, (feature.topLeft[1], Int(feature.topLeft[2] + feature.height / 3)), (feature.bottomRight[1], Int(feature.topLeft[2] + 2 * feature.height / 3)))
-            third = sumRegion(intImg, (feature.topLeft[1], Int(feature.topLeft[2] + 2 * feature.height / 3)), feature.bottomRight)
+            first = sumRegion(intImg, feature.topLeft, (feature.bottomRight[1], Int(round(feature.topLeft[2] + feature.height / 3))))
+            second = sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 3))), (feature.bottomRight[1], Int(round(feature.topLeft[2] + 2 * feature.height / 3))))
+            third = sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + 2 * feature.height / 3))), feature.bottomRight)
             score = first - second + third
         elseif feature.featureType == FeatureTypes[5] # four
             # top left area
-            first = sumRegion(intImg, feature.topLeft, (Int(feature.topLeft[1] + feature.width / 2), Int(feature.topLeft[2] + feature.height / 2)))
+            first = sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 2)), Int(round(feature.topLeft[2] + feature.height / 2))))
             # top right area
-            second = sumRegion(intImg, (Int(feature.topLeft[1] + feature.width / 2), feature.topLeft[2]), (feature.bottomRight[1], Int(feature.topLeft[2] + feature.height / 2)))
+            second = sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2]), (feature.bottomRight[1], Int(round(feature.topLeft[2] + feature.height / 2))))
             # bottom left area
-            third = sumRegion(intImg, (feature.topLeft[1], Int(feature.topLeft[2] + feature.height / 2)), (Int(feature.topLeft[1] + feature.width / 2), feature.bottomRight[2]))
+            third = sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 2))), (Int(round(feature.topLeft[1] + feature.width / 2)), feature.bottomRight[2]))
             # bottom right area
-            fourth = sumRegion(intImg, (Int(feature.topLeft[1] + feature.width / 2), int(feature.topLeft[2] + feature.height / 2)), feature.bottomRight)
+            fourth = sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), Int(round(feature.topLeft[2] + feature.height / 2))), feature.bottomRight)
             score = first - second - third + fourth
         end
+        
         return score
+        
+        
+        # if feature.featureType == FeatureTypes[1] # two vertical
+        #     first = sumRegion(intImg, feature.topLeft, (feature.topLeft[1] + feature.width, round(feature.topLeft[2] + feature.height / 2)))
+        #     second = sumRegion(intImg, (feature.topLeft[1], round(feature.topLeft[2] + feature.height / 2)), feature.bottomRight)
+        #     score = first - second
+        # elseif feature.featureType == FeatureTypes[2] # two horizontal
+        #     first = sumRegion(intImg, feature.topLeft, (round(feature.topLeft[1] + feature.width / 2), feature.topLeft[2] + feature.height))
+        #     second = sumRegion(intImg, (round(feature.topLeft[1] + feature.width / 2), feature.topLeft[2]), feature.bottomRight)
+        #     score = first - second
+        # elseif feature.featureType == FeatureTypes[3] # three horizontal
+        #     first = sumRegion(intImg, feature.topLeft, (round(feature.topLeft[1] + feature.width / 3), feature.topLeft[2] + feature.height))
+        #     second = sumRegion(intImg, (round(feature.topLeft[1] + feature.width / 3), feature.topLeft[2]), (round(feature.topLeft[1] + 2 * feature.width / 3), feature.topLeft[2] + feature.height))
+        #     third = sumRegion(intImg, (round(feature.topLeft[1] + 2 * feature.width / 3), feature.topLeft[2]), feature.bottomRight)
+        #     score = first - second + third
+        # elseif feature.featureType == FeatureTypes[4] # three vertical
+        #     first = sumRegion(intImg, feature.topLeft, (feature.bottomRight[1], round(feature.topLeft[2] + feature.height / 3)))
+        #     second = sumRegion(intImg, (feature.topLeft[1], round(feature.topLeft[2] + feature.height / 3)), (feature.bottomRight[1], round(feature.topLeft[2] + 2 * feature.height / 3)))
+        #     third = sumRegion(intImg, (feature.topLeft[1], round(feature.topLeft[2] + 2 * feature.height / 3)), feature.bottomRight)
+        #     score = first - second + third
+        # elseif feature.featureType == FeatureTypes[5] # four
+        #     # top left area
+        #     first = sumRegion(intImg, feature.topLeft, (round(feature.topLeft[1] + feature.width / 2), round(feature.topLeft[2] + feature.height / 2)))
+        #     # top right area
+        #     second = sumRegion(intImg, (round(feature.topLeft[1] + feature.width / 2), feature.topLeft[2]), (feature.bottomRight[1], round(feature.topLeft[2] + feature.height / 2)))
+        #     # bottom left area
+        #     third = sumRegion(intImg, (feature.topLeft[1], round(feature.topLeft[2] + feature.height / 2)), (round(feature.topLeft[1] + feature.width / 2), feature.bottomRight[2]))
+        #     # bottom right area
+        #     fourth = sumRegion(intImg, (round(feature.topLeft[1] + feature.width / 2), round(feature.topLeft[2] + feature.height / 2)), feature.bottomRight)
+        #     score = first - second - third + fourth
+        # end
+        #
+        # return score
 end
 
 
