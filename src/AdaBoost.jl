@@ -35,6 +35,9 @@ function learn(positiveIIs, negativeIIs, numClassifiers=-1, minFeatureWidth=1, m
     imgHeight, imgWidth = size(positiveIIs[1])
     
     # Maximum feature width and height default to image width and height
+    # Maximum feature width and height default to image width and height
+    # max_feature_height = img_height if max_feature_height == -1 else max_feature_height
+    # max_feature_width = img_width if max_feature_width == -1 else max_feature_width
     if isequal(maxFeatureHeight, -1)
         maxFeatureHeight = imgHeight
     end
@@ -43,10 +46,27 @@ function learn(positiveIIs, negativeIIs, numClassifiers=-1, minFeatureWidth=1, m
     end
     
     # Create initial weights and labels
-    posWeights = ones(numPos) * 1. / (2 * numPos)
-    negWeights = ones(numNeg) * 1. / (2 * numNeg)
-    weights = hcat((posWeights, negWeights))
-    labels = hcat((ones(numPos), ones(numNeg) * -1))
+    posWeights = deepfloat(ones(numPos)) / (2 * numPos)
+    negWeights = deepfloat(ones(numNeg)) / (2 * numNeg)
+    #=
+    Consider the original code,
+        ```
+        $ python3 -c 'import numpy; a=[1,2,3]; b=[4,5,6]; print(numpy.hstack((a,b)))'
+        [1 2 3 4 5 6]
+        ```
+    This is *not* comparablt to Julia's `hcat`.  Here,
+        ```
+        numpy.hstack((a,b)) ≡ vcat(a,b)
+        ```
+    The series of `deep*` functions——though useful in general——were designed from awkward arrays of tuples of arrays, which came about from a translation error in this case.
+    =#
+    weights = vcat(posWeights, negWeights)
+    # weights = vcat(posWeights, negWeights)
+    # weights = hcat((posWeights, negWeights))
+    # weights = vcat([posWeights, negWeights])
+    # labels = vcat((ones(numPos), ones(numNeg) * -1))
+    labels = vcat(ones(numPos), ones(numNeg) * -1)
+    # labels = vcat([ones(numPos), ones(numNeg) * -1])
     
     global images = positiveIIs + negativeIIs
     # global images = vcat(positiveIIs, negativeIIs)
@@ -55,13 +75,15 @@ function learn(positiveIIs, negativeIIs, numClassifiers=-1, minFeatureWidth=1, m
     global features = _create_features(imgHeight, imgWidth, minFeatureWidth, maxFeatureWidth, minFeatureHeight, maxFeatureHeight)
     numFeatures = length(features)
     # feature_indexes = list(range(num_features))
-    featureIndexes = Array(1:numFeatures)
+    featureIndices = Array(1:numFeatures)
     
     if isequal(numClassifiers, -1)
         numClassifiers = numFeatures
     end
     
-    votes = zeros((numImgs, numFeatures))
+    # println(typeof(numImgs));println(typeof(numFeatures))
+    global votes = zeros((numImgs, numFeatures)) # necessarily different from `zero.((numImgs, numFeatures))`
+
     # bar = progressbar.ProgressBar()
     # @everywhere numImgs begin
     @everywhere begin
@@ -72,38 +94,50 @@ function learn(positiveIIs, negativeIIs, numClassifiers=-1, minFeatureWidth=1, m
             # votes[i, :] = np.array(list(Pool(processes=None).map(partial(_get_feature_vote, image=images[i]), features)))
             # votes[i, :] = Array(map(partial(getVote, images[i]), features))
             votes[i, :] = Array(map(feature -> getVote(feature, images[i]), features))
+            # votes[i, :] = [map(feature -> getVote(feature, images[i]), features)]
             next!(p)
         end
     end # end everywhere (end parallel processing)
     
     # select classifiers
-    classifiers = Array()
+    # classifiers = Array()
+    classifiers = []
 
     println("Selecting classifiers...")
     
     n = numClassifiers
     p = Progress(n, 1)   # minimum update interval: 1 second
     for i in processes
-        classificationErrors = zeros(length(featureIndexes))
+        # println(typeof(length(featureIndices)))
+        classificationErrors = zeros(length(featureIndices))
 
         # normalize weights
-        weights *= 1. / sum(weights)
+        # weights *= 1. / np.sum(weights)
+        # weights *= float(1) / sum(weights)
+        # weights = float(weights) / sum(weights) # ensure weights do not get rounded by element-wise making them floats
+        # weights *= 1. / sum(weights)
+        # weights = weights/sum(weights)
+        # weights *= 1. / sum(weights)
+        weights = deepdiv(deepfloat(weights), deepsum(weights))
 
         # select best classifier based on the weighted error
-        for f in 1:length(feature_indexes)
-            fIDX = featureIndexes[f]
-            # classifier error is the sum of image weights where the classifier
-            # is right
+        for f in 1:length(featureIndices)
+            fIDX = featureIndices[f]
+            # classifier error is the sum of image weights where the classifier is right
             # error = sum(map(lambda img_idx: weights[img_idx] if labels[img_idx] != votes[img_idx, f_idx] else 0, range(num_imgs)))
             # error = sum(imgIDX -> (labels[imgIDX] ≠ votes[imgIDX, fIDX]) ? weights[imgIDX] : 0, 1:numImgs)
-            error = sum(map(imgIDX -> (labels[imgIDX] ≠ votes[imgIDX, fIDX]) ? weights[imgIDX] : 0, 1:numImgs))
+            # error = sum(map(lambda img_idx: weights[img_idx] if labels[img_idx] != votes[img_idx, f_idx] else 0, range(num_imgs)))
+            error = deepsum(map(imgIDX -> labels[imgIDX] ≠ votes[imgIDX, fIDX] ? weights[imgIDX] : 0, 1:numImgs))
+            # lambda img_idx: weights[img_idx] if labels[img_idx] != votes[img_idx, f_idx] else 0
+            # imgIDX -> (labels[imgIDX] ≠ votes[imgIDX, fIDX]) ? weights[imgIDX] : 0
+            
             classificationErrors[f] = error
         end
 
-        # get best feature, i.e. with smallest error
-        minErrorIDX = argmin(classificationErrors)
+        # get the best feature; i.e. the feature with the smallest error
+        minErrorIDX = argmin(classificationErrors) # returns the index of the minimum in the array
         bestError = classificationErrors[minErrorIDX]
-        bestFeatureIDX = featureIndexes[minErrorIDX]
+        bestFeatureIDX = featureIndices[minErrorIDX]
 
         # set feature weight
         bestFeature = features[bestFeatureIDX]
@@ -120,7 +154,7 @@ function learn(positiveIIs, negativeIIs, numClassifiers=-1, minFeatureWidth=1, m
 
         # remove feature (a feature can't be selected twice)
         # feature_indexes.remove(best_feature_idx)
-        featureIndexes = filter!(e -> e ∉ bestFeatureIDX, featureIndexes) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`
+        featureIndices = filter!(e -> e ∉ bestFeatureIDX, featureIndices) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`
         
         next!(p)
     end

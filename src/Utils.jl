@@ -19,6 +19,30 @@ main (fda.jl) imports integralimage.jl, adaboost.jl, and utils.jl
 =#
 
 
+# For summing all numerical values in any nested array
+deepsum(a::Number) = a
+deepsum(a) = sum(deepsum.(a))
+
+# function deepsum(X::Union{NTuple{N,T} where N, AbstractArray{T}, T}) where T<:Number
+#     sum(X)
+# end
+# func
+# tion deepsum(X::Union{Tuple, AbstractArray})
+#     sum(X) do v
+#         deepsum(v)
+#     end
+# end
+
+deepdiv(a::Number, b::Number) = a / b
+deepdiv(a,b) = deepdiv.(a, b)
+
+deeptimes(a::Number, b::Number) = a * b
+deeptimes(a,b) = deeptimes.(a, b)
+
+deepfloat(a::Number) = a * 1.0
+deepfloat(a) = deepfloat.(a)
+
+
 # for adaboost
 function partial(f,a...) # for ... syntax see https://en.wikibooks.org/wiki/Introducing_Julia/Functions#Functions_with_variable_number_of_arguments
         ( (b...) -> f(a...,b...) )
@@ -191,6 +215,11 @@ export loadImages
 export ensembleVote
 export ensembleVoteAll
 export reconstruct
+export partial
+export deepsum
+export deepfloat
+export deepdiv
+export deeptimes
 
 
 ### TESTING
