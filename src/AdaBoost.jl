@@ -15,7 +15,7 @@ include("HaarLikeFeature.jl")
 # TODO: attentional cascading
 
 
-function learn(positiveIIs, negativeIIs, numClassifiers=-1, minFeatureWidth=1, maxFeatureWidth=-1, minFeatureHeight=1, maxFeatureHeight=-1)
+function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassifiers::Int64=-1, minFeatureWidth::Int64=1, maxFeatureWidth::Int64=-1, minFeatureHeight::Int64=1, maxFeatureHeight::Int64=-1)
     """
     Selects a set of classifiers. Iteratively takes the best classifiers based
     on a weighted error.
