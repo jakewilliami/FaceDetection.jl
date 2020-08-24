@@ -16,11 +16,18 @@ include("AdaBoost.jl")
 include("Utils.jl")
 
 
-function main()
-      posTrainingPath = "/Users/jakeireland/FaceDetection.jl/data/images/pos/"
-      negTrainingPath = "/Users/jakeireland/FaceDetection.jl/data/images/neg/"
-      posTestingPath = "/Users/jakeireland/FaceDetection.jl/data/images/testing/pos/"
-      negTestingPath = "/Users/jakeireland/Desktop/Assorted Personal Documents/Wallpapers copy/"
+function main(alt::Bool=false)
+      if ! alt
+            posTrainingPath = "/Users/jakeireland/FaceDetection.jl/data/images/pos/"
+            negTrainingPath = "/Users/jakeireland/FaceDetection.jl/data/images/neg/"
+            posTestingPath = "/Users/jakeireland/FaceDetection.jl/data/images/testing/pos/"
+            negTestingPath = "/Users/jakeireland/Desktop/Assorted Personal Documents/Wallpapers copy/"
+      elseif alt
+            posTrainingPath = "/Users/jakeireland/FaceDetection.jl/data/alt/trainset/faces/"
+            negTrainingPath = "/Users/jakeireland/FaceDetection.jl/data/alt/trainset/non-faces/"
+            posTestingPath = "/Users/jakeireland/FaceDetection.jl/data/alt/testset/faces/"
+            negTestingPath = "/Users/jakeireland/FaceDetection.jl/data/alt/testset/non-faces/"
+      end
 
       numClassifiers = 2
       # For performance reasons restricting feature size
@@ -79,4 +86,4 @@ end
 
 
 
-main()
+main(false)
