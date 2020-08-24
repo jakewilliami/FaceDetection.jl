@@ -32,3 +32,4 @@ Manifest.toml
 # 
 data/images/pos/
 data/images/neg
+data/alt/
