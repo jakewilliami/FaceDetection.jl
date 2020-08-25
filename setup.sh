@@ -43,6 +43,10 @@ checkPackages() {
 
 obtainDatasetAlt() {
 	echo "Downloading alternative face detection training data"
+	if [[ -d ${FD_HOME}/face-detection-data/ ]]
+	then
+		rm -rf ${FD_HOME}/face-detection-data/
+	fi
 	if [[ -d ${ALT}/pos/ ]]
 	then
 		rm -rf ${ALT}/pos/
