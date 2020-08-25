@@ -154,7 +154,7 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         bestFeature = features[bestFeatureIDX]
         # featureWeight = 0.5 * log((1 - bestError) / bestError)
         featureWeight = (1 - bestError) / bestError # β
-        println(typeof(featureWeight))
+        # println(typeof(featureWeight))
         bestFeature.weight = featureWeight # need to element-wise alter the struct `weight`; else we get `setfield! immutable struct of type HaarLikeFeature cannot be changed`
 
         # classifiers = vcat(classifiers, bestFeature)
