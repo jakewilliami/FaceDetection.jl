@@ -22,7 +22,7 @@ FeatureTypes = [(1, 2), (2, 1), (3, 1), (1, 3), (2, 2)]
 abstract type HaarFeatureType end
 
 # make structure
-struct HaarLikeFeature <: HaarFeatureType#struct HaarLikeFeature{T} <: HaarObject where {T <: HaarFeatureType}
+mutable struct HaarLikeFeature <: HaarFeatureType#struct HaarLikeFeature{T} <: HaarObject where {T <: HaarFeatureType}
     #=
     Struct representing a Haar-like feature.
     =#
@@ -35,8 +35,8 @@ struct HaarLikeFeature <: HaarFeatureType#struct HaarLikeFeature{T} <: HaarObjec
     height::Int64
     threshold::Int64
     polarity::Int64
-    # weight::Number# number because it can be -Inf due to log(0)
-    weight::Int64
+    weight::Float64# number because when we update weight to featureWeight it changes to Float64
+    # weight::Int64
     # weight::Any
     
     # constructor; equivalent of __init__ method within class # ::CartesianIndex
