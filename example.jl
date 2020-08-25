@@ -15,18 +15,22 @@ include("IntegralImage.jl")
 include("AdaBoost.jl")
 include("Utils.jl")
 
+mainPath = "/Users/jakeireland/FaceDetection.jl/"
+mainImagePath = "$mainPath/data/main/"
+altImagePath = "$mainPath/data/alt/"
+
 
 function main(alt::Bool=false)
-      if ! alt
-            posTrainingPath = "/Users/jakeireland/FaceDetection.jl/data/images/pos/"
-            negTrainingPath = "/Users/jakeireland/FaceDetection.jl/data/images/neg/"
-            posTestingPath = "/Users/jakeireland/FaceDetection.jl/data/images/testing/pos/"
+      if alt
+            posTrainingPath = "$altImagePath/pos/"
+            negTrainingPath = "$altImagePath/neg/"
+            posTestingPath = "$altImagePath/testing/pos/"
             negTestingPath = "/Users/jakeireland/Desktop/Assorted Personal Documents/Wallpapers copy/"
-      elseif alt
-            posTrainingPath = "/Users/jakeireland/FaceDetection.jl/data/alt/trainset/faces/"
-            negTrainingPath = "/Users/jakeireland/FaceDetection.jl/data/alt/trainset/non-faces/"
-            posTestingPath = "/Users/jakeireland/FaceDetection.jl/data/alt/testset/faces/"
-            negTestingPath = "/Users/jakeireland/FaceDetection.jl/data/alt/testset/non-faces/"
+      elseif ! alt
+            posTrainingPath = "$mainImagePath/trainset/faces/"
+            negTrainingPath = "$mainImagePath/trainset/non-faces/"
+            posTestingPath = "$mainImagePath/testset/faces/"
+            negTestingPath = "$mainImagePath/testset/non-faces/"
       end
 
       numClassifiers = 2
@@ -64,7 +68,7 @@ function main(alt::Bool=false)
       facesTesting = loadImages(posTestingPath)
       facesIITesting = map(toIntegralImage, facesTesting) # list(map(...))
       println("...done. ", length(facesTesting), " faces loaded.\n\nLoading test non-faces..")
-      nonFacesTesting = load_images(negTestingPath)
+      nonFacesTesting = loadImages(negTestingPath)
       nonFacesIITesting = map(toIntegralImage, nonFacesTesting) # list(map(...))
       println("...done. ", length(nonFacesTesting), " non-faces loaded.\n")
 
