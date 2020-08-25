@@ -30,6 +30,5 @@ docs/site/
 Manifest.toml
 
 # 
-data/images/pos/
-data/images/neg
+data/main/
 data/alt/

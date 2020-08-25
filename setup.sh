@@ -11,7 +11,7 @@ echo "Please ensure FaceDetection.jl is installed in your home directory..."
 sleep 5
 
 FD_HOME="${HOME}/FaceDetection.jl/"
-MAIN="${FD_HOME}/data/images/"
+MAIN="${FD_HOME}/data/main/"
 ALT="${FD_HOME}/data/alt/"
 
 
@@ -41,48 +41,48 @@ checkPackages() {
 }
 
 
-obtainDataset1() {
-	echo "Downloading face detection training data"
-	if [[ -d ${MAIN}/pos/ ]]
+obtainDatasetAlt() {
+	echo "Downloading alternative face detection training data"
+	if [[ -d ${ALT}/pos/ ]]
 	then
-		rm -rf ${MAIN}/pos/
+		rm -rf ${ALT}/pos/
 	fi
-	if [[ -d ${MAIN}/neg/ ]]
+	if [[ -d ${ALT}/neg/ ]]
 	then
-		rm -rf ${MAIN}/neg/
+		rm -rf ${ALT}/neg/
 	fi
 	cd ${FD_HOME}/ && \
 		git clone https://github.com/OlegTheCat/face-detection-data && \
-		mv ${FD_HOME}/face-detection-data/pos/ ${MAIN}/ && \
-		mv ${FD_HOME}/face-detection-data/neg/ ${MAIN}/ && \
+		mv ${FD_HOME}/face-detection-data/pos/ ${ALT}/ && \
+		mv ${FD_HOME}/face-detection-data/neg/ ${ALT}/ && \
 		rm -rf ${FD_HOME}/face-detection-data/
 	echo "Pruning the positive training images to have the same number as the negative images, or else there will be an array mismatch when constructing the image array in src/Adaboost.jl"
-	for i in $(seq $(ls ${MAIN}/neg/ | wc -l) $(($(ls ${MAIN}/pos/ | wc -l)-1))); do
-		rm ${MAIN}/pos/${i}.pgm
+	for i in $(seq $(ls ${ALT}/neg/ | wc -l) $(($(ls ${ALT}/pos/ | wc -l)-1))); do
+		rm ${ALT}/pos/${i}.pgm
 		# echo "${i}"
 	done
 }
 
 
-obtainDataset2() {
-	echo "Dowloading alternative training data"
+obtainDatasetMain() {
+	echo "Dowloading training data"
 	if [[ -d ${FD_HOME}/Viola-Jones/ ]]
 	then
 		rm -rf ${FD_HOME}/Viola-Jones/
 	fi
-	if [[ -d ${ALT}/testset/ ]]
+	if [[ -d ${MAIN}/testset/ ]]
 	then
-		rm -rf ${ALT}/testset/
+		rm -rf ${MAIN}/testset/
 	fi
-	if [[ -d ${ALT}/trainset/ ]]
+	if [[ -d ${MAIN}/trainset/ ]]
 	then
-		rm -rf ${ALT}/trainset/
+		rm -rf ${MAIN}/trainset/
 	fi
-	mkdir -p ${ALT}/
+	mkdir -p ${MAIN}/
 	cd ${FD_HOME}/ && \
 		git clone https://github.com/INVASIS/Viola-Jones/ && \
-		mv ${FD_HOME}/Viola-Jones/data/testset/ ${ALT}/ && \
-		mv ${FD_HOME}/Viola-Jones/data/trainset/ ${ALT}/ && \
+		mv ${FD_HOME}/Viola-Jones/data/testset/ ${MAIN}/ && \
+		mv ${FD_HOME}/Viola-Jones/data/trainset/ ${MAIN}/ && \
 		rm -rf ${FD_HOME}/Viola-Jones
 	echo "Pruning the positive training images to have the same number as the negative images, or else there will be an array mismatch when constructing the image array in src/Adaboost.jl"
 	# for i in $(seq $(ls ${ALT}/trainset/faces | wc -l) $(($(ls ~/FaceDetection.jl/test/images/pos/ | wc -l)-1))); do
@@ -90,8 +90,8 @@ obtainDataset2() {
 	# 	# echo "${i}"
 	# done
 	
-	find ${ALT}/trainset/non-faces/ -maxdepth 1 -type f -name "*.png" -print | \
-        head -n $(($(ls ${ALT}/trainset/non-faces | wc -l)-$(ls ${ALT}/trainset/faces | wc -l))) |\
+	find ${MAIN}/trainset/non-faces/ -maxdepth 1 -type f -name "*.png" -print | \
+        head -n $(($(ls ${MAIN}/trainset/non-faces | wc -l)-$(ls ${MAIN}/trainset/faces | wc -l))) |\
 		while IFS= read -r file
 		do
 			rm "${file}"
@@ -115,8 +115,8 @@ done
 main() {
 	# setupWD
 	# checkPackages
-	# obtainDataset1
-	obtainDataset2
+	obtainDatasetMain
+	obtainDatasetAlt
 }
 
 
