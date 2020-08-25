@@ -4,19 +4,26 @@
     "${BASH_SOURCE[0]}" "$@"
     =#
     
-"""
-Any one pixel in a given image has the value that is the sum of all of the pixels above it and to the left.
+#=
+Rectangle features can be computed very rapidly using an intermediate representation for the image, which we call the integral image.
+The integral image at location $x,y$ contains the sum of the pixels above and to the left of $x,y$ inclusive.
 Original    Integral
 +--------   +------------
 | 1 2 3 .   | 1  3  6 .
 | 4 5 6 .   | 5 12 21 .
 | . . . .   | . . . . .
-"""
+=#
 
 function toIntegralImage(imgArr::AbstractArray)
-    """
+    #=
+    Calculates the integral image based on this instance's original image data.
+    
+    parameter `imgArr`: Image source data [type: Abstract Array]
+    
+    return `integralImageArr`: Integral image for given image [type: Abstract Array]
+    
     https://www.ipol.im/pub/art/2014/57/article_lr.pdf, p. 346
-    """
+    =#
     
     arrRows, arrCols = size(imgArr) # get size only once in case
     rowSum = zeros(arrRows, arrCols)
@@ -62,12 +69,15 @@ end
     
 
 function sumRegion(integralImageArr::AbstractArray, topLeft::Tuple{Int64,Int64}, bottomRight::Tuple{Int64,Int64})
-    """
-    Calculates the sum in the rectangle specified by the given tuples
-    topLeft: (x, y) of the rectangle's top left corner
-    bottomRight: (x, y) of the rectangle's bottom right corner
-    return The sum of all pixels in the given rectangle
-    """
+    #=
+    parameter `integralImageArr`: The intermediate Integral Image [type: Abstract Array]
+    Calculates the sum in the rectangle specified by the given tuples:
+        parameter `topLeft`: (x,y) of the rectangle's top left corner [type: Tuple]
+        parameter `bottomRight`: (x,y) of the rectangle's bottom right corner [type: Tuple]
+    
+    return: The sum of all pixels in the given rectangle defined by the parameters topLeft and bottomRight
+    =#
+    
     # swap tuples
     # topLeft = [topLeft[2], topLeft[1]]
     topLeft = (topLeft[2], topLeft[1])

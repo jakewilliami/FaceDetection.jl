@@ -113,9 +113,9 @@ done
 
 
 main() {
-	setupWD
-	checkPackages
-	obtainDataset1
+	# setupWD
+	# checkPackages
+	# obtainDataset1
 	obtainDataset2
 }
 

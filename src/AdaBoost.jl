@@ -16,19 +16,18 @@ include("HaarLikeFeature.jl")
 
 
 function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassifiers::Int64=-1, minFeatureWidth::Int64=1, maxFeatureWidth::Int64=-1, minFeatureHeight::Int64=1, maxFeatureHeight::Int64=-1)
-    """
-    Selects a set of classifiers. Iteratively takes the best classifiers based
-    on a weighted error.
-    :param positive_iis: List of positive integral image examples
-    :type positive_iis: list[numpy.ndarray]
-    :param negative_iis: List of negative integral image examples
-    :type negative_iis: list[numpy.ndarray]
-    :param num_classifiers: Number of classifiers to select, -1 will use all
-    classifiers
-    :type num_classifiers: int
-    :return: List of selected features
-    :rtype: list[violajones.HaarLikeFeature.HaarLikeFeature]
-    """
+    #=
+    The boosting algorithm for learning a query online.  $T$ hypotheses are constructed, each using a single feature.  The final hypothesis is a weighted linear combination of the $T$ hypotheses, where the weights are inverselt proportional to the training errors.
+    This function selects a set of classifiers. Iteratively takes the best classifiers based on a weighted error.
+    
+    parameter `positiveIIs`: List of positive integral image examples [type: Abstracy Array]
+    parameter `negativeIIs`: List of negative integral image examples [type: Abstract Array]
+    parameter `numClassifiers`: Number of classifiers to select. -1 will use all
+    classifiers [type: Integer]
+    
+    return `classifiers`: List of selected features [type: HaarLikeFeature]
+    =#
+    
     numPos = length(positiveIIs)
     numNeg = length(negativeIIs)
     global numImgs = numPos + numNeg
@@ -61,6 +60,7 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
     The series of `deep*` functions——though useful in general——were designed from awkward arrays of tuples of arrays, which came about from a translation error in this case.
     =#
     weights = vcat(posWeights, negWeights)
+    # println(weights)
     # weights = vcat(posWeights, negWeights)
     # weights = hcat((posWeights, negWeights))
     # weights = vcat([posWeights, negWeights])
@@ -86,6 +86,7 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
 
     # bar = progressbar.ProgressBar()
     # @everywhere numImgs begin
+    # println(votes)
     @everywhere begin
         n = numImgs
         processes = length(numImgs)
@@ -107,7 +108,7 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
     
     n = numClassifiers
     p = Progress(n, 1)   # minimum update interval: 1 second
-    for i in processes
+    for _ in processes
         # println(typeof(length(featureIndices)))
         classificationErrors = zeros(length(featureIndices))
 
@@ -139,6 +140,8 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         bestError = classificationErrors[minErrorIDX]
         bestFeatureIDX = featureIndices[minErrorIDX]
 
+        # println(classificationErrors)
+        # println(weights)
         # set feature weight
         bestFeature = features[bestFeatureIDX]
         featureWeight = 0.5 * log((1 - bestError) / bestError)
@@ -173,6 +176,19 @@ end
 
 
 function _create_features(imgHeight::Int64, imgWidth::Int64, minFeatureWidth::Int64, maxFeatureWidth::Int64, minFeatureHeight::Int64, maxFeatureHeight::Int64)
+    #=
+    Iteratively creates the Haar-like feautures
+    
+    parameter `imgHeight`: The height of the image [type: Integer]
+    parameter `imgWidth`: The width of the image [type: Integer]
+    parameter `minFeatureWidth`: The minimum width of the feature (used for computation efficiency purposes) [type: Integer]
+    parameter `maxFeatureWidth`: The maximum width of the feature [type: Integer]
+    parameter `minFeatureHeight`: The minimum height of the feature [type: Integer]
+    parameter `maxFeatureHeight`: The maximum height of the feature [type: Integer]
+    
+    return `features`: an array of Haar-like features found for an image [type: Abstract Array]
+    =#
+    
     println("Creating Haar-like features...")
     # features = Array()
     features = []

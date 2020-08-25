@@ -44,12 +44,52 @@ deepfloat(a) = deepfloat.(a)
 
 
 # for adaboost
-function partial(f,a...) # for ... syntax see https://en.wikibooks.org/wiki/Introducing_Julia/Functions#Functions_with_variable_number_of_arguments
+function partial(f,a...)
+    #=
+    Tentative partial function (like Python's partial function) which takes a function as input and *some of* its variables.
+    
+    parameter `f`: a function
+    parameter `a`: one of the function's arguments
+    
+    for `...` syntax see https://en.wikibooks.org/wiki/Introducing_Julia/Functions#Functions_with_variable_number_of_arguments
+    =#
         ( (b...) -> f(a...,b...) )
 end
 
 
+function loadImages(imageDir::AbstractString)
+    #=
+    Given a path to a directory of images, recursively loads those images.
+    
+    parameter `imageDir`: path to a directory of images [type: Abstract String (path)]
+    
+    return `images`: a list of images from the path provided [type: Abstract Array]
+    =#
+    
+    # imageDir = joinpath(dirname(dirname(@__FILE__)), "test", "images")
+    
+    images = []
+    
+    for file in readdir(imageDir, join=true, sort=false) # join true for getImageMatrix to find file from absolute path
+        if basename(file) == ".DS_Store" # silly macos stuff >:(
+            continue
+        end
+        images = push!(images, getImageMatrix(file))
+    end
+    
+    return images
+end
+
+
 function getImageMatrix(imageFile::AbstractString)
+    #=
+    Takes an image and constructs a matrix of greyscale intensity values based on it.
+    
+    parameter `imageFile`: the path of the file of the image to be turned into an array [type: Abstract String (path)]
+    
+    return `imgArr`: The array of greyscale intensity values from the image [type: Absrtact Array]
+    =#
+    
     img = load(imageFile)
     # img = imresize(img, ratio=1/8)
     img = imresize(img, (10,10)) # for standardised size
@@ -66,22 +106,6 @@ function getImageMatrix(imageFile::AbstractString)
     # print(img)
 end
 
-
-function loadImages(imageDir::AbstractString)
-    # imageDir = joinpath(dirname(dirname(@__FILE__)), "test", "images")
-    
-    images = []
-    
-    for file in readdir(imageDir, join=true, sort=false) # join true for getImageMatrix to find file
-        if basename(file) == ".DS_Store" # silly macos stuff >:(
-            continue
-        end
-        images = push!(images, getImageMatrix(file))
-    end
-    
-    return images
-end
-
     
 # to emulate python's function
 function pow(x::Number, y::Number)
@@ -90,57 +114,58 @@ end
     
     
 function ensembleVote(intImg::AbstractArray, classifiers::AbstractArray)
-    """
-    Classifies given integral image (numpy array) using given classifiers, i.e.
-    if the sum of all classifier votes is greater 0, image is classified
-    positively (1) else negatively (0). The threshold is 0, because votes can be
-    +1 or -1.
-    :param int_img: Integral image to be classified
-    :type int_img: numpy.ndarray
-    :param classifiers: List of classifiers
-    :type classifiers: list[violajones.HaarLikeFeature.HaarLikeFeature]
-    :return: 1 iff sum of classifier votes is greater 0, else 0
-    :rtype: int
-    """
-    if sum([c.get_vote(int_img) for c in classifiers]) >= 0
-        return 1
-    else
-        return 0
-    end
+    #=
+    Classifies given integral image (Abstract Array) using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
+    
+    parameter `intImg`: Integral image to be classified [type: AbstractArray]
+    parameter `classifiers`: List of classifiers [type: AbstractArray (array of HaarLikeFeatures)]
+
+    return:
+        1       ⟺ sum of classifier votes > 0
+        0       otherwise
+    [type: Integer]
+    =#
+    
+    # if sum([c.get_vote(int_img) for c in classifiers]) >= 0
+    #     return 1
+    # else
+    #     return 0
+    # end
+    
+    return (sum([c.get_vote(int_img) for c in classifiers]) >= 0 ? 1 : 0)
 end
 
 function ensembleVoteAll(intImgs::AbstractArray, classifiers::AbstractArray)
-    """
-    Classifies given list of integral images (numpy arrays) using classifiers,
-    i.e. if the sum of all classifier votes is greater 0, an image is classified
-    positively (1) else negatively (0). The threshold is 0, because votes can be
-    +1 or -1.
-    :param int_imgs: List of integral images to be classified
-    :type int_imgs: list[numpy.ndarray]
-    :param classifiers: List of classifiers
-    :type classifiers: list[violajones.HaarLikeFeature.HaarLikeFeature]
-    :return: List of assigned labels, 1 if image was classified positively, else
-    0
-    :rtype: list[int]
-    """
-    partial = (f, a...) -> (b...) -> f(a..., b...)
+    #=
+    Classifies given integral image (Abstract Array) using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
+    
+    parameter `intImg`: Integral image to be classified [type: AbstractArray]
+    parameter `classifiers`: List of classifiers [type: AbstractArray (array of HaarLikeFeatures)]
+
+    return list of assigned labels:
+        1       if image was classified positively
+        0       otherwise
+    [type: Abstract Arrays (array of Integers)]
+    =#
+    
     votePartial = partial(ensembleVote, classifiers=classifiers)
+    
     return map(votePartial, intImgs)
 end
 
 
 function reconstruct(classifiers::HaarLikeFeature, imgSize::Tuple)
-    """
-    Creates an image by putting all given classifiers on top of each other
-    producing an archetype of the learned class of object.
-    :param classifiers: List of classifiers
-    :type classifiers: list[violajones.HaarLikeFeature.HaarLikeFeature]
-    :param img_size: Tuple of width and height
-    :type img_size: (int, int)
-    :return: Reconstructed image
-    :rtype: PIL.Image
-    """
+    #=
+    Creates an image by putting all given classifiers on top of each other producing an archetype of the learned class of object.
+    
+    parameter `classifiers`: List of classifiers [type: Abstract Array (array of HaarLikeFeatures)]
+    parameter `imgSize`: Tuple of width and height [Tuple]
+
+    return `result`: Reconstructed image [type: PIL.Image??]
+    =#
+    
     image = zeros(imgSize)
+    
     for c in classifiers
         # map polarity: -1 -> 0, 1 -> 1
         polarity = pow(1 + c.polarity, 2)/4

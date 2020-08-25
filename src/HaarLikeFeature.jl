@@ -23,6 +23,10 @@ abstract type HaarFeatureType end
 
 # make structure
 struct HaarLikeFeature <: HaarFeatureType#struct HaarLikeFeature{T} <: HaarObject where {T <: HaarFeatureType}
+    #=
+    Struct representing a Haar-like feature.
+    =#
+    
     featureType::Tuple{Int64, Int64}
     position::Tuple{Int64, Int64}
     topLeft::Tuple{Int64, Int64}
@@ -32,6 +36,8 @@ struct HaarLikeFeature <: HaarFeatureType#struct HaarLikeFeature{T} <: HaarObjec
     threshold::Int64
     polarity::Int64
     weight::Number# number because it can be -Inf due to log(0)
+    # weight::Int64
+    # weight::Any
     
     # constructor; equivalent of __init__ method within class # ::CartesianIndex
     function HaarLikeFeature(featureType::Tuple{Int64,Int64}, position::Tuple{Int64, Int64}, width::Int64, height::Int64, threshold::Int64, polarity::Int64)
@@ -108,13 +114,15 @@ end # end structure
 # end
 
 function getScore(feature::HaarLikeFeature, intImg::Array)
-        """
+        #=
         Get score for given integral image array.
-        :param int_img: Integral image array
-        :type int_img: numpy.ndarray
-        :return: Score for given feature
-        :rtype: float
-        """
+        
+        parameter `feature`: given Haar-like feature (parameterised replacement of Python's `self`) [type: HaarLikeFeature]
+        parameter `intImg`: Integral image array [type: Abstract Array]
+        
+        return `score`: Score for given feature [type: Float]
+        =#
+        
         score = 0
 
         if feature.featureType == FeatureTypes[1] # two vertical
@@ -187,20 +195,25 @@ end
 
 
 function getVote(feature::HaarLikeFeature, intImg::AbstractArray)
-    """
+    #=
     Get vote of this feature for given integral image.
-    :param int_img: Integral image array
-    :type int_img: numpy.ndarray
-    :return: 1 iff this feature votes positively, otherwise -1
-    :rtype: int
-    """
+    
+    parameter `feature`: given Haar-like feature (parameterised replacement of Python's `self`) [type: HaarLikeFeature]
+    parameter `intImg`: Integral image array [type: Abstract Array]
+    
+    return:
+        1       ⟺ this feature votes positively
+        -1      otherwise
+    [type: Integer]
+    =#
+    
     score = getScore(feature, intImg)
     
     
     # return feature.weight * (1 if score < feature.polarity * feature.threshold else -1)
     
-    
     return feature.weight * ((score < (feature.polarity * feature.threshold)) ? 1 : -1)
+    # return 1 * ((score < (feature.polarity * feature.threshold)) ? 1 : -1)
 end
 
 
