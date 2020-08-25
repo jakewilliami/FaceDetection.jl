@@ -148,7 +148,7 @@ function ensembleVoteAll(intImgs::AbstractArray, classifiers::AbstractArray)
     [type: Abstract Arrays (array of Integers)]
     =#
     
-    votePartial = partial(ensembleVote, classifiers=classifiers)
+    votePartial = partial(ensembleVote, classifiers)
     
     return map(votePartial, intImgs)
 end
