@@ -35,8 +35,8 @@ struct HaarLikeFeature <: HaarFeatureType#struct HaarLikeFeature{T} <: HaarObjec
     height::Int64
     threshold::Int64
     polarity::Int64
-    weight::Number# number because it can be -Inf due to log(0)
-    # weight::Int64
+    # weight::Number# number because it can be -Inf due to log(0)
+    weight::Int64
     # weight::Any
     
     # constructor; equivalent of __init__ method within class # ::CartesianIndex

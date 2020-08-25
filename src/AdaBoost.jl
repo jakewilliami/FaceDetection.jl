@@ -28,12 +28,14 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
     return `classifiers`: List of selected features [type: HaarLikeFeature]
     =#
     
+    # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
     numPos = length(positiveIIs)
     numNeg = length(negativeIIs)
     global numImgs = numPos + numNeg
+    
+    # get image height and width
     imgHeight, imgWidth = size(positiveIIs[1])
     
-    # Maximum feature width and height default to image width and height
     # Maximum feature width and height default to image width and height
     # max_feature_height = img_height if max_feature_height == -1 else max_feature_height
     # max_feature_width = img_width if max_feature_width == -1 else max_feature_width
@@ -44,7 +46,7 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         maxFeatureWidth = imgWidth
     end
     
-    # Create initial weights and labels
+    # Initialise weights $w_{1,i} = \frac{1}{2m}, \frac{1}{2l}$, for $y_i=0,1$ for negative and positive examples respectively
     posWeights = deepfloat(ones(numPos)) / (2 * numPos)
     negWeights = deepfloat(ones(numNeg)) / (2 * numNeg)
     #=
@@ -59,6 +61,8 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         ```
     The series of `deep*` functions——though useful in general——were designed from awkward arrays of tuples of arrays, which came about from a translation error in this case.
     =#
+    
+    # Concatenate positive and negative weights into one `weights` array
     weights = vcat(posWeights, negWeights)
     # println(weights)
     # weights = vcat(posWeights, negWeights)
@@ -68,8 +72,9 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
     labels = vcat(ones(numPos), ones(numNeg) * -1)
     # labels = vcat([ones(numPos), ones(numNeg) * -1])
     
-    global images = positiveIIs + negativeIIs
-    # global images = vcat(positiveIIs, negativeIIs)
+    # get list of images (global because of @everywhere scope)
+    # global images = positiveIIs + negativeIIs
+    global images = vcat(positiveIIs, negativeIIs)
 
     # Create features for all sizes and locations
     global features = _create_features(imgHeight, imgWidth, minFeatureWidth, maxFeatureWidth, minFeatureHeight, maxFeatureHeight)
@@ -82,19 +87,22 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
     end
     
     # println(typeof(numImgs));println(typeof(numFeatures))
+    # create an empty array (of zeroes) with dimensions (numImgs, numFeautures)
     global votes = zeros((numImgs, numFeatures)) # necessarily different from `zero.((numImgs, numFeatures))`
 
     # bar = progressbar.ProgressBar()
     # @everywhere numImgs begin
     # println(votes)
+
+    # show progress bar
     @everywhere begin
         n = numImgs
-        processes = length(numImgs)
+        processes = length(numImgs) # i.e., hypotheses
         p = Progress(n, 1)   # minimum update interval: 1 second
-        for i in processes # bar(range(num_imgs)):
+        for t in processes # bar(range(num_imgs)):
             # votes[i, :] = np.array(list(Pool(processes=None).map(partial(_get_feature_vote, image=images[i]), features)))
             # votes[i, :] = Array(map(partial(getVote, images[i]), features))
-            votes[i, :] = Array(map(feature -> getVote(feature, images[i]), features))
+            votes[t, :] = Array(map(feature -> getVote(feature, images[t]), features))
             # votes[i, :] = [map(feature -> getVote(feature, images[i]), features)]
             next!(p)
         end
@@ -108,11 +116,11 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
     
     n = numClassifiers
     p = Progress(n, 1)   # minimum update interval: 1 second
-    for _ in processes
+    for t in processes
         # println(typeof(length(featureIndices)))
         classificationErrors = zeros(length(featureIndices))
 
-        # normalize weights
+        # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
         # weights *= 1. / np.sum(weights)
         # weights *= float(1) / sum(weights)
         # weights = float(weights) / sum(weights) # ensure weights do not get rounded by element-wise making them floats
@@ -121,21 +129,21 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         # weights *= 1. / sum(weights)
         weights = deepdiv(deepfloat(weights), deepsum(weights))
 
-        # select best classifier based on the weighted error
-        for f in 1:length(featureIndices)
-            fIDX = featureIndices[f]
+        # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
+        for j in 1:length(featureIndices)
+            fIDX = featureIndices[j]
             # classifier error is the sum of image weights where the classifier is right
             # error = sum(map(lambda img_idx: weights[img_idx] if labels[img_idx] != votes[img_idx, f_idx] else 0, range(num_imgs)))
             # error = sum(imgIDX -> (labels[imgIDX] ≠ votes[imgIDX, fIDX]) ? weights[imgIDX] : 0, 1:numImgs)
             # error = sum(map(lambda img_idx: weights[img_idx] if labels[img_idx] != votes[img_idx, f_idx] else 0, range(num_imgs)))
-            error = deepsum(map(imgIDX -> labels[imgIDX] ≠ votes[imgIDX, fIDX] ? weights[imgIDX] : 0, 1:numImgs))
+            ε = deepsum(map(imgIDX -> labels[imgIDX] ≠ votes[imgIDX, fIDX] ? weights[imgIDX] : 0, 1:numImgs))
             # lambda img_idx: weights[img_idx] if labels[img_idx] != votes[img_idx, f_idx] else 0
             # imgIDX -> (labels[imgIDX] ≠ votes[imgIDX, fIDX]) ? weights[imgIDX] : 0
             
-            classificationErrors[f] = error
+            classificationErrors[j] = ε
         end
 
-        # get the best feature; i.e. the feature with the smallest error
+        # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
         minErrorIDX = argmin(classificationErrors) # returns the index of the minimum in the array
         bestError = classificationErrors[minErrorIDX]
         bestFeatureIDX = featureIndices[minErrorIDX]
@@ -144,16 +152,29 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         # println(weights)
         # set feature weight
         bestFeature = features[bestFeatureIDX]
-        featureWeight = 0.5 * log((1 - bestError) / bestError)
-        bestFeature.weight = featureWeight
+        # featureWeight = 0.5 * log((1 - bestError) / bestError)
+        featureWeight = (1 - bestError) / bestError # β
+        bestFeature.weight = featureWeight # need to element-wise alter the struct `weight`; else we get `setfield! immutable struct of type HaarLikeFeature cannot be changed`
 
         # classifiers = vcat(classifiers, bestFeature)
         classifiers = push!(classifiers, bestFeature)
 
-        # update image weights
+        # update image weights $w_{t+1,i}=w_{t,i}\beta_{t}^{1-e_i}$
         # weights = list(map(lambda img_idx: weights[img_idx] * np.sqrt((1-best_error)/best_error) if labels[img_idx] != votes[img_idx, best_feature_idx] else weights[img_idx] * np.sqrt(best_error/(1-best_error)), range(num_imgs)))
         # weights = (imgIDX -> (labels[imgIDX] ≠ votes[imgIDX, bestFeatureIDX]) ? weights[imgIDX]*sqrt((1-bestError)/bestError) : weights[imgIDX]*sqrt(bestError/(1-bestError)), 1:numImgs)
-        weights = map(imgIDX -> (labels[imgIDX] ≠ votes[imgIDX, bestFeatureIDX]) ? weights[imgIDX]*sqrt((1-bestError)/bestError) : weights[imgIDX]*sqrt(bestError/(1-bestError)), 1:numImgs)
+        
+        weights = map(imgIDX -> (labels[imgIDX] ≠ votes[imgIDX, bestFeatureIDX]) ? weights[imgIDX] * featureWeight : weights[imgIDX] * featureWeight, 1:numImgs)
+        
+        # β = ε / (1 - ε)
+        #
+        # e = nothing
+        #
+        # if labels[imgIDX] ≠ votes[imgIDX, bestFeatureIDX]
+        #     weights[imgIDX] * sqrt((1-bestError)/bestError)
+        # else
+        #     weights[imgIDX]*sqrt(bestError/(1-bestError)
+        # end
+        
 
         # remove feature (a feature can't be selected twice)
         # feature_indexes.remove(best_feature_idx)
