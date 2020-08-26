@@ -7,7 +7,7 @@
 using FileIO # for loading images
 using QuartzImageIO, ImageMagick, ImageSegmentation, ImageFeatures # for reading images
 using Colors # for making images greyscale
-using Images # for channelview; converting images to matrices
+using Images # for channelview; converting images to matrices; for `reconstruct`
 using ImageTransformations # for scaling high-quality images down
 
 
@@ -179,7 +179,7 @@ function ensembleVoteAll(intImgs::AbstractArray, classifiers::AbstractArray)
 end
 
 
-function reconstruct(classifiers::HaarLikeFeature, imgSize::Tuple)
+function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
     #=
     Creates an image by putting all given classifiers on top of each other producing an archetype of the learned class of object.
     
@@ -194,47 +194,51 @@ function reconstruct(classifiers::HaarLikeFeature, imgSize::Tuple)
     for c in classifiers
         # map polarity: -1 -> 0, 1 -> 1
         polarity = pow(1 + c.polarity, 2)/4
-        if c.type == FeatureType.TWO_VERTICAL
+        if c.featureType == FeatureTypes[1] # two vertical
+            # println("hi")
             for x in 1:c.width
                 sign = polarity
                 for y in 1:c.height
                     if y >= c.height/2
                         sign = mod((sign + 1), 2)
+                        # println(sign)
                     end
-                    image[c.top_left[2] + y, c.top_left[1] + x] += 1 * sign * c.weight
+                    image[c.topLeft[2] + y, c.topLeft[1] + x] += 1 * sign * c.weight
+                    # println(c.topLeft[2] + y, " , ", c.topLeft[1] + x)
+                    # println(1*sign*c.weight)
                 end
             end
-        elseif c.type == FeatureType.TWO_HORIZONTAL
+        elseif c.featureType == FeatureTypes[2] # two horizontal
             sign = polarity
             for x in 1:c.width
                 if x >= c.width/2
                     sign = mod((sign + 1), 2)
                 end
                 for y in 1:c.height
-                    image[c.top_left[0] + x, c.top_left[1] + y] += 1 * sign * c.weight
+                    image[c.topLeft[0] + x, c.topLeft[1] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.type == FeatureType.THREE_HORIZONTAL
+        elseif c.featureType == FeatureTypes[3] # three horizontal
             sign = polarity
             for x in 1:c.width
                 if iszero(mod(x, c.width/3))
                     sign = mod((sign + 1), 2)
                 end
                 for y in 1:c.height
-                    image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
+                    image[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.type == FeatureType.THREE_VERTICAL
+        elseif c.featureType == FeatureTypes[4] # three vertical
             for x in 1:c.width
                 sign = polarity
                 for y in 1:c.height
                     if iszero(mod(x, c.height/3))
                         sign = mod((sign + 1), 2)
                     end
-                    image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
+                    image[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.type == FeatureType.FOUR
+        elseif c.featureType == FeatureTypes[5] # four
             sign = polarity
             for x in 1:c.width
                 if iszero(mod(x, c.width/2))
@@ -244,18 +248,29 @@ function reconstruct(classifiers::HaarLikeFeature, imgSize::Tuple)
                     if iszero(mod(x, c.height/2))
                         sign = mod((sign + 1), 2)
                     end
-                    image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
+                    image[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
                 end
             end
         end
     end # end for c in classifiers
     
-    image -= image.min()
-    image /= image.max()
-    image *= 255 # for colours
+    # https://medium.com/@alienrobot/part-1-julia-images-moving-from-python-to-julia-image-i-o-basic-manipulations-eecae73fe04d
+    # image .-= minimum(image) # equivalent to `min(image...)`
+    # image ./= maximum(image)
+    # image .*= 255
+    
+    
+    # image -= image.min()
+    # image /= image.max()
+    # image -= min(image)
+    # image /= max(image)
+    # image *= 255 # for colours
     # result = Image.fromarray(image.astype(np.uint8)) # this is where the images come from.  Get these values from IntegralImage.getImageMatrix()
     
-    return result
+    # result = imshow(image, cmap="rainbow", fmt="png")
+    
+    # return result
+    return image
 end
 
 

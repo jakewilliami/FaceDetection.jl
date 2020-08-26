@@ -117,10 +117,10 @@ done
 
 
 main() {
-	# setupWD
-	# checkPackages
+	setupWD
+	checkPackages
 	obtainDatasetMain
-	obtainDatasetAlt
+	# obtainDatasetAlt
 }
 
 

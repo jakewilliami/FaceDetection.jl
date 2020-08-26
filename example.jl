@@ -81,17 +81,22 @@ function main(alt::Bool=false)
       println("Testing selected classifiers...")
       correctFaces = 0
       correctNonFaces = 0
-      correctFaces = sum(ensembleVoteAll(facesIITesting, classifiers))
-      correctNonFaces = length(nonFacesTesting) - sum(ensembleVoteAll(nonFacesIITesting, classifiers))
+      correctFaces = deepsum(ensembleVoteAll(facesIITesting, classifiers))
+      correctNonFaces = length(nonFacesTesting) - deepsum(ensembleVoteAll(nonFacesIITesting, classifiers))
+      correctFacesPercent = (deepfloat(correctFaces) / length(facesTesting)) * 100
+      correctNonFacesPercent = (deepfloat(correctNonFaces) / length(nonFacesTesting)) * 100
 
-      println("...done.\n\nResult:\n      Faces: ", correctFaces, "/", length(faces_testing)
-            , "  (", ((deepfloat(correctFaces) / length(facesTesting)) * 100), "%)\n  non-Faces: "
-            , (correct_non_faces), "/", length(non_faces_testing), "  ("
-            , ((deepfloat(correct_non_faces) / length(non_faces_testing)) * 100), "%)")
+      println("...done.\n\nResult:\n      Faces: ", correctFaces, "/", length(facesTesting), "  (", correctFacesPercent, "%)\n  non-Faces: ", correctNonFaces, "/", length(nonFacesTesting), "  (", correctNonFacesPercent, " %)")
 
-      # Just for fun: putting all haar-like features over each other generates a face-like image
-      recon = reconstruct(classifiers, size(facesTesting[1]))
-      recon.save("/Users/jakeireland/Desktop/reconstruction.png")
+      # Just for fun: putting all Haar-like features over each other generates a face-like image
+      reconstructedImage = reconstruct(classifiers, size(facesTesting[1]))
+      # reconstructedImage = [reconstruct(c, size(facesTesting[1])) for c in classifiers]
+      # reconstructedImage = map(c -> reconstruct(c, size(facesTesting[1])), classifiers)
+      
+      # recon.save("/Users/jakeireland/Desktop/reconstruction.png")
+      
+      # println(reconstructedImage)
+      save("/Users/jakeireland/Desktop/reconstruction.png", colorview(Gray, reconstructedImage))
 end
 
 
