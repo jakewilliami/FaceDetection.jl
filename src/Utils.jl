@@ -132,7 +132,11 @@ function ensembleVote(intImg::AbstractArray, classifiers::AbstractArray)
     #     return 0
     # end
     
-    return (sum([c.get_vote(int_img) for c in classifiers]) >= 0 ? 1 : 0)
+    # println([typeof(c) for c in classifiers])
+    # println(typeof(classifiers))
+    return deepsum([getVote(c, intImg) for c in classifiers]) >= 0 ? 1 : 0
+    
+     # >= 0 ? 1 : 0
 end
 
 function ensembleVoteAll(intImgs::AbstractArray, classifiers::AbstractArray)
@@ -148,9 +152,28 @@ function ensembleVoteAll(intImgs::AbstractArray, classifiers::AbstractArray)
     [type: Abstract Arrays (array of Integers)]
     =#
     
-    votePartial = partial(ensembleVote, classifiers)
+    # [println(typeof(c)) for c in classifiers]
+    # println(typeof(classifiers))
     
-    return map(votePartial, intImgs)
+    # votePartial = [partial(ensembleVote, c) for c in classifiers]
+    # votePartial = partial(ensembleVote, [c for c in classifiers])
+    # votePartial = partial(ensembleVote, classifiers)
+    #
+    # return map(votePartial, intImgs)
+    
+    # map(i -> ensembleVote(classifiers, i), intImgs)
+    return map(i -> ensembleVote(i, classifiers), intImgs)
+    
+    # votePartial = partial(ensembleVote, intImgs)
+    #
+    # return map(votePartial, classifiers)
+    
+    
+    # map(imgIDX -> (labels[imgIDX] ≠ votes[imgIDX, bestFeatureIDX]) ? weights[imgIDX] * featureWeight : weights[imgIDX] * featureWeight, 1:numImgs)
+    #
+    # map(i -> (), intImgs)
+    #
+    
 end
 
 

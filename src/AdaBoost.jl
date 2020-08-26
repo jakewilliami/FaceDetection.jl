@@ -155,9 +155,10 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         # featureWeight = 0.5 * log((1 - bestError) / bestError)
         featureWeight = (1 - bestError) / bestError # β
         # println(typeof(featureWeight))
-        bestFeature.weight = featureWeight # need to element-wise alter the struct `weight`; else we get `setfield! immutable struct of type HaarLikeFeature cannot be changed`
+        bestFeature.weight = featureWeight
 
         # classifiers = vcat(classifiers, bestFeature)
+        # println(classifiers)
         classifiers = push!(classifiers, bestFeature)
 
         # update image weights $w_{t+1,i}=w_{t,i}\beta_{t}^{1-e_i}$
@@ -184,6 +185,7 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         next!(p)
     end
     
+    # println(typeof(classifiers[1]))
     return classifiers
     
 end

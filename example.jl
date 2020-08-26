@@ -64,6 +64,12 @@ function main(alt::Bool=false)
       println("Determining classifiers; this may take a while...")
       classifiers = learn(facesIITraining, nonFacesIITraining, numClassifiers, minFeatureHeight, maxFeatureHeight, minFeatureWidth, maxFeatureWidth)
 
+      # [println(c) for c in classifiers]
+      # println(typeof(classifiers))
+      # for c in classifiers
+      #       println(typeof(c))
+      # end
+
       println("Loading test faces...")
       facesTesting = loadImages(posTestingPath)
       facesIITesting = map(toIntegralImage, facesTesting) # list(map(...))
@@ -79,9 +85,9 @@ function main(alt::Bool=false)
       correctNonFaces = length(nonFacesTesting) - sum(ensembleVoteAll(nonFacesIITesting, classifiers))
 
       println("...done.\n\nResult:\n      Faces: ", correctFaces, "/", length(faces_testing)
-            , "  (", ((float(correctFaces) / len(facesTesting)) * 100), "%)\n  non-Faces: "
-            , (correct_non_faces), "/", len(non_faces_testing), "  ("
-            , ((float(correct_non_faces) / len(non_faces_testing)) * 100), "%)")
+            , "  (", ((deepfloat(correctFaces) / length(facesTesting)) * 100), "%)\n  non-Faces: "
+            , (correct_non_faces), "/", length(non_faces_testing), "  ("
+            , ((deepfloat(correct_non_faces) / length(non_faces_testing)) * 100), "%)")
 
       # Just for fun: putting all haar-like features over each other generates a face-like image
       recon = reconstruct(classifiers, size(facesTesting[1]))
