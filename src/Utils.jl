@@ -117,6 +117,8 @@ function ensembleVote(intImg::AbstractArray, classifiers::AbstractArray)
     #=
     Classifies given integral image (Abstract Array) using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
     
+    That is, the final strong classifier is $h(x)=\begin{cases}1&\text{if }\sum_{t=1}^{T}\alpha_th_t(x)\geq \frac{1}{2}\sum_{t=1}^{T}\alpha_t\\0&\text{otherwise}\end{cases}$, where $\alpha_t=\log{\left(\frac{1}{\beta_t}\right)}$
+    
     parameter `intImg`: Integral image to be classified [type: AbstractArray]
     parameter `classifiers`: List of classifiers [type: AbstractArray (array of HaarLikeFeatures)]
 
