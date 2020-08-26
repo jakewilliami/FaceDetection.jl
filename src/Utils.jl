@@ -91,11 +91,13 @@ function getImageMatrix(imageFile::AbstractString)
     =#
     
     img = load(imageFile)
+    # println(eltype(img))
     # img = imresize(img, ratio=1/8)
     img = imresize(img, (10,10)) # for standardised size
 
     # imgArr = convert(Array{Float64}, channelview(img)) # for coloured images
     imgArr = convert(Array{Float64}, Colors.Gray.(img))
+    # println(eltype(imgArr))
     
     # segments = ImageSegmentation.felzenszwalb(img, 100)
     # imgArr = ImageSegmentation.imshow(map(i->segment_mean(segments,i), labels_map(segments)))
@@ -253,11 +255,14 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
             end
         end
     end # end for c in classifiers
-    
-    # https://medium.com/@alienrobot/part-1-julia-images-moving-from-python-to-julia-image-i-o-basic-manipulations-eecae73fe04d
+    # println(eltype(image))
     # image .-= minimum(image) # equivalent to `min(image...)`
     # image ./= maximum(image)
     # image .*= 255
+    
+    image = replace!(image, NaN=>0.0) # change NaN to white
+    
+    # println(eltype(image))
     
     
     # image -= image.min()
@@ -268,9 +273,39 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
     # result = Image.fromarray(image.astype(np.uint8)) # this is where the images come from.  Get these values from IntegralImage.getImageMatrix()
     
     # result = imshow(image, cmap="rainbow", fmt="png")
+    # result = reinterpret(UInt8, image)
+    # println(typeof(result))
     
     # return result
+    # println(findmin(image))
     return image
+end
+
+
+function getRandomImage(facePath::AbstractString, nonFacePath::AbstractString)
+    face = rand(Bool)
+    fileName = rand(readdir(face ? facePath : nonFacePath, join=true))
+    return fileName#, face
+end
+
+
+function generateValidationImage()
+    images = map(load, [getRandomImage() for _ in 1:169])
+    newImage = new("RGB", (256, 256))
+    tlx = 0
+    tly = 0
+    
+    for img in images
+        new_img.paste(img, (tlx, tly))
+        if tlx < 12*19
+            tlx += 19
+        else
+            tlx = 0
+            tly += 19
+        end
+    end
+    
+    save("/Users/jakeireland/Desktop/test.png", Gray.(map(clamp01nan, newImg)))
 end
 
 
