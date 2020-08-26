@@ -86,7 +86,7 @@ function main(alt::Bool=false)
       correctFacesPercent = (deepfloat(correctFaces) / length(facesTesting)) * 100
       correctNonFacesPercent = (deepfloat(correctNonFaces) / length(nonFacesTesting)) * 100
 
-      println("...done.\n\nResult:\n      Faces: ", correctFaces, "/", length(facesTesting), "  (", correctFacesPercent, "%)\n  non-Faces: ", correctNonFaces, "/", length(nonFacesTesting), "  (", correctNonFacesPercent, " %)")
+      println("...done.\n\nResult:\n      Faces: ", correctFaces, "/", length(facesTesting), "  (", correctFacesPercent, "%)\n  non-Faces: ", correctNonFaces, "/", length(nonFacesTesting), "  (", correctNonFacesPercent, "%)")
 
       # Just for fun: putting all Haar-like features over each other generates a face-like image
       reconstructedImage = reconstruct(classifiers, size(facesTesting[1]))

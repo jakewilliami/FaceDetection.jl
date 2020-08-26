@@ -152,8 +152,8 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         # println(weights)
         # set feature weight
         bestFeature = features[bestFeatureIDX]
-        # featureWeight = 0.5 * log((1 - bestError) / bestError)
-        featureWeight = (1 - bestError) / bestError # β
+        featureWeight = 0.5 * log((1 - bestError) / bestError)
+        # featureWeight = (1 - bestError) / bestError # β
         # println(typeof(featureWeight))
         bestFeature.weight = featureWeight
 
