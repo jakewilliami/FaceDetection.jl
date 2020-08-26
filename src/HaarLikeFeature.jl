@@ -44,8 +44,9 @@ mutable struct HaarLikeFeature <: HaarFeatureType#struct HaarLikeFeature{T} <: H
         topLeft = position
         bottomRight = (position[1] + width, position[2] + height)
         weight = 1
+        # println(weight)
         
-        new(featureType, position, topLeft, bottomRight, width, height, threshold, polarity)
+        new(featureType, position, topLeft, bottomRight, width, height, threshold, polarity, weight)
     end # end constructor
 end # end structure
 

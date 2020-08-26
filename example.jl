@@ -41,6 +41,7 @@ function main(alt::Bool=false)
       maxFeatureWidth = 10
 
 
+      ### TRAINING PROCESS
       println("Loading faces...")
       
       facesTraining = loadImages(posTrainingPath)
@@ -61,7 +62,7 @@ function main(alt::Bool=false)
       # end
 
       # classifiers are haar like features
-      println("Determining classifiers; this may take a while...")
+      # println("Determining classifiers; this may take a while...")
       classifiers = learn(facesIITraining, nonFacesIITraining, numClassifiers, minFeatureHeight, maxFeatureHeight, minFeatureWidth, maxFeatureWidth)
 
       # [println(c) for c in classifiers]
@@ -96,7 +97,16 @@ function main(alt::Bool=false)
       # recon.save("/Users/jakeireland/Desktop/reconstruction.png")
       
       # println(reconstructedImage)
-      save("/Users/jakeireland/Desktop/reconstruction.png", colorview(Gray, reconstructedImage))
+      # save("/Users/jakeireland/Desktop/reconstruction.png", colorview(Gray, map(clamp01nan, reconstructedImage)))
+      # save("/Users/jakeireland/Desktop/reconstruction.png", reconstructedImage)
+      # readblob(reconstructedImage, "/Users/jakeireland/Desktop/reconstruction.png")
+      
+      # save("/Users/jakeireland/Desktop/reconstruction.png", reconstructedImage)
+      save("/Users/jakeireland/Desktop/reconstruction.png", Gray.(map(clamp01nan, reconstructedImage)))
+      # save("/Users/jakeireland/Desktop/reconstruction.png", Gray.(reconstructedImage ./ 255))
+      # println(channelview(reconstructedImage))
+      # colorview(Gray, reconstructedImage)
+
 end
 
 

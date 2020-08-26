@@ -93,7 +93,7 @@ function getImageMatrix(imageFile::AbstractString)
     img = load(imageFile)
     # println(eltype(img))
     # img = imresize(img, ratio=1/8)
-    img = imresize(img, (10,10)) # for standardised size
+    # img = imresize(img, (10,10)) # for standardised size
 
     # imgArr = convert(Array{Float64}, channelview(img)) # for coloured images
     imgArr = convert(Array{Float64}, Colors.Gray.(img))
@@ -166,7 +166,8 @@ function ensembleVoteAll(intImgs::AbstractArray, classifiers::AbstractArray)
     # return map(votePartial, intImgs)
     
     # map(i -> ensembleVote(classifiers, i), intImgs)
-    return map(i -> ensembleVote(i, classifiers), intImgs)
+    # return map(i -> ensembleVote(i, classifiers), intImgs)
+    return Array(map(i -> ensembleVote(i, classifiers), intImgs))
     
     # votePartial = partial(ensembleVote, intImgs)
     #
