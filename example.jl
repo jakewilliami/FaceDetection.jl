@@ -20,7 +20,7 @@ mainImagePath = "$mainPath/data/main/"
 altImagePath = "$mainPath/data/alt/"
 
 
-function main(alt::Bool=false, HaarLikeFeature::Bool=false)
+function main(alt::Bool=false, imageReconstruction::Bool=false)
       if alt
             posTrainingPath = "$altImagePath/pos/"
             negTrainingPath = "$altImagePath/neg/"
@@ -101,7 +101,7 @@ function main(alt::Bool=false, HaarLikeFeature::Bool=false)
       # save("/Users/jakeireland/Desktop/reconstruction.png", reconstructedImage)
       # readblob(reconstructedImage, "/Users/jakeireland/Desktop/reconstruction.png")
       
-      if HaarLikeFeatures
+      if imageReconstruction
       # save("/Users/jakeireland/Desktop/reconstruction.png", reconstructedImage)
             save(joinpath(homedir(), "/Desktop/reconstruction.png"), Gray.(map(clamp01nan, reconstructedImage)))
       # save("/Users/jakeireland/Desktop/reconstruction.png", Gray.(reconstructedImage ./ 255))
