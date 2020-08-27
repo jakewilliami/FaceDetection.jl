@@ -22,38 +22,6 @@ function displaymatrix(M::AbstractArray)
 end
 
 
-function zerosarray(a::Int64, b::Int64=1)
-    #=
-    To construct an array of arrays of zeros.
-    
-    parameter `a`: A number of length for array to be [type: Integer]
-    parameter `b`: A number of the second dimension for array of arrays of zeros (defaults to one) [type: Integer]
-     
-    return: Either an array of zeros (i.e., `[0, 0, 0]`), or an array of arrays of zeros (if b is given; i.e., [0, 0, 0, 0; 0, 0, 0, 0; 0, 0, 0, 0]) [type: Abstract Array]
-    =#
-    
-    if isone(b)
-        return collect(eachrow(zeros(b, a)))
-    else
-        return collect(eachrow(zeros(a, b)))
-    end
-end
-
-
-function partial(f,a...)
-    #=
-    Tentative partial function (like Python's partial function) which takes a function as input and *some of* its variables.
-    
-    parameter `f`: a function
-    parameter `a`: one of the function's arguments
-    
-    for `...` syntax see https://en.wikibooks.org/wiki/Introducing_Julia/Functions#Functions_with_variable_number_of_arguments
-    =#
-    
-        ( (b...) -> f(a...,b...) )
-end
-
-
 function loadImages(imageDir::AbstractString)
     #=
     Given a path to a directory of images, recursively loads those images.
@@ -89,21 +57,6 @@ function getImageMatrix(imageFile::AbstractString)
     imgArr = convert(Array{Float64}, Colors.Gray.(img))
     
     return imgArr
-end
-
-    
-# to emulate python's function
-function pow(x::Number, y::Number)
-    #=
-    An easier way to get powers.
-    
-    parameter `x`: The base number [type: Number]
-    parameter `y`: The exponent [type: Number]
-    
-    return x^y: The result of x to the power of y [type: Number]
-    =#
-    
-    return (x)^(y)
 end
     
     
@@ -167,7 +120,7 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
     
     for c in classifiers
         # map polarity: -1 -> 0, 1 -> 1
-        polarity = pow(1 + c.polarity, 2)/4
+        polarity = ((1 + c.polarity)^2)/4
         if c.featureType == FeatureTypes[1] # two vertical
             for x in 1:c.width
                 sign = polarity
@@ -273,15 +226,11 @@ function generateValidationImage()
 end
 
 
-
+export displaymatrix
 export loadImages
+export getImageMatrix
 export ensembleVote
 export ensembleVoteAll
 export reconstruct
-export partial
-export displaymatrix
-export zerosarray
-export getImageMatrix
-export pow
 export getRandomImage
 export generateValidationImage
