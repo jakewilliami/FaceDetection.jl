@@ -10,20 +10,6 @@ using Images: save, load, Colors, clamp01nan, Gray
 include("HaarLikeFeature.jl")
 
 
-# For summing (&c.) all numerical values in any nested array
-deepsum(a::Number) = a
-deepsum(a) = sum(deepsum.(a))
-
-deepdiv(a::Number, b::Number) = a / b
-deepdiv(a,b) = deepdiv.(a, b)
-
-deeptimes(a::Number, b::Number) = a * b
-deeptimes(a,b) = deeptimes.(a, b)
-
-deepfloat(a::Number) = a * 1.0
-deepfloat(a) = deepfloat.(a)
-
-
 function displaymatrix(M::AbstractArray)
     #=
     A function to show a big matrix on one console screen (similar to default `print` of numpy arrays in Python).
@@ -135,7 +121,7 @@ function ensembleVote(intImg::AbstractArray, classifiers::AbstractArray)
         0       otherwise
     [type: Integer]
     =#
-    return deepsum([getVote(c, intImg) for c in classifiers]) >= 0 ? 1 : 0
+    return sum([getVote(c, intImg) for c in classifiers]) >= 0 ? 1 : 0
 end
 
 
@@ -293,10 +279,6 @@ export ensembleVote
 export ensembleVoteAll
 export reconstruct
 export partial
-export deepsum
-export deepfloat
-export deepdiv
-export deeptimes
 export displaymatrix
 export zerosarray
 export getImageMatrix

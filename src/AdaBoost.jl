@@ -43,8 +43,8 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
     end
     
     # Initialise weights $w_{1,i} = \frac{1}{2m}, \frac{1}{2l}$, for $y_i=0,1$ for negative and positive examples respectively
-    posWeights = deepfloat(ones(numPos)) / (2 * numPos)
-    negWeights = deepfloat(ones(numNeg)) / (2 * numNeg)
+    posWeights = float(ones(numPos)) / (2 * numPos)
+    negWeights = float(ones(numNeg)) / (2 * numNeg)
     #=
     Consider the original code,
         ```
@@ -55,7 +55,6 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         ```
         numpy.hstack((a,b)) ≡ vcat(a,b)
         ```
-    The series of `deep*` functions——though useful in general——were designed from awkward arrays of tuples of arrays, which came about from a translation error in this case.  These may not be required anymore.
     =#
     
     # Concatenate positive and negative weights into one `weights` array
@@ -97,13 +96,13 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         classificationErrors = zeros(length(featureIndices)) # previously, zerosarray
 
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
-        weights = deepdiv(deepfloat(weights), deepsum(weights))
+        weights = float(weights) / sum(weights)
 
         # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
         for j in 1:length(featureIndices)
             fIDX = featureIndices[j]
             # classifier error is the sum of image weights where the classifier is right
-            ε = deepsum(map(imgIDX -> labels[imgIDX] ≠ votes[imgIDX, fIDX] ? weights[imgIDX] : 0, 1:numImgs))
+            ε = sum(map(imgIDX -> labels[imgIDX] ≠ votes[imgIDX, fIDX] ? weights[imgIDX] : 0, 1:numImgs))
             
             classificationErrors[j] = ε
         end

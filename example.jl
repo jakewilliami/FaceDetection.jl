@@ -67,10 +67,10 @@ function main(alt::Bool=false, imageReconstruction::Bool=false)
       println("Testing selected classifiers...")
       correctFaces = 0
       correctNonFaces = 0
-      correctFaces = deepsum(ensembleVoteAll(facesIITesting, classifiers))
-      correctNonFaces = length(nonFacesTesting) - deepsum(ensembleVoteAll(nonFacesIITesting, classifiers))
-      correctFacesPercent = (deepfloat(correctFaces) / length(facesTesting)) * 100
-      correctNonFacesPercent = (deepfloat(correctNonFaces) / length(nonFacesTesting)) * 100
+      correctFaces = sum(ensembleVoteAll(facesIITesting, classifiers))
+      correctNonFaces = length(nonFacesTesting) - sum(ensembleVoteAll(nonFacesIITesting, classifiers))
+      correctFacesPercent = (float(correctFaces) / length(facesTesting)) * 100
+      correctNonFacesPercent = (float(correctNonFaces) / length(nonFacesTesting)) * 100
 
       println("...done.\n\nResult:\n      Faces: ", correctFaces, "/", length(facesTesting), "  (", correctFacesPercent, "%)\n  non-Faces: ", correctNonFaces, "/", length(nonFacesTesting), "  (", correctNonFacesPercent, "%)")
 
