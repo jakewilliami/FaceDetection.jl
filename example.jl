@@ -71,7 +71,7 @@ function main(alt::Bool=false)
       #       println(typeof(c))
       # end
 
-      println("Loading test faces...")
+      println("\nLoading test faces...")
       facesTesting = loadImages(posTestingPath)
       facesIITesting = map(toIntegralImage, facesTesting) # list(map(...))
       println("...done. ", length(facesTesting), " faces loaded.\n\nLoading test non-faces..")

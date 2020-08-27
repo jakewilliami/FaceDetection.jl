@@ -43,6 +43,32 @@ deepfloat(a::Number) = a * 1.0
 deepfloat(a) = deepfloat.(a)
 
 
+function displaymatrix(M::AbstractArray)
+    return show(IOContext(stdout, :limit => true, :compact => true, :short => true), "text/plain", M)
+    # return show(IOContext(stdout, :limit => true, :compact => true, :short => true, :displaysize), "text/plain", M)
+end
+
+
+function zerosarray(a::Int64, b::Int64=1)
+    #=
+    To replicate numpy.zeros(...)
+    
+    parameter `a`: A number of length for array to be [type: Integer]
+    parameter `b`: A number of the second dimension for array of arrays of zeros (defaults to one) [type: Integer]
+     
+    return: Either an array of zeros (i.e., `[0, 0, 0]`), or an array of arrays of zeros (if b is given; i.e., [0, 0, 0, 0; 0, 0, 0, 0; 0, 0, 0, 0]) [type: Abstract Array]
+    =#
+    
+    if isone(b)
+        # return [zeros(a) for _ in 1:b]
+        return collect(eachrow(zeros(b, a)))
+    else
+        # return [zeros(b) for _ in 1:a]
+        return collect(eachrow(zeros(a, b)))
+    end
+end
+
+
 # for adaboost
 function partial(f,a...)
     #=
@@ -218,7 +244,7 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
                     sign = mod((sign + 1), 2)
                 end
                 for y in 1:c.height
-                    image[c.topLeft[0] + x, c.topLeft[1] + y] += 1 * sign * c.weight
+                    image[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
                 end
             end
         elseif c.featureType == FeatureTypes[3] # three horizontal

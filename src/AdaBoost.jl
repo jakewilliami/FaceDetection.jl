@@ -96,40 +96,48 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
     
     # println(typeof(numImgs));println(typeof(numFeatures))
     # create an empty array (of zeroes) with dimensions (numImgs, numFeautures)
-    global votes = zeros((numImgs, numFeatures)) # necessarily different from `zero.((numImgs, numFeatures))`
+    global votes = zeros((numImgs, numFeatures)) # necessarily different from `zero.((numImgs, numFeatures))`; previously zerosarray
 
     # bar = progressbar.ProgressBar()
     # @everywhere numImgs begin
+    # println(size(votes))
     # println(votes)
-
+    # displaymatrix(votes)
+    # println(length(features))
+    # displaymatrix(features)
     # show progress bar
+    # displaymatrix(images)
+    # println(size(images))
     @everywhere begin
         n = numImgs
-        processes = length(numImgs) # i.e., hypotheses
-        p = Progress(n, 1)   # minimum update interval: 1 second
-        for t in 1:processes # bar(range(num_imgs)):
+        processes = numImgs # i.e., hypotheses
+        # println(processes)
+        # p = Progress(n, 1)   # minimum update interval: 1 second
+        @showprogress for t in 1:processes # bar(range(num_imgs)):
+            # println(t)
             # votes[i, :] = np.array(list(Pool(processes=None).map(partial(_get_feature_vote, image=images[i]), features)))
-            # votes[i, :] = Array(map(partial(getVote, images[i]), features))
-            votes[t, :] = Array(map(feature -> getVote(feature, images[t]), features))
+            # votes[t, :] = Array(map(partial(_get_feature_vote, images[t]), features))
+            votes[t, :] = Array(map(f -> _get_feature_vote(f, images[t]), features))
             # votes[i, :] = [map(feature -> getVote(feature, images[i]), features)]
-            next!(p)
+            # next!(p)
         end
     end # end everywhere (end parallel processing)
+    # displaymatrix(votes)
     
     # select classifiers
     # classifiers = Array()
     classifiers = []
 
-    println("Selecting classifiers...")
+    println("\nSelecting classifiers...")
     
     n = numClassifiers
-    p = Progress(n, 1)   # minimum update interval: 1 second
-    for t in 1:numClassifiers
+    # p = Progress(n, 1)   # minimum update interval: 1 second
+    @showprogress for t in 1:numClassifiers
     # for t in processes
         # println(typeof(length(featureIndices)))
         # print_matrix(stdout, weights)
         # println(weights)
-        classificationErrors = zeros(length(featureIndices))
+        classificationErrors = zeros(length(featureIndices)) # previously, zerosarray
 
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
         # weights *= 1. / np.sum(weights)
@@ -164,6 +172,7 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
             
             classificationErrors[j] = ε
         end
+        # print_matrix(stdout, weights)
 
         # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
         minErrorIDX = argmin(classificationErrors) # returns the index of the minimum in the array
@@ -179,7 +188,9 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         # featureWeight = (1 - bestError) / bestError # β
         # println(typeof(featureWeight))
         # [println(f.weight) for f in features]
+        # print_matrix(stdout, weights)
         bestFeature.weight = featureWeight
+        # print_matrix(stdout, weights)
 
         # classifiers = vcat(classifiers, bestFeature)
         # println(classifiers)
@@ -188,8 +199,22 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         # update image weights $w_{t+1,i}=w_{t,i}\beta_{t}^{1-e_i}$
         # weights = list(map(lambda img_idx: weights[img_idx] * np.sqrt((1-best_error)/best_error) if labels[img_idx] != votes[img_idx, best_feature_idx] else weights[img_idx] * np.sqrt(best_error/(1-best_error)), range(num_imgs)))
         # weights = (imgIDX -> (labels[imgIDX] ≠ votes[imgIDX, bestFeatureIDX]) ? weights[imgIDX]*sqrt((1-bestError)/bestError) : weights[imgIDX]*sqrt(bestError/(1-bestError)), 1:numImgs)
+        # print_matrix(stdout, weights)
+        # weights = Array(map(imgIDX -> labels[imgIDX] ≠ votes[imgIDX, bestFeatureIDX] ? weights[imgIDX] * sqrt((1 - bestError) / bestError) : weights[imgIDX] * sqrt(bestError / (1 - bestError)), 1:numImgs))
+        weights = Array(map(i -> labels[i] ≠ votes[i, bestFeatureIDX] ? weights[i] * sqrt((1 - bestError) / bestError) : weights[i] * sqrt(bestError / (1 - bestError)), 1:numImgs))
+        # println(votes[:,bestFeatureIDX])
         
-        weights = Array(map(imgIDX -> (labels[imgIDX] ≠ votes[imgIDX, bestFeatureIDX]) ? weights[imgIDX] * featureWeight : weights[imgIDX] * featureWeight, 1:numImgs))
+        # print_matrix(stdout, weights)
+        # println(typeof(weights))
+        
+        # imgIDX -> labels[imgIDX] ≠ votes[imgIDX, bestFeatureIDX] ? weights[imgIDX] * sqrt((1 - bestError) / bestError) : weights[imgIDX] * sqrt(bestError / (1 - bestError))
+        
+        # weights = np.array(list(map(
+        #
+        # lambda img_idx:
+        #     weights[img_idx] * np.sqrt((1-best_error)/best_error) if labels[img_idx] != votes[img_idx, best_feature_idx] else weights[img_idx] * np.sqrt(best_error/(1-best_error)),
+        #
+        #     range(num_imgs))))
         
         # β = ε / (1 - ε)
         #
@@ -207,12 +232,19 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         featureIndices = filter!(e -> e ∉ bestFeatureIDX, featureIndices) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`
         # println(bestFeature)
         
-        next!(p)
+        # next!(p)
     end
+    # println(weights)
     
     # println(typeof(classifiers[1]))
+    # println(votes)
     return classifiers
     
+end
+
+
+function _get_feature_vote(feature::HaarLikeFeature, image::AbstractArray)
+    return getVote(feature, image)
 end
 
 
