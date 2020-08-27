@@ -3,39 +3,16 @@
     exec julia --project="~/FaceDetection.jl/" "${BASH_SOURCE[0]}" "$@" -e 'include(popfirst!(ARGS))' \
     "${BASH_SOURCE[0]}" "$@"
     =#
-    
-# using FileIO: save # for loading images
-# using QuartzImageIO
-# using ImageMagick
-# using ImageSegmentation
-# using ImageFeatures # for reading images
-# using Colors # for making images greyscale
-# using ImageIO: save
-using Images: save, load, Colors, clamp01nan, Gray # for channelview; converting images to matrices; for `reconstruct`
-# using ImageTransformations # for scaling high-quality images down
 
+
+using Images: save, load, Colors, clamp01nan, Gray
 
 include("HaarLikeFeature.jl")
-#=
-adaboost imports haarlikefeature.jl
-
-main (fda.jl) imports integralimage.jl, adaboost.jl, and utils.jl
-=#
 
 
-# For summing all numerical values in any nested array
+# For summing (&c.) all numerical values in any nested array
 deepsum(a::Number) = a
 deepsum(a) = sum(deepsum.(a))
-
-# function deepsum(X::Union{NTuple{N,T} where N, AbstractArray{T}, T}) where T<:Number
-#     sum(X)
-# end
-# func
-# tion deepsum(X::Union{Tuple, AbstractArray})
-#     sum(X) do v
-#         deepsum(v)
-#     end
-# end
 
 deepdiv(a::Number, b::Number) = a / b
 deepdiv(a,b) = deepdiv.(a, b)
@@ -48,14 +25,20 @@ deepfloat(a) = deepfloat.(a)
 
 
 function displaymatrix(M::AbstractArray)
+    #=
+    A function to show a big matrix on one console screen (similar to default `print` of numpy arrays in Python).
+    
+    parameter `M`: Some array [type: Abstract Array]
+    
+    return: A nice array to print [type: plain text]
+    =#
     return show(IOContext(stdout, :limit => true, :compact => true, :short => true), "text/plain", M)
-    # return show(IOContext(stdout, :limit => true, :compact => true, :short => true, :displaysize), "text/plain", M)
 end
 
 
 function zerosarray(a::Int64, b::Int64=1)
     #=
-    To replicate numpy.zeros(...)
+    To construct an array of arrays of zeros.
     
     parameter `a`: A number of length for array to be [type: Integer]
     parameter `b`: A number of the second dimension for array of arrays of zeros (defaults to one) [type: Integer]
@@ -64,16 +47,13 @@ function zerosarray(a::Int64, b::Int64=1)
     =#
     
     if isone(b)
-        # return [zeros(a) for _ in 1:b]
         return collect(eachrow(zeros(b, a)))
     else
-        # return [zeros(b) for _ in 1:a]
         return collect(eachrow(zeros(a, b)))
     end
 end
 
 
-# for adaboost
 function partial(f,a...)
     #=
     Tentative partial function (like Python's partial function) which takes a function as input and *some of* its variables.
@@ -83,6 +63,7 @@ function partial(f,a...)
     
     for `...` syntax see https://en.wikibooks.org/wiki/Introducing_Julia/Functions#Functions_with_variable_number_of_arguments
     =#
+    
         ( (b...) -> f(a...,b...) )
 end
 
@@ -95,9 +76,7 @@ function loadImages(imageDir::AbstractString)
     
     return `images`: a list of images from the path provided [type: Abstract Array]
     =#
-    
-    # imageDir = joinpath(dirname(dirname(@__FILE__)), "test", "images")
-    
+        
     images = []
     
     for file in readdir(imageDir, join=true, sort=false) # join true for getImageMatrix to find file from absolute path
@@ -121,26 +100,23 @@ function getImageMatrix(imageFile::AbstractString)
     =#
     
     img = load(imageFile)
-    # println(eltype(img))
-    # img = imresize(img, ratio=1/8)
-    # img = imresize(img, (10,10)) # for standardised size
-
-    # imgArr = convert(Array{Float64}, channelview(img)) # for coloured images
     imgArr = convert(Array{Float64}, Colors.Gray.(img))
-    # println(eltype(imgArr))
-    
-    # segments = ImageSegmentation.felzenszwalb(img, 100)
-    # imgArr = ImageSegmentation.imshow(map(i->segment_mean(segments,i), labels_map(segments)))
-    # imgArr = segment_labels(segments)
     
     return imgArr
-
-    # print(img)
 end
 
     
 # to emulate python's function
 function pow(x::Number, y::Number)
+    #=
+    An easier way to get powers.
+    
+    parameter `x`: The base number [type: Number]
+    parameter `y`: The exponent [type: Number]
+    
+    return x^y: The result of x to the power of y [type: Number]
+    =#
+    
     return (x)^(y)
 end
     
@@ -159,19 +135,9 @@ function ensembleVote(intImg::AbstractArray, classifiers::AbstractArray)
         0       otherwise
     [type: Integer]
     =#
-    
-    # if sum([c.get_vote(int_img) for c in classifiers]) >= 0
-    #     return 1
-    # else
-    #     return 0
-    # end
-    
-    # println([typeof(c) for c in classifiers])
-    # println(typeof(classifiers))
     return deepsum([getVote(c, intImg) for c in classifiers]) >= 0 ? 1 : 0
-    
-     # >= 0 ? 1 : 0
 end
+
 
 function ensembleVoteAll(intImgs::AbstractArray, classifiers::AbstractArray)
     #=
@@ -198,17 +164,6 @@ function ensembleVoteAll(intImgs::AbstractArray, classifiers::AbstractArray)
     # map(i -> ensembleVote(classifiers, i), intImgs)
     # return map(i -> ensembleVote(i, classifiers), intImgs)
     return Array(map(i -> ensembleVote(i, classifiers), intImgs))
-    
-    # votePartial = partial(ensembleVote, intImgs)
-    #
-    # return map(votePartial, classifiers)
-    
-    
-    # map(imgIDX -> (labels[imgIDX] ≠ votes[imgIDX, bestFeatureIDX]) ? weights[imgIDX] * featureWeight : weights[imgIDX] * featureWeight, 1:numImgs)
-    #
-    # map(i -> (), intImgs)
-    #
-    
 end
 
 
@@ -228,17 +183,13 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
         # map polarity: -1 -> 0, 1 -> 1
         polarity = pow(1 + c.polarity, 2)/4
         if c.featureType == FeatureTypes[1] # two vertical
-            # println("hi")
             for x in 1:c.width
                 sign = polarity
                 for y in 1:c.height
                     if y >= c.height/2
                         sign = mod((sign + 1), 2)
-                        # println(sign)
                     end
                     image[c.topLeft[2] + y, c.topLeft[1] + x] += 1 * sign * c.weight
-                    # println(c.topLeft[2] + y, " , ", c.topLeft[1] + x)
-                    # println(1*sign*c.weight)
                 end
             end
         elseif c.featureType == FeatureTypes[2] # two horizontal
@@ -286,41 +237,37 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
             end
         end
     end # end for c in classifiers
-    # println(eltype(image))
-    # image .-= minimum(image) # equivalent to `min(image...)`
-    # image ./= maximum(image)
-    # image .*= 255
+    image .-= minimum(image) # equivalent to `min(image...)`
+    image ./= maximum(image)
+    image .*= 255
     
-    image = replace!(image, NaN=>0.0) # change NaN to white
+    image = replace!(image, NaN=>0.0) # change NaN to white (not that there should be any NaN values)
     
-    # println(eltype(image))
-    
-    
-    # image -= image.min()
-    # image /= image.max()
-    # image -= min(image)
-    # image /= max(image)
-    # image *= 255 # for colours
-    # result = Image.fromarray(image.astype(np.uint8)) # this is where the images come from.  Get these values from IntegralImage.getImageMatrix()
-    
-    # result = imshow(image, cmap="rainbow", fmt="png")
-    # result = reinterpret(UInt8, image)
-    # println(typeof(result))
-    
-    # return result
-    # println(findmin(image))
     return image
 end
 
 
 function getRandomImage(facePath::AbstractString, nonFacePath::AbstractString)
+    #=
+    Chooses a random image from a given two directories.
+    
+    parameter `facePath`: The path to the faces directory [type: Abstract String (path)]
+    parameter `nonFacePath`: The path to the non-faces directory [type: Abstract String (path)]
+    
+    return `fileName`: The path to the file randomly chosen [type: Abstract String (path)]
+    =#
+    
     face = rand(Bool)
     fileName = rand(readdir(face ? facePath : nonFacePath, join=true))
-    return fileName#, face
+    return fileName
 end
 
 
 function generateValidationImage()
+    #=
+    ...?
+    =#
+    
     images = map(load, [getRandomImage() for _ in 1:169])
     newImage = new("RGB", (256, 256))
     tlx = 0
@@ -341,7 +288,6 @@ end
 
 
 
-# export getImageMatrix
 export loadImages
 export ensembleVote
 export ensembleVoteAll
@@ -351,10 +297,9 @@ export deepsum
 export deepfloat
 export deepdiv
 export deeptimes
-
-
-### TESTING
-
-# output = loadImages("/Users/jakeireland/FaceDetection.jl/test/images/")
-#
-# println(output)
+export displaymatrix
+export zerosarray
+export getImageMatrix
+export pow
+export getRandomImage
+export generateValidationImage

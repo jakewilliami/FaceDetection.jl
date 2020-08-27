@@ -14,6 +14,7 @@ Original    Integral
 | . . . .   | . . . . .
 =#
 
+
 function toIntegralImage(imgArr::AbstractArray)
     #=
     Calculates the integral image based on this instance's original image data.
@@ -31,8 +32,7 @@ function toIntegralImage(imgArr::AbstractArray)
     
     # process the first column
     for x in 1:(arrRows)
-        # we cannot access an element that does not exist if we are in the
-        # top left corner of the image matrix
+        # we cannot access an element that does not exist if we are in the top left corner of the image matrix
         if isone(x)
             integralImageArr[x, 1] = imgArr[x, 1]
         else
@@ -42,9 +42,7 @@ function toIntegralImage(imgArr::AbstractArray)
     
     # start processing columns
     for y in 1:(arrCols)
-        # same as above: we cannot access a 0th element in the matrix
-        # our scalar accumulator s will catch the 1st row, so we only
-        # needed to predefine the first column before this loop
+        # same as above: we cannot access a 0th element in the matrix our scalar accumulator s will catch the 1st row, so we only needed to predefine the first column before this loop
         if isone(y)
             continue
         end
@@ -79,19 +77,15 @@ function sumRegion(integralImageArr::AbstractArray, topLeft::Tuple{Int64,Int64},
     =#
     
     # swap tuples
-    # topLeft = [topLeft[2], topLeft[1]]
     topLeft = (topLeft[2], topLeft[1])
-    # bottomRight = [bottomRight[2], bottomRight[1]]
     bottomRight = (bottomRight[2], bottomRight[1])
     
     if isequal(topLeft, bottomRight)
-            return integralImageArr[topLeft[1], topLeft[2]]
+        return integralImageArr[topLeft[1], topLeft[2]]
     end
     
     # construct rectangles
-    # topRight = [bottomRight[1], topLeft[2]]
     topRight = (bottomRight[1], topLeft[2])
-    # bottomLeft = [topLeft[1], bottomRight[2]]
     bottomLeft = (topLeft[1], bottomRight[2])
     
     topLeftVal = integralImageArr[topLeft[1], topLeft[2]]
@@ -99,35 +93,9 @@ function sumRegion(integralImageArr::AbstractArray, topLeft::Tuple{Int64,Int64},
     topRightVal = integralImageArr[topRight[1], topRight[2]]
     bottomLeftVal = integralImageArr[bottomLeft[1], bottomLeft[2]]
     
-    # println(typeof(bottomRightVal - topRightVal - bottomLeftVal + topLeftVal))
-    # return integralImageArr[bottomRight] - integralImageArr[topRight] - integralImageArr[bottomLeft] + integralImageArr[topLeft]
-    # println(bottomRightVal)
     return bottomRightVal - topRightVal - bottomLeftVal + topLeftVal
-    # return integral_img_arr[bottom_right] - integral_img_arr[top_right] - integral_img_arr[bottom_left] + integral_img_arr[top_left]
 end
 
 
-
-# imgArr = getImageMatrix()
-# integralImageArr = toIntegralImage(imgArr)
-
-# Base.print_matrix(stdout, integralImageArr)
-# println(size(integralImageArr))
-
 export toIntegralImage
 export sumRegion
-
-# return integralImageArr
-
-
-
-
-### TESTING
-
-# A = [1 7 4 2 9;7 2 3 8 2;1 8 7 9 1;3 2 3 1 5;2 9 5 6 6]
-#
-# Base.print_matrix(stdout, A)
-# println(size(A))
-#
-# Base.print_matrix(stdout, toIntegralImage(A))
-# println(size(toIntegralImage(A)))
