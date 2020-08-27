@@ -1,8 +1,5 @@
 # FaceDetection using Viola-Jones' Robust Algorithm for Object Detection
 
-## IMPORTANT NOTE:
-**This repository is currently under construction.  There is no working algorithm yet.**
-
 ## Introduction
 
 This is a Julia implementation of [Viola-Jones' Object Detection algorithm](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.10.6807).  Although there is an [OpenCV port in Julia](https://github.com/JuliaOpenCV/OpenCV.jl), it seems to be ill-maintained.  As this algorithm was created for commercial use, there seem to be few widely-used or well-documented implementations of it on GitHub.  The implementation this repository is based off is [Simon Hohberg's Pythonic repository](https://github.com/Simon-Hohberg/Viola-Jones), as it seems to be well written (amd the most starred Python implementation on GitHub, though this is not necessarily a good measure), and Julia and Python alike are easy to read and write in &mdash; my thinking was that this would be easy enough to replicate in Julia, except for Pythonic classes, where I would have to use `struct`s (or at least easier to replicate from than, for example, [C++](https://github.com/alexdemartos/ViolaAndJones) or [JS](https://github.com/foo123/HAAR.js) &mdash; two other highly-starred repositories.).
@@ -32,3 +29,10 @@ In an over-simplified manner, the Viola-Jones algorithm has some four stages:
  4. Finally, this algorithm uses [Cascading Classifiers](https://en.wikipedia.org/wiki/Cascading_classifiers) to identify faces.  (See page 12 of the original paper for the specific cascade).
  
 For a better explanation, read [the paper from 2001](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.10.6807), or see [the Wikipedia page](https://en.wikipedia.org/wiki/Viola%E2%80%93Jones_object_detection_framework) on this algorithm.
+
+## Running the Algorithm
+
+After you have setup your workspace, simply run
+```bash
+~/FaceDetection.jl/src/FDA.jl
+```
