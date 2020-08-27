@@ -4,11 +4,15 @@
     "${BASH_SOURCE[0]}" "$@"
     =#
     
-using FileIO # for loading images
-using QuartzImageIO, ImageMagick, ImageSegmentation, ImageFeatures # for reading images
-using Colors # for making images greyscale
-using Images # for channelview; converting images to matrices; for `reconstruct`
-using ImageTransformations # for scaling high-quality images down
+# using FileIO: save # for loading images
+# using QuartzImageIO
+# using ImageMagick
+# using ImageSegmentation
+# using ImageFeatures # for reading images
+# using Colors # for making images greyscale
+# using ImageIO: save
+using Images: save, load, Colors, clamp01nan, Gray # for channelview; converting images to matrices; for `reconstruct`
+# using ImageTransformations # for scaling high-quality images down
 
 
 include("HaarLikeFeature.jl")

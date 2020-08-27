@@ -12,7 +12,7 @@ Adapted from https://github.com/Simon-Hohberg/Viola-Jones/
 println("Loading required libraries (it will take a moment to precompile if it is your first time doing this)...")
 
 include("IntegralImage.jl")
-include("AdaBoost.jl")
+include("AdaBoost.jl") # imports HaarLikeFeature.jl implicitly
 include("Utils.jl")
 
 mainPath = "/Users/jakeireland/FaceDetection.jl/"
@@ -103,7 +103,7 @@ function main(alt::Bool=false, imageReconstruction::Bool=false)
       
       if imageReconstruction
       # save("/Users/jakeireland/Desktop/reconstruction.png", reconstructedImage)
-            save(joinpath(homedir(), "/Desktop/reconstruction.png"), Gray.(map(clamp01nan, reconstructedImage)))
+            save(joinpath(homedir(), "Desktop", "reconstruction.png"), Gray.(map(clamp01nan, reconstructedImage)))
       # save("/Users/jakeireland/Desktop/reconstruction.png", Gray.(reconstructedImage ./ 255))
       # println(channelview(reconstructedImage))
       # colorview(Gray, reconstructedImage)

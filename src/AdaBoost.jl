@@ -4,12 +4,10 @@
     "${BASH_SOURCE[0]}" "$@"
     =#
     
-using ProgressMeter
-using Distributed # for parallel processing (namely, @everywhere)
+using ProgressMeter: @showprogress
+using Distributed: @everywhere # for parallel processing (namely, @everywhere)
 
 include("HaarLikeFeature.jl")
-
-import Base.print_matrix
 
 # TODO: select optimal threshold for each feature
 # TODO: attentional cascading
