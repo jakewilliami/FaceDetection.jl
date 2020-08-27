@@ -157,6 +157,12 @@ function _create_features(imgHeight::Int64, imgWidth::Int64, minFeatureWidth::In
     notifyUser("Creating Haar-like features...")
     features = []
     
+    if imgWidth < maxFeatureWidth || imgHeight < maxFeatureHeight
+        error("""
+        Cannot possibly find classifiers whose size is greater than the image itself [(width,height) = ($imgWidth,$imgHeight)].
+        """)
+    end
+    
     for feature in FeatureTypes # from HaarLikeFeature.jl (FeatureTypes are just tuples)
         featureStartWidth = max(minFeatureWidth, feature[1])
         for featureWidth in range(featureStartWidth, stop=maxFeatureWidth, step=feature[1])
