@@ -73,7 +73,7 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         numClassifiers = numFeatures
     end
     
-    println("Calculating scores for images...")
+    notifyUser("Calculating scores for images...")
     
     # create an empty array (of zeroes) with dimensions (numImgs, numFeautures)
     global votes = zeros((numImgs, numFeatures)) # necessarily different from `zero.((numImgs, numFeatures))`; previously zerosarray
@@ -86,10 +86,12 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         end # end show progress in for loop
     end # end everywhere (end parallel processing)
     
+    print("\n") # for a new line after the progress bar
+    
     # select classifiers
     classifiers = []
 
-    println("\nSelecting classifiers...")
+    notifyUser("Selecting classifiers...")
     
     n = numClassifiers
     @showprogress for t in 1:numClassifiers
@@ -126,6 +128,8 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         featureIndices = filter!(e -> e ∉ bestFeatureIDX, featureIndices) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`
     end
     
+    print("\n") # for a new line after the progress bar
+    
     return classifiers
     
 end
@@ -150,7 +154,7 @@ function _create_features(imgHeight::Int64, imgWidth::Int64, minFeatureWidth::In
     return `features`: an array of Haar-like features found for an image [type: Abstract Array]
     =#
     
-    println("Creating Haar-like features...")
+    notifyUser("Creating Haar-like features...")
     features = []
     
     for feature in FeatureTypes # from HaarLikeFeature.jl (FeatureTypes are just tuples)

@@ -1,6 +1,8 @@
 [deps]
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
+ImageIO = "82e4d734-157c-48bb-816b-45c225c6df19"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
 Netpbm = "f09324ee-3d7c-5217-9330-fc30815ba969"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

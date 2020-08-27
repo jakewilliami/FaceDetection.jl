@@ -22,6 +22,11 @@ function displaymatrix(M::AbstractArray)
 end
 
 
+function notifyUser(message::AbstractString)
+    return println("\033[1;34m===>\033[0;38m\033[1;38m\t$message\033[0;38m")
+end
+
+
 function loadImages(imageDir::AbstractString)
     #=
     Given a path to a directory of images, recursively loads those images.
@@ -176,12 +181,12 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
             end
         end
     end # end for c in classifiers
-    image .-= minimum(image) # equivalent to `min(image...)`
-    image ./= maximum(image)
-    image .*= 255
-    
-    image = replace!(image, NaN=>0.0) # change NaN to white (not that there should be any NaN values)
-    
+    # image .-= minimum(image) # equivalent to `min(image...)`
+    # image ./= maximum(image)
+    # image .*= 255
+    #
+    # image = replace!(image, NaN=>0.0) # change NaN to white (not that there should be any NaN values)
+    # 
     return image
 end
 
@@ -227,6 +232,7 @@ end
 
 
 export displaymatrix
+export notifyUser
 export loadImages
 export getImageMatrix
 export ensembleVote

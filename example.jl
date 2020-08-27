@@ -9,21 +9,20 @@
 Adapted from https://github.com/Simon-Hohberg/Viola-Jones/
 =#
 
+println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
 
-println("Loading required libraries (it will take a moment to precompile if it is your first time doing this)...")
-
+using Printf: @printf
 
 include("IntegralImage.jl")
 include("AdaBoost.jl") # imports HaarLikeFeature.jl implicitly
 include("Utils.jl")
 
 
-mainPath = "/Users/jakeireland/FaceDetection.jl/"
-mainImagePath = "$mainPath/data/main/"
-altImagePath = "$mainPath/data/alt/"
-
-
 function main(alt::Bool=false, imageReconstruction::Bool=false)
+      mainPath = "/Users/jakeireland/FaceDetection.jl/"
+      mainImagePath = "$mainPath/data/main/"
+      altImagePath = "$mainPath/data/alt/"
+      
       if alt
             posTrainingPath = "$altImagePath/pos/"
             negTrainingPath = "$altImagePath/neg/"
@@ -36,7 +35,7 @@ function main(alt::Bool=false, imageReconstruction::Bool=false)
             negTestingPath = "$mainImagePath/testset/non-faces/"
       end
 
-      numClassifiers = 2
+      numClassifiers = 5
       # For performance reasons restricting feature size
       minFeatureHeight = 8
       maxFeatureHeight = 10
@@ -44,11 +43,14 @@ function main(alt::Bool=false, imageReconstruction::Bool=false)
       maxFeatureWidth = 10
 
 
-      println("Loading faces...")
+      notifyUser("Loading faces...")
       
       facesTraining = loadImages(posTrainingPath)
       facesIITraining = map(toIntegralImage, facesTraining) # list(map(...))
-      println("...done. ", length(facesTraining), " faces loaded.\n\nLoading non-faces...")
+      println("...done. ", length(facesTraining), " faces loaded.")
+      
+      notifyUser("Loading non-faces...")
+      
       nonFacesTraining = loadImages(negTrainingPath)
       nonFacesIITraining = map(toIntegralImage, nonFacesTraining) # list(map(...))
       println("...done. ", length(nonFacesTraining), " non-faces loaded.\n")
@@ -56,15 +58,19 @@ function main(alt::Bool=false, imageReconstruction::Bool=false)
       # classifiers are haar like features
       classifiers = learn(facesIITraining, nonFacesIITraining, numClassifiers, minFeatureHeight, maxFeatureHeight, minFeatureWidth, maxFeatureWidth)
 
-      println("\nLoading test faces...")
+      notifyUser("Loading test faces...")
+      
       facesTesting = loadImages(posTestingPath)
       facesIITesting = map(toIntegralImage, facesTesting)
-      println("...done. ", length(facesTesting), " faces loaded.\n\nLoading test non-faces..")
+      println("...done. ", length(facesTesting), " faces loaded.")
+      
+      notifyUser("Loading test non-faces..")
+      
       nonFacesTesting = loadImages(negTestingPath)
       nonFacesIITesting = map(toIntegralImage, nonFacesTesting)
       println("...done. ", length(nonFacesTesting), " non-faces loaded.\n")
 
-      println("Testing selected classifiers...")
+      notifyUser("Testing selected classifiers...")
       correctFaces = 0
       correctNonFaces = 0
       correctFaces = sum(ensembleVoteAll(facesIITesting, classifiers))
@@ -72,16 +78,29 @@ function main(alt::Bool=false, imageReconstruction::Bool=false)
       correctFacesPercent = (float(correctFaces) / length(facesTesting)) * 100
       correctNonFacesPercent = (float(correctNonFaces) / length(nonFacesTesting)) * 100
 
-      println("...done.\n\nResult:\n      Faces: ", correctFaces, "/", length(facesTesting), "  (", correctFacesPercent, "%)\n  non-Faces: ", correctNonFaces, "/", length(nonFacesTesting), "  (", correctNonFacesPercent, "%)")
+      facesFrac = string(correctFaces, "/", length(facesTesting))
+      facesPercent = string("(", correctFacesPercent, "% of faces were recognised as faces)")
+      nonFacesFrac = string(correctNonFaces, "/", length(nonFacesTesting))
+      nonFacesPercent = string("(", correctNonFacesPercent, "% of non-faces were considered to be faces)")
+
+      println("...done.\n")
+      notifyUser("Result:\n")
+      
+      @printf("%10.9s %10.9s %15s\n", "Faces:", facesFrac, facesPercent)
+      @printf("%10.9s %10.9s %15s\n\n", "Non-faces:", nonFacesFrac, nonFacesPercent)
 
       # Just for fun: putting all Haar-like features over each other generates a face-like image
       reconstructedImage = reconstruct(classifiers, size(facesTesting[1]))
       
       if imageReconstruction
+            notifyUser("Constructing an image of all Haar-like Features found...")
+            
             save(joinpath(homedir(), "Desktop", "reconstruction.png"), Gray.(map(clamp01nan, reconstructedImage)))
+            
+            println("...done.  See ", joinpath(homedir(), "Desktop", "reconstruction.png"), ".\n")
       end
 end
 
 
 
-main()
+@time main(false, true)
