@@ -11,11 +11,11 @@ Adapted from https://github.com/Simon-Hohberg/Viola-Jones/
 
 println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
 
-using Printf: @printf
+include("FaceDetection.jl")
 
-include("IntegralImage.jl")
-include("AdaBoost.jl") # imports HaarLikeFeature.jl implicitly
-include("Utils.jl")
+using .FaceDetection
+using Printf: @printf
+using Images: Gray, clamp01nan, save
 
 
 function main(alt::Bool=false, imageReconstruction::Bool=false)
@@ -35,7 +35,7 @@ function main(alt::Bool=false, imageReconstruction::Bool=false)
             negTestingPath = "$mainImagePath/testset/non-faces/"
       end
 
-      numClassifiers = 5
+      numClassifiers = 10
       # For performance reasons restricting feature size
       minFeatureHeight = 8
       maxFeatureHeight = 10
@@ -81,7 +81,7 @@ function main(alt::Bool=false, imageReconstruction::Bool=false)
       facesFrac = string(correctFaces, "/", length(facesTesting))
       facesPercent = string("(", correctFacesPercent, "% of faces were recognised as faces)")
       nonFacesFrac = string(correctNonFaces, "/", length(nonFacesTesting))
-      nonFacesPercent = string("(", correctNonFacesPercent, "% of non-faces were considered to be faces)")
+      nonFacesPercent = string("(", correctNonFacesPercent, "% of non-faces were identified as non-faces)")
 
       println("...done.\n")
       notifyUser("Result:\n")

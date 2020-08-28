@@ -3,14 +3,22 @@
     exec julia --project="~/FaceDetection.jl/" "${BASH_SOURCE[0]}" "$@" -e 'include(popfirst!(ARGS))' \
     "${BASH_SOURCE[0]}" "$@"
     =#
-    
-using ProgressMeter: @showprogress
-using Distributed: @everywhere # for parallel processing (namely, @everywhere)
 
-include("HaarLikeFeature.jl")
 
 # TODO: select optimal threshold for each feature
 # TODO: attentional cascading
+
+
+module Adaboost
+
+include("HaarLikeFeature.jl")
+include("Utils.jl")
+
+using ProgressMeter: @showprogress
+using .HaarLikeFeature: FeatureTypes, HaarLikeObject, getScore, getVote
+using .Utils: notifyUser
+
+export learn, _get_feature_vote, _create_features
 
 
 function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassifiers::Int64=-1, minFeatureWidth::Int64=1, maxFeatureWidth::Int64=-1, minFeatureHeight::Int64=1, maxFeatureHeight::Int64=-1)
@@ -23,13 +31,14 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
     parameter `numClassifiers`: Number of classifiers to select. -1 will use all
     classifiers [type: Integer]
     
-    return `classifiers`: List of selected features [type: HaarLikeFeature]
+    return `classifiers`: List of selected features [type: HaarLikeObject]
     =#
+    
     
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
     numPos = length(positiveIIs)
     numNeg = length(negativeIIs)
-    global numImgs = numPos + numNeg
+    numImgs = numPos + numNeg
     
     # get image height and width
     imgHeight, imgWidth = size(positiveIIs[1])
@@ -62,10 +71,10 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
     labels = vcat(ones(numPos), ones(numNeg) * -1)
     
     # get list of images (global because of @everywhere scope)
-    global images = vcat(positiveIIs, negativeIIs)
+    images = vcat(positiveIIs, negativeIIs)
 
     # Create features for all sizes and locations
-    global features = _create_features(imgHeight, imgWidth, minFeatureWidth, maxFeatureWidth, minFeatureHeight, maxFeatureHeight)
+    features = _create_features(imgHeight, imgWidth, minFeatureWidth, maxFeatureWidth, minFeatureHeight, maxFeatureHeight)
     numFeatures = length(features)
     featureIndices = Array(1:numFeatures)
     
@@ -76,15 +85,13 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
     notifyUser("Calculating scores for images...")
     
     # create an empty array (of zeroes) with dimensions (numImgs, numFeautures)
-    global votes = zeros((numImgs, numFeatures)) # necessarily different from `zero.((numImgs, numFeatures))`; previously zerosarray
+    votes = zeros((numImgs, numFeatures)) # necessarily different from `zero.((numImgs, numFeatures))`; previously zerosarray
 
-    @everywhere begin
-        n = numImgs
-        processes = numImgs # i.e., hypotheses
-        @showprogress for t in 1:processes # bar(range(num_imgs)):
-            votes[t, :] = Array(map(f -> _get_feature_vote(f, images[t]), features))
-        end # end show progress in for loop
-    end # end everywhere (end parallel processing)
+    n = numImgs
+    processes = numImgs # i.e., hypotheses
+    @showprogress for t in 1:processes # bar(range(num_imgs)):
+        votes[t, :] = Array(map(f -> _get_feature_vote(f, images[t]), features))
+    end # end show progress in for loop
     
     print("\n") # for a new line after the progress bar
     
@@ -135,7 +142,7 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
 end
 
 
-function _get_feature_vote(feature::HaarLikeFeature, image::AbstractArray)
+function _get_feature_vote(feature::HaarLikeObject, image::AbstractArray)
     return getVote(feature, image)
 end
 
@@ -163,15 +170,15 @@ function _create_features(imgHeight::Int64, imgWidth::Int64, minFeatureWidth::In
         """)
     end
     
-    for feature in FeatureTypes # from HaarLikeFeature.jl (FeatureTypes are just tuples)
+    for feature in FeatureTypes # from HaarLikeObject.jl (FeatureTypes are just tuples)
         featureStartWidth = max(minFeatureWidth, feature[1])
         for featureWidth in range(featureStartWidth, stop=maxFeatureWidth, step=feature[1])
             featureStartHeight = max(minFeatureHeight, feature[2])
             for featureHeight in range(featureStartHeight, stop=maxFeatureHeight, step=feature[2])
                 for x in 1:(imgWidth - featureWidth)
                     for y in 1:(imgHeight - featureHeight)
-                        features = push!(features, HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, 1))
-                        features = push!(features, HaarLikeFeature(feature, (x, y), featureWidth, featureHeight, 0, -1))
+                        features = push!(features, HaarLikeObject(feature, (x, y), featureWidth, featureHeight, 0, 1))
+                        features = push!(features, HaarLikeObject(feature, (x, y), featureWidth, featureHeight, 0, -1))
                     end # end for y
                 end # end for x
             end # end for feature height
@@ -184,6 +191,4 @@ function _create_features(imgHeight::Int64, imgWidth::Int64, minFeatureWidth::In
 end
 
 
-export learn
-export _get_feature_vote
-export _create_features
+end # end module

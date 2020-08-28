@@ -4,7 +4,12 @@
     "${BASH_SOURCE[0]}" "$@"
     =#
 
-using Test
-using FaceDetection
+include(joinpath(homedir(), "FaceDetection.jl", "src", "FaceDetection.jl"))
 
-# @test ... == ...
+using .FaceDetection
+using Test: @test
+
+# write your own tests here
+@test 1 == 1
+# @test
+

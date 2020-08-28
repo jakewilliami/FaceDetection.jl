@@ -14,6 +14,10 @@ Original    Integral
 | . . . .   | . . . . .
 =#
 
+module IntegralImage
+
+export toIntegralImage, sumRegion
+
 
 function toIntegralImage(imgArr::AbstractArray)
     #=
@@ -96,6 +100,4 @@ function sumRegion(integralImageArr::AbstractArray, topLeft::Tuple{Int64,Int64},
     return bottomRightVal - topRightVal - bottomLeftVal + topLeftVal
 end
 
-
-export toIntegralImage
-export sumRegion
+end # end module

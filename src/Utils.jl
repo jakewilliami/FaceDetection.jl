@@ -5,9 +5,14 @@
     =#
 
 
-using Images: save, load, Colors, clamp01nan, Gray
+module Utils
 
 include("HaarLikeFeature.jl")
+
+using Images: save, load, Colors, clamp01nan, Gray
+using .HaarLikeFeature: FeatureTypes, HaarLikeObject, getScore, getVote
+
+export displaymatrix, notifyUser, loadImages, getImageMatrix, ensembleVote, ensembleVoteAll, reconstruct, getRandomImage, generateValidationImage
 
 
 function displaymatrix(M::AbstractArray)
@@ -72,7 +77,7 @@ function ensembleVote(intImg::AbstractArray, classifiers::AbstractArray)
     That is, the final strong classifier is $h(x)=\begin{cases}1&\text{if }\sum_{t=1}^{T}\alpha_th_t(x)\geq \frac{1}{2}\sum_{t=1}^{T}\alpha_t\\0&\text{otherwise}\end{cases}$, where $\alpha_t=\log{\left(\frac{1}{\beta_t}\right)}$
     
     parameter `intImg`: Integral image to be classified [type: AbstractArray]
-    parameter `classifiers`: List of classifiers [type: AbstractArray (array of HaarLikeFeatures)]
+    parameter `classifiers`: List of classifiers [type: AbstractArray (array of HaarLikeObjects)]
 
     return:
         1       ⟺ sum of classifier votes > 0
@@ -88,7 +93,7 @@ function ensembleVoteAll(intImgs::AbstractArray, classifiers::AbstractArray)
     Classifies given integral image (Abstract Array) using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
     
     parameter `intImg`: Integral image to be classified [type: AbstractArray]
-    parameter `classifiers`: List of classifiers [type: AbstractArray (array of HaarLikeFeatures)]
+    parameter `classifiers`: List of classifiers [type: AbstractArray (array of HaarLikeObjects)]
 
     return list of assigned labels:
         1       if image was classified positively
@@ -115,7 +120,7 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
     #=
     Creates an image by putting all given classifiers on top of each other producing an archetype of the learned class of object.
     
-    parameter `classifiers`: List of classifiers [type: Abstract Array (array of HaarLikeFeatures)]
+    parameter `classifiers`: List of classifiers [type: Abstract Array (array of HaarLikeObjects)]
     parameter `imgSize`: Tuple of width and height [Tuple]
 
     return `result`: Reconstructed image [type: PIL.Image??]
@@ -186,7 +191,7 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
     # image .*= 255
     #
     # image = replace!(image, NaN=>0.0) # change NaN to white (not that there should be any NaN values)
-    # 
+    #
     return image
 end
 
@@ -231,12 +236,4 @@ function generateValidationImage()
 end
 
 
-export displaymatrix
-export notifyUser
-export loadImages
-export getImageMatrix
-export ensembleVote
-export ensembleVoteAll
-export reconstruct
-export getRandomImage
-export generateValidationImage
+end # end module

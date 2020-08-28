@@ -5,13 +5,23 @@
     =#
     
 
+module HaarLikeFeature
+
+include("IntegralImage.jl")
+
+using .IntegralImage: toIntegralImage, sumRegion
+
+export FeatureTypes, HaarLikeObject, getScore, getVote
+
+
 FeatureTypes = [(1, 2), (2, 1), (3, 1), (1, 3), (2, 2)]
 
 
-abstract type HaarFeatureType end
+abstract type HaarFeatureAbstractType end
+# abstract type AbstractHaarLikeObject <: HaarFeatureAbstractType end
 
 # make structure
-mutable struct HaarLikeFeature <: HaarFeatureType
+mutable struct HaarLikeObject <: HaarFeatureAbstractType
     #=
     Struct representing a Haar-like feature.
     =#
@@ -26,8 +36,8 @@ mutable struct HaarLikeFeature <: HaarFeatureType
     polarity::Int64
     weight::Float64
     
-    # constructor; equivalent of __init__ method within class # ::CartesianIndex
-    function HaarLikeFeature(featureType::Tuple{Int64,Int64}, position::Tuple{Int64, Int64}, width::Int64, height::Int64, threshold::Int64, polarity::Int64)
+    # constructor; equivalent of __init__ method within class
+    function HaarLikeObject(featureType::Tuple{Int64,Int64}, position::Tuple{Int64, Int64}, width::Int64, height::Int64, threshold::Int64, polarity::Int64)
         topLeft = position
         bottomRight = (position[1] + width, position[2] + height)
         weight = 1
@@ -37,11 +47,11 @@ mutable struct HaarLikeFeature <: HaarFeatureType
 end # end structure
 
 
-function getScore(feature::HaarLikeFeature, intImg::Array)
+function getScore(feature, intImg::Array)#function getScore(feature::HaarLikeObject, intImg::Array)
         #=
         Get score for given integral image array.
         
-        parameter `feature`: given Haar-like feature (parameterised replacement of Python's `self`) [type: HaarLikeFeature]
+        parameter `feature`: given Haar-like feature (parameterised replacement of Python's `self`) [type: HaarLikeObject]
         parameter `intImg`: Integral image array [type: Abstract Array]
         
         return `score`: Score for given feature [type: Float]
@@ -84,11 +94,11 @@ end
 
 
 
-function getVote(feature::HaarLikeFeature, intImg::AbstractArray)
+function getVote(feature, intImg::AbstractArray)#function getVote(feature::HaarLikeObject, intImg::AbstractArray)
     #=
     Get vote of this feature for given integral image.
     
-    parameter `feature`: given Haar-like feature (parameterised replacement of Python's `self`) [type: HaarLikeFeature]
+    parameter `feature`: given Haar-like feature (parameterised replacement of Python's `self`) [type: HaarLikeObject]
     parameter `intImg`: Integral image array [type: Abstract Array]
     
     return:
@@ -104,6 +114,4 @@ function getVote(feature::HaarLikeFeature, intImg::AbstractArray)
 end
 
 
-export HaarLikeFeature
-export getScore
-export getVote
+end # end module
