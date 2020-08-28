@@ -16,11 +16,21 @@ Original    Integral
 
 module IntegralImage
 
+import Base: size, getindex, LinearIndices
+using IntervalSets: ClosedInterval
+using Images: Images, coords_spatial
+
+
 export toIntegralImage, sumRegion
 
 
+struct IntegralArray{T, N, A} <: AbstractArray{T, N}
+	data::A
+end
+
+
 function toIntegralImage(imgArr::AbstractArray)
-    #=
+	#=
     Calculates the integral image based on this instance's original image data.
     
     parameter `imgArr`: Image source data [type: Abstract Array]
@@ -28,47 +38,26 @@ function toIntegralImage(imgArr::AbstractArray)
     return `integralImageArr`: Integral image for given image [type: Abstract Array]
     
     https://www.ipol.im/pub/art/2014/57/article_lr.pdf, p. 346
+    
+    This function is adapted from https://github.com/JuliaImages/IntegralArrays.jl/blob/a2aa5bb7c2d26512f562ab98f43497d695b84701/src/IntegralArrays.jl
     =#
-    
-    arrRows, arrCols = size(imgArr) # get size only once in case
-    rowSum = zeros(arrRows, arrCols)
-    integralImageArr = zeros(arrRows, arrCols)
-    
-    # process the first column
-    for x in 1:(arrRows)
-        # we cannot access an element that does not exist if we are in the top left corner of the image matrix
-        if isone(x)
-            integralImageArr[x, 1] = imgArr[x, 1]
-        else
-            integralImageArr[x, 1] = integralImageArr[x-1, 1] + imgArr[x, 1]
-        end
+	
+	arraySize = size(imgArr)
+    integralImageArr = Array{Images.accum(eltype(imgArr))}(undef, arraySize)
+    sd = coords_spatial(imgArr)
+    cumsum!(integralImageArr, imgArr; dims=sd[1])#length(arraySize)
+    for i = 2:length(sd)
+        cumsum!(integralImageArr, integralImageArr; dims=sd[i])
     end
-    
-    # start processing columns
-    for y in 1:(arrCols)
-        # same as above: we cannot access a 0th element in the matrix our scalar accumulator s will catch the 1st row, so we only needed to predefine the first column before this loop
-        if isone(y)
-            continue
-        end
-        
-        # get initial row
-        s = imgArr[1, y] # scalar accumulator
-        integralImageArr[1, y] = integralImageArr[1, y-1] + s
-        
-        # now start processing everything else
-        for x in 1:(arrRows)
-            if isone(x)
-                continue
-            end
-            s = s + imgArr[x, y]
-            integralImageArr[x, y] = integralImageArr[x, y-1] + s
-        end
-    end
-    
-    return integralImageArr
-
+	
+    return Array{eltype(imgArr), ndims(imgArr)}(integralImageArr)
 end
-    
+
+LinearIndices(A::IntegralArray) = Base.LinearFast()
+size(A::IntegralArray) = size(A.data)
+getindex(A::IntegralArray, i::Int...) = A.data[i...]
+getindex(A::IntegralArray, ids::Tuple...) = getindex(A, ids[1]...)
+
 
 function sumRegion(integralImageArr::AbstractArray, topLeft::Tuple{Int64,Int64}, bottomRight::Tuple{Int64,Int64})
     #=
@@ -79,25 +68,13 @@ function sumRegion(integralImageArr::AbstractArray, topLeft::Tuple{Int64,Int64},
     
     return: The sum of all pixels in the given rectangle defined by the parameters topLeft and bottomRight
     =#
-    
-    # swap tuples
-    topLeft = (topLeft[2], topLeft[1])
-    bottomRight = (bottomRight[2], bottomRight[1])
-    
-    if isequal(topLeft, bottomRight)
-        return integralImageArr[topLeft[1], topLeft[2]]
-    end
-    
-    # construct rectangles
-    topRight = (bottomRight[1], topLeft[2])
-    bottomLeft = (topLeft[1], bottomRight[2])
-    
-    topLeftVal = integralImageArr[topLeft[1], topLeft[2]]
-    bottomRightVal = integralImageArr[bottomRight[1], bottomRight[2]]
-    topRightVal = integralImageArr[topRight[1], topRight[2]]
-    bottomLeftVal = integralImageArr[bottomLeft[1], bottomLeft[2]]
-    
-    return bottomRightVal - topRightVal - bottomLeftVal + topLeftVal
+	
+	sum = integralImageArr[bottomRight[2], bottomRight[1]]
+    sum -= topLeft[1] > 1 ? integralImageArr[bottomRight[2], topLeft[1] - 1] : 0
+    sum -= topLeft[2] > 1 ? integralImageArr[topLeft[2] - 1, bottomRight[1]] : 0
+    sum += topLeft[2] > 1 && topLeft[1] > 1 ? integralImageArr[topLeft[2] - 1, topLeft[1] - 1] : 0
+	
+    return sum
 end
 
 end # end module

@@ -232,6 +232,19 @@ function generateValidationImage()
         end
     end
     
+    # using TestImages, ImageDraw, ColorVectorSpace, ImageCore
+    # img = testimage("lighthouse");
+    #
+    ## save("image.png", draw!(img, RegularPolygon(Point(200,150), 4, 50, 0), RGB{N0f8}(1))) # point::CartesianIndex{2}, side_count::Int, side_length::T, θ::U
+    # save("image1.png", draw!(img, Polygon([Point(200,150), Point(150,300), Point(300,200), Point(200,150)])))
+    
+#     #Arguments
+# * `center::Point` : the center of the polygon
+# * `side_count::Int` : number of sides of the polygon
+# * `side_length::Real` : length of each side
+# * `θ::Real` : orientation of the polygon w.r.t x-axis (in radians)
+
+    
     save("/Users/jakeireland/Desktop/test.png", Gray.(map(clamp01nan, newImg)))
 end
 
