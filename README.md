@@ -39,9 +39,9 @@ After you have setup your workspace, simply run
 
 ## Timeline of Progression
 
- - [https://github.com/jakewilliami/FaceDetection.jl/commit/a79ab6f9](a79ab6f9) &mdash; Began working on the algorithm; mainly figuring out best way to go about this implementation.
- - [https://github.com/jakewilliami/FaceDetection.jl/commit/fd5e645c](fd5e645c) &mdash; First "Julia" adaptation of the algorithm; still a *lot* of bugs to figure out.
- - [https://github.com/jakewilliami/FaceDetection.jl/commit/2fcae630](2fcae630) &mdash; Started bug fixing using `src/FDA.jl` (the main example file).
- - [https://github.com/jakewilliami/FaceDetection.jl/commit/f1f5b5ea](f1f5b5ea) &mdash; Getting along very well with bug fixing (created a `struct` for Haar-like feature; updated weighting calculations; fixed `hstack` translation with nested arrays).  Added detailed comments on each function.
- - [https://github.com/jakewilliami/FaceDetection.jl/commit/a9e10eb4](a9e10eb4) &mdash; First working draft of the algorithm (without image reconstruction)!
- - [https://github.com/jakewilliami/FaceDetection.jl/commit/6b35f6d5](6b35f6d5) &mdash; Finally, the algorithm works as it should.  Just enhancements from here on out.
+ - [a79ab6f9](https://github.com/jakewilliami/FaceDetection.jl/commit/a79ab6f9) &mdash; Began working on the algorithm; mainly figuring out best way to go about this implementation.
+ - [fd5e645c](https://github.com/jakewilliami/FaceDetection.jl/commit/fd5e645c) &mdash; First "Julia" adaptation of the algorithm; still a *lot* of bugs to figure out.
+ - [2fcae630](https://github.com/jakewilliami/FaceDetection.jl/commit/2fcae630) &mdash; Started bug fixing using `src/FDA.jl` (the main example file).
+ - [f1f5b5ea](https://github.com/jakewilliami/FaceDetection.jl/commit/f1f5b5ea) &mdash; Getting along very well with bug fixing (created a `struct` for Haar-like feature; updated weighting calculations; fixed `hstack` translation with nested arrays).  Added detailed comments on each function.
+ - [a9e10eb4](https://github.com/jakewilliami/FaceDetection.jl/commit/a9e10eb4) &mdash; First working draft of the algorithm (without image reconstruction)!
+ - [6b35f6d5](https://github.com/jakewilliami/FaceDetection.jl/commit/6b35f6d5) &mdash; Finally, the algorithm works as it should.  Just enhancements from here on out.
