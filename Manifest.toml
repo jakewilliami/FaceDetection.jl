@@ -167,6 +167,12 @@ git-tree-sha1 = "cf9b02b9f5e33c768c223de6d8f7d1b6d0cf4136"
 uuid = "51556ac3-7006-55f5-8cb3-34580c88182d"
 version = "0.2.7"
 
+[[ImageDraw]]
+deps = ["Distances", "ImageCore", "LinearAlgebra"]
+git-tree-sha1 = "b7035a0f8df2c40d29b9c25572b058c74a027d01"
+uuid = "4381153b-2b60-58ae-a1ba-fd683676385f"
+version = "0.2.3"
+
 [[ImageFiltering]]
 deps = ["CatIndices", "ColorVectorSpace", "ComputationalResources", "DataStructures", "FFTViews", "FFTW", "ImageCore", "ImageMetadata", "LinearAlgebra", "MappedArrays", "OffsetArrays", "Requires", "StaticArrays", "Statistics", "TiledIteration"]
 git-tree-sha1 = "1587838842e1c35381c59cc52dbabca37bbc458d"

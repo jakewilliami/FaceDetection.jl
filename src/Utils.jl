@@ -10,6 +10,7 @@ module Utils
 include("HaarLikeFeature.jl")
 
 using Images: save, load, Colors, clamp01nan, Gray
+using ImageDraw: draw!, Polygon, Point
 using .HaarLikeFeature: FeatureTypes, HaarLikeObject, getScore, getVote
 
 export displaymatrix, notifyUser, loadImages, getImageMatrix, ensembleVote, ensembleVoteAll, reconstruct, getRandomImage, generateValidationImage
@@ -196,7 +197,7 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
 end
 
 
-function getRandomImage(facePath::AbstractString, nonFacePath::AbstractString)
+function getRandomImage(facePath::AbstractString, nonFacePath::AbstractString="", nonFaces::Bool=false)
     #=
     Chooses a random image from a given two directories.
     
@@ -206,37 +207,95 @@ function getRandomImage(facePath::AbstractString, nonFacePath::AbstractString)
     return `fileName`: The path to the file randomly chosen [type: Abstract String (path)]
     =#
     
-    face = rand(Bool)
-    fileName = rand(readdir(face ? facePath : nonFacePath, join=true))
-    return fileName
+    if nonFaces
+        face = rand(Bool)
+        fileName = rand(filter(f -> f != ".DS_Store", readdir(face ? facePath : nonFacePath, join=true)))
+        return fileName
+    elseif ! nonFaces
+        fileName = rand(filter(f -> f != ".DS_Store", readdir(facePath, join=true)))
+        return fileName
+    end
 end
 
 
-function generateValidationImage()
+function generateValidationImage(imagePath::AbstractString, classifiers::AbstractArray)
     #=
     ...?
     =#
     
-    images = map(load, [getRandomImage() for _ in 1:169])
-    newImage = new("RGB", (256, 256))
-    tlx = 0
-    tly = 0
+    img = load(imagePath)
     
-    for img in images
-        new_img.paste(img, (tlx, tly))
-        if tlx < 12*19
-            tlx += 19
-        else
-            tlx = 0
-            tly += 19
-        end
+    imgSize = size(img)
+    
+    topLeft = (0,0)
+    bottomRight = (0,0)
+    bottomLeft = (0,0)
+    topRight = (0,0)
+    
+    features = []
+    
+    for c in classifiers
+        features = push!(features, (c.topLeft, c.bottomRight))
+        # if c.featureType == FeatureTypes[1] # two vertical
+        #     features = push!(features, (c.topLeft, c.bottomRight))
+        # elseif c.featureType == FeatureTypes[2] # two horizontal
+        # elseif c.featureType == FeatureTypes[3] # three horizontal
+        # elseif c.featureType == FeatureTypes[4] # three vertical
+        # elseif c.featureType == FeatureTypes[5] # four
+        # end
     end
+    
+    # todo: figure out rectangles over boxes.  This includes finding the smallest image in size and converting the random input to that size if needed (requires importing another module).  bottom right needs to have smallest y but greatest x, etc.
+    
+    # chosenTopLeft = (0, 0)
+    # chosenBottomRight = (0, 0)
+    #
+    # for f in features # iterate through elements in features (e.g., Any[((9, 2), (17, 12)), ((11, 8), (19, 16))])
+    #     # for t in f # iterate through inner tuples
+    #         chosenTopLeft = chosenTopLeft > f[1] || chosenTopLeft > f[1] ? chosenTopLeft : f[1]
+    #         chosenBottomRight = chosenBottomRight > f[2] || chosenBottomRight > f[2] ? chosenBottomRight : f[2]
+    #     # end
+    # end
+    
+    reasonableProportion = Int(round(0.26 * minimum(imgSize)))
+    
+    topLeft = (reasonableProportion, reasonableProportion)
+    bottomRight = (imgSize[1] - reasonableProportion, imgSize[2] - reasonableProportion)
+    bottomLeft = (reasonableProportion, imgSize[2] - reasonableProportion)
+    topRight = (imgSize[1] - reasonableProportion, reasonableProportion)
+    
+    
+    
+    
+    
+    # for image in images:
+    # faces = face_cascade_alt2.detectMultiScale(image['GRAY'], 1.3, 5)
+    # for (x,y,w,h) in faces:
+    #     cv.rectangle(image['GRAY'],(x,y),(x+w,y+h),(255,0,0), 8)
+    #     list_of_faces.append(stretch(image['RGB'][y:y+h, x:x+w]))
+    # faces_2 = face_cascade.detectMultiScale(image['GRAY'], 1.3, 5)
+    # for (x,y,w,h) in faces_2:
+    #     if (x,y,w,h) not in faces:
+    #         # cv.rectangle(image['GRAY'], (x, y), (x + w, y + h), (255, 0, 0), 8)
+    #         list_of_faces.append(stretch(image['RGB'][y:y + h, x:x + w]))
+    # faces_3 = face_cascade_alt.detectMultiScale(image['GRAY'], 1.3, 5)
+    # for (x, y, w, h) in faces_3:
+    #     if (x, y, w, h) not in faces:
+    #         # cv.rectangle(image['GRAY'], (x, y), (x + w, y + h), (255, 0, 0), 8)
+    #         list_of_faces.append(stretch(image['RGB'][y:y + h, x:x + w]))
+    # faces_4 = face_cascade_alt_tree.detectMultiScale(image['GRAY'], 1.3, 5)
+    # for (x, y, w, h) in faces_4:
+    #     if (x, y, w, h) not in faces:
+    #         # cv.rectangle(image['GRAY'], (x, y), (x + w, y + h), (255, 0, 0), 8)
+    #         list_of_faces.append(stretch(image['RGB'][y:y + h, x:x + w]))
+    
+    
     
     # using TestImages, ImageDraw, ColorVectorSpace, ImageCore
     # img = testimage("lighthouse");
     #
     ## save("image.png", draw!(img, RegularPolygon(Point(200,150), 4, 50, 0), RGB{N0f8}(1))) # point::CartesianIndex{2}, side_count::Int, side_length::T, θ::U
-    # save("image1.png", draw!(img, Polygon([Point(200,150), Point(150,300), Point(300,200), Point(200,150)])))
+    return save(joinpath(homedir(), "Desktop", "validation.png"), draw!(img, Polygon([Point(topLeft), Point(bottomLeft), Point(bottomRight), Point(topRight)])))
     
 #     #Arguments
 # * `center::Point` : the center of the polygon
@@ -245,7 +304,7 @@ function generateValidationImage()
 # * `θ::Real` : orientation of the polygon w.r.t x-axis (in radians)
 
     
-    save("/Users/jakeireland/Desktop/test.png", Gray.(map(clamp01nan, newImg)))
+    # save("/Users/jakeireland/Desktop/test.png", Gray.(map(clamp01nan, newImg)))
 end
 
 

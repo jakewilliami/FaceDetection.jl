@@ -18,7 +18,7 @@ using Printf: @printf
 using Images: Gray, clamp01nan, save
 
 
-function main(alt::Bool=false, imageReconstruction::Bool=false)
+function main(smartChooseFeats::Bool=false, alt::Bool=false, imageReconstruction::Bool=false, featValidaton::Bool=true)
       mainPath = "/Users/jakeireland/FaceDetection.jl/"
       mainImagePath = "$mainPath/data/main/"
       altImagePath = "$mainPath/data/alt/"
@@ -36,11 +36,14 @@ function main(alt::Bool=false, imageReconstruction::Bool=false)
       end
 
       numClassifiers = 10
-      # For performance reasons restricting feature size
-      minFeatureHeight = 8
-      maxFeatureHeight = 10
-      minFeatureWidth = 8
-      maxFeatureWidth = 10
+
+      if ! smartChooseFeats
+            # For performance reasons restricting feature size
+            minFeatureHeight = 8
+            maxFeatureHeight = 10
+            minFeatureWidth = 8
+            maxFeatureWidth = 10
+      end
 
 
       notifyUser("Loading faces...")
@@ -99,8 +102,16 @@ function main(alt::Bool=false, imageReconstruction::Bool=false)
             
             println("...done.  See ", joinpath(homedir(), "Desktop", "reconstruction.png"), ".\n")
       end
+      
+      if featValidaton
+            notifyUser("Constructing a validation image on a random image...")
+            
+            generateValidationImage(getRandomImage(joinpath(homedir(), "Desktop", "faces"), joinpath(homedir(), "Desktop", "non")), classifiers)
+            
+            println("...done.  See ", joinpath(homedir(), "Desktop", "validation.png"), ".\n")
+      end
 end
 
 
 
-@time main(false, true)
+@time main(false, false, true, true)

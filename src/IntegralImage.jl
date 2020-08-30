@@ -17,7 +17,6 @@ Original    Integral
 module IntegralImage
 
 import Base: size, getindex, LinearIndices
-using IntervalSets: ClosedInterval
 using Images: Images, coords_spatial
 
 
