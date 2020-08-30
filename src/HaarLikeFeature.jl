@@ -9,7 +9,7 @@ module HaarLikeFeature
 
 include("IntegralImage.jl")
 
-using .IntegralImage: toIntegralImage, sumRegion
+using .IntegralImage: sumRegion
 
 export FeatureTypes, HaarLikeObject, getScore, getVote
 
@@ -60,32 +60,32 @@ function getScore(feature, intImg::Array)#function getScore(feature::HaarLikeObj
         score = 0
 
         if feature.featureType == FeatureTypes[1] # two vertical
-            first = sumRegion(intImg, feature.topLeft, (feature.topLeft[1] + feature.width, Int(round(feature.topLeft[2] + feature.height / 2))))
-            second = sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 2))), feature.bottomRight)
+            first = IntegralImage.sumRegion(intImg, feature.topLeft, (feature.topLeft[1] + feature.width, Int(round(feature.topLeft[2] + feature.height / 2))))
+            second = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 2))), feature.bottomRight)
             score = first - second
         elseif feature.featureType == FeatureTypes[2] # two horizontal
-            first = sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2] + feature.height))
-            second = sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2]), feature.bottomRight)
+            first = IntegralImage.sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2] + feature.height))
+            second = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2]), feature.bottomRight)
             score = first - second
         elseif feature.featureType == FeatureTypes[3] # three horizontal
-            first = sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 3)), feature.topLeft[2] + feature.height))
-            second = sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 3)), feature.topLeft[2]), (Int(round(feature.topLeft[1] + 2 * feature.width / 3)), feature.topLeft[2] + feature.height))
-            third = sumRegion(intImg, (Int(round(feature.topLeft[1] + 2 * feature.width / 3)), feature.topLeft[2]), feature.bottomRight)
+            first = IntegralImage.sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 3)), feature.topLeft[2] + feature.height))
+            second = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 3)), feature.topLeft[2]), (Int(round(feature.topLeft[1] + 2 * feature.width / 3)), feature.topLeft[2] + feature.height))
+            third = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + 2 * feature.width / 3)), feature.topLeft[2]), feature.bottomRight)
             score = first - second + third
         elseif feature.featureType == FeatureTypes[4] # three vertical
-            first = sumRegion(intImg, feature.topLeft, (feature.bottomRight[1], Int(round(feature.topLeft[2] + feature.height / 3))))
-            second = sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 3))), (feature.bottomRight[1], Int(round(feature.topLeft[2] + 2 * feature.height / 3))))
-            third = sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + 2 * feature.height / 3))), feature.bottomRight)
+            first = IntegralImage.sumRegion(intImg, feature.topLeft, (feature.bottomRight[1], Int(round(feature.topLeft[2] + feature.height / 3))))
+            second = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 3))), (feature.bottomRight[1], Int(round(feature.topLeft[2] + 2 * feature.height / 3))))
+            third = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + 2 * feature.height / 3))), feature.bottomRight)
             score = first - second + third
         elseif feature.featureType == FeatureTypes[5] # four
             # top left area
-            first = sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 2)), Int(round(feature.topLeft[2] + feature.height / 2))))
+            first = IntegralImage.sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 2)), Int(round(feature.topLeft[2] + feature.height / 2))))
             # top right area
-            second = sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2]), (feature.bottomRight[1], Int(round(feature.topLeft[2] + feature.height / 2))))
+            second = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2]), (feature.bottomRight[1], Int(round(feature.topLeft[2] + feature.height / 2))))
             # bottom left area
-            third = sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 2))), (Int(round(feature.topLeft[1] + feature.width / 2)), feature.bottomRight[2]))
+            third = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 2))), (Int(round(feature.topLeft[1] + feature.width / 2)), feature.bottomRight[2]))
             # bottom right area
-            fourth = sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), Int(round(feature.topLeft[2] + feature.height / 2))), feature.bottomRight)
+            fourth = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), Int(round(feature.topLeft[2] + feature.height / 2))), feature.bottomRight)
             score = first - second - third + fourth
         end
         

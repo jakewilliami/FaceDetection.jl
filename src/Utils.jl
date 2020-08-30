@@ -11,9 +11,9 @@ include("HaarLikeFeature.jl")
 
 using Images: save, load, Colors, clamp01nan, Gray
 using ImageDraw: draw!, Polygon, Point
-using .HaarLikeFeature: FeatureTypes, HaarLikeObject, getScore, getVote
+using .HaarLikeFeature: FeatureTypes, getVote
 
-export displaymatrix, notifyUser, loadImages, getImageMatrix, ensembleVote, ensembleVoteAll, reconstruct, getRandomImage, generateValidationImage
+export displaymatrix, notifyUser, loadImages, ensembleVoteAll, reconstruct, getRandomImage, generateValidationImage #, getImageMatrix, ensembleVote
 
 
 function displaymatrix(M::AbstractArray)
@@ -35,7 +35,7 @@ end
 
 function loadImages(imageDir::AbstractString)
     #=
-    Given a path to a directory of images, recursively loads those images.
+    Given a path to a directory of images, recursively loads those
     
     parameter `imageDir`: path to a directory of images [type: Abstract String (path)]
     
@@ -85,7 +85,7 @@ function ensembleVote(intImg::AbstractArray, classifiers::AbstractArray)
         0       otherwise
     [type: Integer]
     =#
-    return sum([getVote(c, intImg) for c in classifiers]) >= 0 ? 1 : 0
+    return sum([HaarLikeFeature.getVote(c, intImg) for c in classifiers]) >= 0 ? 1 : 0
 end
 
 
@@ -132,7 +132,7 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
     for c in classifiers
         # map polarity: -1 -> 0, 1 -> 1
         polarity = ((1 + c.polarity)^2)/4
-        if c.featureType == FeatureTypes[1] # two vertical
+        if c.featureType == HaarLikeFeature.FeatureTypes[1] # two vertical
             for x in 1:c.width
                 sign = polarity
                 for y in 1:c.height
@@ -142,7 +142,7 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
                     image[c.topLeft[2] + y, c.topLeft[1] + x] += 1 * sign * c.weight
                 end
             end
-        elseif c.featureType == FeatureTypes[2] # two horizontal
+        elseif c.featureType == HaarLikeFeature.FeatureTypes[2] # two horizontal
             sign = polarity
             for x in 1:c.width
                 if x >= c.width/2
@@ -152,7 +152,7 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
                     image[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.featureType == FeatureTypes[3] # three horizontal
+        elseif c.featureType == HaarLikeFeature.FeatureTypes[3] # three horizontal
             sign = polarity
             for x in 1:c.width
                 if iszero(mod(x, c.width/3))
@@ -162,7 +162,7 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
                     image[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.featureType == FeatureTypes[4] # three vertical
+        elseif c.featureType == HaarLikeFeature.FeatureTypes[4] # three vertical
             for x in 1:c.width
                 sign = polarity
                 for y in 1:c.height
@@ -172,7 +172,7 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
                     image[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.featureType == FeatureTypes[5] # four
+        elseif c.featureType == HaarLikeFeature.FeatureTypes[5] # four
             sign = polarity
             for x in 1:c.width
                 if iszero(mod(x, c.width/2))
@@ -195,6 +195,9 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
     #
     return image
 end
+
+
+# function findSmallestImage()
 
 
 function getRandomImage(facePath::AbstractString, nonFacePath::AbstractString="", nonFaces::Bool=false)
@@ -236,12 +239,12 @@ function generateValidationImage(imagePath::AbstractString, classifiers::Abstrac
     
     for c in classifiers
         features = push!(features, (c.topLeft, c.bottomRight))
-        # if c.featureType == FeatureTypes[1] # two vertical
+        # if c.featureType == HaarLikeFeature.FeatureTypes[1] # two vertical
         #     features = push!(features, (c.topLeft, c.bottomRight))
-        # elseif c.featureType == FeatureTypes[2] # two horizontal
-        # elseif c.featureType == FeatureTypes[3] # three horizontal
-        # elseif c.featureType == FeatureTypes[4] # three vertical
-        # elseif c.featureType == FeatureTypes[5] # four
+        # elseif c.featureType == HaarLikeFeature.FeatureTypes[2] # two horizontal
+        # elseif c.featureType == HaarLikeFeature.FeatureTypes[3] # three horizontal
+        # elseif c.featureType == HaarLikeFeature.FeatureTypes[4] # three vertical
+        # elseif c.featureType == HaarLikeFeature.FeatureTypes[5] # four
         # end
     end
     

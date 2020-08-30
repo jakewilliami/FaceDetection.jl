@@ -15,7 +15,7 @@ include("Utils.jl")
 
 using .IntegralImage: toIntegralImage, sumRegion
 using .HaarLikeFeature: FeatureTypes, HaarLikeObject, getScore, getVote
-using .Adaboost: learn, _get_feature_vote, _create_features
+using .AdaBoost: learn, _get_feature_vote, _create_features
 using .Utils: displaymatrix, notifyUser, loadImages, getImageMatrix, ensembleVote, ensembleVoteAll, reconstruct, getRandomImage, generateValidationImage
 
 end # end module

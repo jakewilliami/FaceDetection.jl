@@ -9,16 +9,16 @@
 # TODO: attentional cascading
 
 
-module Adaboost
+module AdaBoost
 
 include("HaarLikeFeature.jl")
 include("Utils.jl")
 
 using ProgressMeter: @showprogress
-using .HaarLikeFeature: FeatureTypes, HaarLikeObject, getScore, getVote
+using .HaarLikeFeature: FeatureTypes, HaarLikeObject, getVote
 using .Utils: notifyUser
 
-export learn, _get_feature_vote, _create_features
+export learn #,  _get_feature_vote, _create_features
 
 
 function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassifiers::Int64=-1, minFeatureWidth::Int64=1, maxFeatureWidth::Int64=-1, minFeatureHeight::Int64=1, maxFeatureHeight::Int64=-1)
@@ -82,7 +82,7 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         numClassifiers = numFeatures
     end
     
-    notifyUser("Calculating scores for images...")
+    Utils.notifyUser("Calculating scores for images...")
     
     # create an empty array (of zeroes) with dimensions (numImgs, numFeautures)
     votes = zeros((numImgs, numFeatures)) # necessarily different from `zero.((numImgs, numFeatures))`; previously zerosarray
@@ -98,7 +98,7 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
     # select classifiers
     classifiers = []
 
-    notifyUser("Selecting classifiers...")
+    Utils.notifyUser("Selecting classifiers...")
     
     n = numClassifiers
     @showprogress for t in 1:numClassifiers
@@ -143,7 +143,7 @@ end
 
 
 function _get_feature_vote(feature::HaarLikeObject, image::AbstractArray)
-    return getVote(feature, image)
+    return HaarLikeFeature.getVote(feature, image)
 end
 
 
@@ -161,7 +161,7 @@ function _create_features(imgHeight::Int64, imgWidth::Int64, minFeatureWidth::In
     return `features`: an array of Haar-like features found for an image [type: Abstract Array]
     =#
     
-    notifyUser("Creating Haar-like features...")
+    Utils.notifyUser("Creating Haar-like features...")
     features = []
     
     if imgWidth < maxFeatureWidth || imgHeight < maxFeatureHeight
@@ -170,15 +170,15 @@ function _create_features(imgHeight::Int64, imgWidth::Int64, minFeatureWidth::In
         """)
     end
     
-    for feature in FeatureTypes # from HaarLikeObject.jl (FeatureTypes are just tuples)
+    for feature in HaarLikeFeature.FeatureTypes # from HaarLikeObject.jl (FeatureTypes are just tuples)
         featureStartWidth = max(minFeatureWidth, feature[1])
         for featureWidth in range(featureStartWidth, stop=maxFeatureWidth, step=feature[1])
             featureStartHeight = max(minFeatureHeight, feature[2])
             for featureHeight in range(featureStartHeight, stop=maxFeatureHeight, step=feature[2])
                 for x in 1:(imgWidth - featureWidth)
                     for y in 1:(imgHeight - featureHeight)
-                        features = push!(features, HaarLikeObject(feature, (x, y), featureWidth, featureHeight, 0, 1))
-                        features = push!(features, HaarLikeObject(feature, (x, y), featureWidth, featureHeight, 0, -1))
+                        features = push!(features, HaarLikeFeature.HaarLikeObject(feature, (x, y), featureWidth, featureHeight, 0, 1))
+                        features = push!(features, HaarLikeFeature.HaarLikeObject(feature, (x, y), featureWidth, featureHeight, 0, -1))
                     end # end for y
                 end # end for x
             end # end for feature height
