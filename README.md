@@ -1,4 +1,7 @@
-# FaceDetection using Viola-Jones' Robust Algorithm for Object Detection
+<h1 align="center">
+   FaceDetection using Viola-Jones' Robust Algorithm for Object Detection
+</h1>
+
 
 ## Introduction
 
@@ -45,3 +48,20 @@ After you have setup your workspace, simply run
  - [f1f5b5ea](https://github.com/jakewilliami/FaceDetection.jl/commit/f1f5b5ea) &mdash; Getting along very well with bug fixing (created a `struct` for Haar-like feature; updated weighting calculations; fixed `hstack` translation with nested arrays).  Added detailed comments on each function.
  - [a9e10eb4](https://github.com/jakewilliami/FaceDetection.jl/commit/a9e10eb4) &mdash; First working draft of the algorithm (without image reconstruction)!
  - [6b35f6d5](https://github.com/jakewilliami/FaceDetection.jl/commit/6b35f6d5) &mdash; Finally, the algorithm works as it should.  Just enhancements from here on out.
+
+
+## Notes (TODO)
+
+ - At the moment, `QuartzImageIO` is required to read `.jpg` files, but the programme is not set up to do so.  At the minute, this programme only accepts `.png` and `.pgm` files (thank's to `ImageIO` and `Netpbm` respectively).
+ - I am unsure at the moment whether this programme will work if the test images are of differing dimensionality to the training faces.  I suspect it won't, but I will test this soon.
+
+## Acknowledgements
+
+Thank you to:
+
+ - [*Simon Honberg*](https://github.com/Simon-Hohberg) for the original open-source Python code upon which this repository is largely based.  This has provided me with an easy-to-read and clear foundation for the Julia implementation of this algorithm;
+ - [*Michael Jones*](https://www.merl.com/people/mjones) for (along with [Tirta Susilo](https://people.wgtn.ac.nz/tirta.susilo)) suggesting the method for a **facelike-ness** measure;
+ - [*Mahdi Rezaei*](https://environment.leeds.ac.uk/staff/9408/dr-mahdi-rezaei) for helping me understand the full process of Viola-Jones' object detection;
+ - [*Ying Bi*](https://ecs.wgtn.ac.nz/Main/GradYingBi) for always being happy to answer questions (which mainly turned out to be a lack of programming knowledge rather than conceptual);
+ - [*David Peck*](https://github.com/dmipeck) for being ever so patient with my lack of understanding of programming, and helping me with conceptual translation from Python to Julia;
+ - Finally, the people in the Julia slack channel, for dealing with many (probably stupid) questions.  To name a few: Micket, David Sanders, Eric Forgy, Jakob Nissen, and Roel.
