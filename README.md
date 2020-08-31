@@ -50,7 +50,7 @@ After you have setup your workspace, simply run
  - [6b35f6d5](https://github.com/jakewilliami/FaceDetection.jl/commit/6b35f6d5) &mdash; Finally, the algorithm works as it should.  Just enhancements from here on out.
 
 
-## Notes (TODO)
+## To-do Notes
 
  - At the moment, `QuartzImageIO` is required to read `.jpg` files, but the programme is not set up to do so.  At the minute, this programme only accepts `.png` and `.pgm` files (thank's to `ImageIO` and `Netpbm` respectively).
  - I am unsure at the moment whether this programme will work if the test images are of differing dimensionality to the training faces.  I suspect it won't, but I will test this soon.
