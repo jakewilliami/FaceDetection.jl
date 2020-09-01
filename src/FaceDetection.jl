@@ -10,7 +10,7 @@ export toIntegralImage, sumRegion, FeatureTypes, HaarLikeObject, getScore, getVo
 
 include("IntegralImage.jl")
 include("HaarLikeFeature.jl")
-include("Adaboost.jl")
+include("AdaBoost.jl")
 include("Utils.jl")
 
 using .IntegralImage: toIntegralImage, sumRegion
