@@ -21,9 +21,9 @@ using .Utils: notifyUser
 export learn #,  _get_feature_vote, _create_features
 
 
-function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassifiers::Int64=-1, minFeatureWidth::Int64=1, maxFeatureWidth::Int64=-1, minFeatureHeight::Int64=1, maxFeatureHeight::Int64=-1)
+function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassifiers::Int64=-1, minFeatureWidth::Int64=1, maxFeatureWidth::Int64=-1, minFeatureHeight::Int64=1, maxFeatureHeight::Int64=-1)#::Array{HaarLikeObject,1}
     #=
-    The boosting algorithm for learning a query online.  $T$ hypotheses are constructed, each using a single feature.  The final hypothesis is a weighted linear combination of the $T$ hypotheses, where the weights are inverselt proportional to the training errors.
+    The boosting algorithm for learning a query online.  $T$ hypotheses are constructed, each using a single feature.  The final hypothesis is a weighted linear combination of the $T$ hypotheses, where the weights are inversely proportional to the training errors.
     This function selects a set of classifiers. Iteratively takes the best classifiers based on a weighted error.
     
     parameter `positiveIIs`: List of positive integral image examples [type: Abstracy Array]

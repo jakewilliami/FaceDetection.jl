@@ -15,7 +15,7 @@ include("FaceDetection.jl")
 
 using .FaceDetection
 using Printf: @printf
-using Images: Gray, clamp01nan, save
+using Images: Gray, clamp01nan, save, imresize
 
 
 function main(smartChooseFeats::Bool=false, alt::Bool=false, imageReconstruction::Bool=false, featValidaton::Bool=true)
@@ -31,7 +31,7 @@ function main(smartChooseFeats::Bool=false, alt::Bool=false, imageReconstruction
       elseif ! alt
             posTrainingPath = "$mainImagePath/trainset/faces/"
             negTrainingPath = "$mainImagePath/trainset/non-faces/"
-            posTestingPath = "$mainImagePath/testset/faces/"
+            posTestingPath = "$mainImagePath/testset/faces/"#joinpath(homedir(), "Desktop", "faces")#"$mainImagePath/testset/faces/"
             negTestingPath = "$mainImagePath/testset/non-faces/"
       end
 
@@ -64,7 +64,8 @@ function main(smartChooseFeats::Bool=false, alt::Bool=false, imageReconstruction
       FaceDetection.notifyUser("Loading test faces...")
       
       facesTesting = FaceDetection.loadImages(posTestingPath)
-      facesIITesting = map(FaceDetection.toIntegralImage, facesTesting)
+      # facesIITesting = map(FaceDetection.toIntegralImage, facesTesting)
+      facesIITesting = map(i -> imresize(i, (19,19)), map(FaceDetection.toIntegralImage, facesTesting))
       println("...done. ", length(facesTesting), " faces loaded.")
       
       FaceDetection.notifyUser("Loading test non-faces..")
@@ -92,12 +93,11 @@ function main(smartChooseFeats::Bool=false, alt::Bool=false, imageReconstruction
       @printf("%10.9s %10.9s %15s\n", "Faces:", facesFrac, facesPercent)
       @printf("%10.9s %10.9s %15s\n\n", "Non-faces:", nonFacesFrac, nonFacesPercent)
 
-      # Just for fun: putting all Haar-like features over each other generates a face-like image
-      reconstructedImage = FaceDetection.reconstruct(classifiers, size(facesTesting[1]))
-      
       if imageReconstruction
+            # Just for fun: putting all Haar-like features over each other generates a face-like image
             FaceDetection.notifyUser("Constructing an image of all Haar-like Features found...")
             
+            reconstructedImage = FaceDetection.reconstruct(classifiers, size(facesTesting[1]))
             save(joinpath(homedir(), "Desktop", "reconstruction.png"), Gray.(map(clamp01nan, reconstructedImage)))
             
             println("...done.  See ", joinpath(homedir(), "Desktop", "reconstruction.png"), ".\n")
@@ -106,7 +106,7 @@ function main(smartChooseFeats::Bool=false, alt::Bool=false, imageReconstruction
       if featValidaton
             FaceDetection.notifyUser("Constructing a validation image on a random image...")
             
-            FaceDetection.generateValidationImage(FaceDetection.getRandomImage(joinpath(homedir(), "Desktop", "faces"), joinpath(homedir(), "Desktop", "non")), classifiers)
+            FaceDetection.generateValidationImage(FaceDetection.getRandomImage(joinpath(homedir(), "Desktop", "faces")), classifiers)
             
             println("...done.  See ", joinpath(homedir(), "Desktop", "validation.png"), ".\n")
       end

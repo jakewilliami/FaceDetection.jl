@@ -110,7 +110,7 @@ function getVote(feature, intImg::AbstractArray)#function getVote(feature::HaarL
     score = getScore(feature, intImg)
     
         
-    return feature.weight * ((score < (feature.polarity * feature.threshold)) ? 1 : -1)
+    return (feature.weight * score) < (feature.polarity * feature.threshold) ? 1 : -1
 end
 
 

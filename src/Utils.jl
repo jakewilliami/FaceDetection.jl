@@ -8,10 +8,12 @@
 module Utils
 
 include("HaarLikeFeature.jl")
+include("IntegralImage.jl")
 
-using Images: save, load, Colors, clamp01nan, Gray
+using Images: save, load, Colors, clamp01nan, Gray, imresize
 using ImageDraw: draw!, Polygon, Point
-using .HaarLikeFeature: FeatureTypes, getVote
+using .HaarLikeFeature: FeatureTypes, getVote, getScore ,HaarLikeObject
+using .IntegralImage: toIntegralImage
 
 export displaymatrix, notifyUser, loadImages, ensembleVoteAll, reconstruct, getRandomImage, generateValidationImage #, getImageMatrix, ensembleVote
 
@@ -22,7 +24,7 @@ function displaymatrix(M::AbstractArray)
     
     parameter `M`: Some array [type: Abstract Array]
     
-    return: A nice array to print [type: plain text]
+    return: A nice array to print [type: plain text
     =#
     return show(IOContext(stdout, :limit => true, :compact => true, :short => true), "text/plain", M)
 end
@@ -44,10 +46,7 @@ function loadImages(imageDir::AbstractString)
         
     images = []
     
-    for file in readdir(imageDir, join=true, sort=false) # join true for getImageMatrix to find file from absolute path
-        if basename(file) == ".DS_Store" # silly macos stuff >:(
-            continue
-        end
+    for file in filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(imageDir, join=true, sort=false))
         images = push!(images, getImageMatrix(file))
     end
     
@@ -65,7 +64,7 @@ function getImageMatrix(imageFile::AbstractString)
     =#
     
     img = load(imageFile)
-    imgArr = convert(Array{Float64}, Colors.Gray.(img))
+    imgArr = convert(Array{Float64}, Gray.(img))
     
     return imgArr
 end
@@ -102,17 +101,6 @@ function ensembleVoteAll(intImgs::AbstractArray, classifiers::AbstractArray)
     [type: Abstract Arrays (array of Integers)]
     =#
     
-    # [println(typeof(c)) for c in classifiers]
-    # println(typeof(classifiers))
-    
-    # votePartial = [partial(ensembleVote, c) for c in classifiers]
-    # votePartial = partial(ensembleVote, [c for c in classifiers])
-    # votePartial = partial(ensembleVote, classifiers)
-    #
-    # return map(votePartial, intImgs)
-    
-    # map(i -> ensembleVote(classifiers, i), intImgs)
-    # return map(i -> ensembleVote(i, classifiers), intImgs)
     return Array(map(i -> ensembleVote(i, classifiers), intImgs))
 end
 
@@ -197,9 +185,6 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
 end
 
 
-# function findSmallestImage()
-
-
 function getRandomImage(facePath::AbstractString, nonFacePath::AbstractString="", nonFaces::Bool=false)
     #=
     Chooses a random image from a given two directories.
@@ -212,12 +197,38 @@ function getRandomImage(facePath::AbstractString, nonFacePath::AbstractString=""
     
     if nonFaces
         face = rand(Bool)
-        fileName = rand(filter(f -> f != ".DS_Store", readdir(face ? facePath : nonFacePath, join=true)))
-        return fileName
+        fileName = rand(filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(face ? facePath : nonFacePath, join=true)))
+        return fileName#, face
     elseif ! nonFaces
-        fileName = rand(filter(f -> f != ".DS_Store", readdir(facePath, join=true)))
-        return fileName
+        fileName = rand(filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(facePath, join=true)))
+        return fileName#, face
     end
+end
+
+
+function scaleBox(topLeft::Tuple{Int64, Int64}, bottomRight::Tuple{Int64, Int64}, genisisSize::Tuple{Int64, Int64}, imgSize::Tuple{Int64, Int64})
+    #=
+    Scales the bounding box around classifiers if the image we are pasting it on is a different size to the original image.
+    
+    parameter `topLeft`: the top left of the Haar-like feature [type: Tuple]
+    parameter `bottomRight`: the bottom right of the Haar-like feature [type: Tuple]
+    parameter `genisisSize`: the size of the test images [type: Tuple]
+    parameter `imgSize`: the size of the image which we are pasting the bounding box on top of [type: Tuple]
+    
+    return: the corners of the bounding box [type: Tuples]
+    =#
+    
+    imageRatio = (imgSize[1]/genisisSize[1], imgSize[2]/genisisSize[2])
+    
+    bottomLeft = (topLeft[1], bottomRight[2])
+    topRight = (bottomRight[1], topLeft[2])
+    
+    topLeft = convert.(Int, round.(topLeft .* imageRatio))
+    bottomRight = convert.(Int, round.(bottomRight .* imageRatio))
+    bottomLeft = convert.(Int, round.(bottomLeft .* imageRatio))
+    topRight = convert.(Int, round.(topRight .* imageRatio))
+    
+    return topLeft, bottomLeft, bottomRight, topRight
 end
 
 
@@ -226,8 +237,7 @@ function generateValidationImage(imagePath::AbstractString, classifiers::Abstrac
     ...?
     =#
     
-    img = load(imagePath)
-    
+    img = toIntegralImage(getImageMatrix(imagePath))
     imgSize = size(img)
     
     topLeft = (0,0)
@@ -249,56 +259,124 @@ function generateValidationImage(imagePath::AbstractString, classifiers::Abstrac
     end
     
     # todo: figure out rectangles over boxes.  This includes finding the smallest image in size and converting the random input to that size if needed (requires importing another module).  bottom right needs to have smallest y but greatest x, etc.
+    # todo: IF face is not a non-face, then draw box.  Don't force a box.
     
-    # chosenTopLeft = (0, 0)
-    # chosenBottomRight = (0, 0)
+    chosenTopLeft = (0, 0)
+    chosenBottomRight = (0, 0)
+    
+    for f in features # iterate through elements in features (e.g., Any[((9, 2), (17, 12)), ((11, 8), (19, 16))])
+        # for t in f # iterate through inner tuples
+            chosenTopLeft = chosenTopLeft < f[1] || chosenTopLeft < f[1] ? chosenTopLeft : f[1]
+            chosenBottomRight = chosenBottomRight > f[2] || chosenBottomRight > f[2] ? chosenBottomRight : f[2]
+        # end
+    end
+    
+    # reasonableProportion = Int(round(0.26 * minimum(imgSize)))
     #
-    # for f in features # iterate through elements in features (e.g., Any[((9, 2), (17, 12)), ((11, 8), (19, 16))])
-    #     # for t in f # iterate through inner tuples
-    #         chosenTopLeft = chosenTopLeft > f[1] || chosenTopLeft > f[1] ? chosenTopLeft : f[1]
-    #         chosenBottomRight = chosenBottomRight > f[2] || chosenBottomRight > f[2] ? chosenBottomRight : f[2]
-    #     # end
-    # end
+    # topLeft = (reasonableProportion, reasonableProportion)
+    # bottomRight = (imgSize[1] - reasonableProportion, imgSize[2] - reasonableProportion)
+    # bottomLeft = (reasonableProportion, imgSize[2] - reasonableProportion)
+    # topRight = (imgSize[1] - reasonableProportion, reasonableProportion)
     
-    reasonableProportion = Int(round(0.26 * minimum(imgSize)))
+    topLeft = chosenTopLeft
+    bottomRight = chosenBottomRight
+    bottomLeft = (chosenTopLeft[1], chosenBottomRight[2])
+    topRight = (chosenBottomRight[1], chosenTopLeft[2])
     
-    topLeft = (reasonableProportion, reasonableProportion)
-    bottomRight = (imgSize[1] - reasonableProportion, imgSize[2] - reasonableProportion)
-    bottomLeft = (reasonableProportion, imgSize[2] - reasonableProportion)
-    topRight = (imgSize[1] - reasonableProportion, reasonableProportion)
+    boxDimensions = scaleBox(topLeft, bottomRight, (19, 19), imgSize)
     
     
     
     
     
-    # for image in images:
-    # faces = face_cascade_alt2.detectMultiScale(image['GRAY'], 1.3, 5)
-    # for (x,y,w,h) in faces:
-    #     cv.rectangle(image['GRAY'],(x,y),(x+w,y+h),(255,0,0), 8)
-    #     list_of_faces.append(stretch(image['RGB'][y:y+h, x:x+w]))
-    # faces_2 = face_cascade.detectMultiScale(image['GRAY'], 1.3, 5)
-    # for (x,y,w,h) in faces_2:
-    #     if (x,y,w,h) not in faces:
-    #         # cv.rectangle(image['GRAY'], (x, y), (x + w, y + h), (255, 0, 0), 8)
-    #         list_of_faces.append(stretch(image['RGB'][y:y + h, x:x + w]))
-    # faces_3 = face_cascade_alt.detectMultiScale(image['GRAY'], 1.3, 5)
-    # for (x, y, w, h) in faces_3:
-    #     if (x, y, w, h) not in faces:
-    #         # cv.rectangle(image['GRAY'], (x, y), (x + w, y + h), (255, 0, 0), 8)
-    #         list_of_faces.append(stretch(image['RGB'][y:y + h, x:x + w]))
-    # faces_4 = face_cascade_alt_tree.detectMultiScale(image['GRAY'], 1.3, 5)
-    # for (x, y, w, h) in faces_4:
-    #     if (x, y, w, h) not in faces:
-    #         # cv.rectangle(image['GRAY'], (x, y), (x + w, y + h), (255, 0, 0), 8)
-    #         list_of_faces.append(stretch(image['RGB'][y:y + h, x:x + w]))
+    boxes = zeros(imgSize)
+    
+    for c in classifiers
+        # map polarity: -1 -> 0, 1 -> 1
+        polarity = ((1 + c.polarity)^2)/4
+        if c.featureType == HaarLikeFeature.FeatureTypes[1] # two vertical
+            for x in 1:c.width
+                sign = polarity
+                for y in 1:c.height
+                    if y >= c.height/2
+                        sign = mod((sign + 1), 2)
+                    end
+                    boxes[c.topLeft[2] + y, c.topLeft[1] + x] += 1 * sign * c.weight
+                end
+            end
+        elseif c.featureType == HaarLikeFeature.FeatureTypes[2] # two horizontal
+            sign = polarity
+            for x in 1:c.width
+                if x >= c.width/2
+                    sign = mod((sign + 1), 2)
+                end
+                for y in 1:c.height
+                    boxes[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
+                end
+            end
+        elseif c.featureType == HaarLikeFeature.FeatureTypes[3] # three horizontal
+            sign = polarity
+            for x in 1:c.width
+                if iszero(mod(x, c.width/3))
+                    sign = mod((sign + 1), 2)
+                end
+                for y in 1:c.height
+                    boxes[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
+                end
+            end
+        elseif c.featureType == HaarLikeFeature.FeatureTypes[4] # three vertical
+            for x in 1:c.width
+                sign = polarity
+                for y in 1:c.height
+                    if iszero(mod(x, c.height/3))
+                        sign = mod((sign + 1), 2)
+                    end
+                    boxes[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
+                end
+            end
+        elseif c.featureType == HaarLikeFeature.FeatureTypes[5] # four
+            sign = polarity
+            for x in 1:c.width
+                if iszero(mod(x, c.width/2))
+                    sign = mod((sign + 1), 2)
+                end
+                for y in 1:c.height
+                    if iszero(mod(x, c.height/2))
+                        sign = mod((sign + 1), 2)
+                    end
+                    boxes[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
+                end
+            end
+        end
+    end # end for c in classifiers
+    
+    # validationImage = load(imagePath) .+ boxes
+    #
+    # println(typeof(img))
+    # println(typeof(boxes))
+    # println(typeof(validationImage))
     
     
     
     # using TestImages, ImageDraw, ColorVectorSpace, ImageCore
     # img = testimage("lighthouse");
+    
+    # img = imresize(img, (19, 19))
+    
+    # [println(c.featureType) for c in classifiers]
     #
-    ## save("image.png", draw!(img, RegularPolygon(Point(200,150), 4, 50, 0), RGB{N0f8}(1))) # point::CartesianIndex{2}, side_count::Int, side_length::T, θ::U
-    return save(joinpath(homedir(), "Desktop", "validation.png"), draw!(img, Polygon([Point(topLeft), Point(bottomLeft), Point(bottomRight), Point(topRight)])))
+    for c in classifiers
+        
+        # boxDimensions = [c.topLeft, (c.topLeft[1], c.bottomRight[2]), c.bottomRight, (c.bottomRight[1], c.topLeft[2])]
+        
+        boxDimensions = scaleBox(c.topLeft, c.bottomRight, (19, 19), imgSize)
+        
+        save(joinpath(homedir(), "Desktop", "validation.png"), draw!(load(imagePath), Polygon([Point(boxDimensions[1]), Point(boxDimensions[2]), Point(boxDimensions[3]), Point(boxDimensions[4])])))
+    end
+    
+    # box = Polygon([Point(boxDimensions[1]), Point(boxDimensions[2]), Point(boxDimensions[3]), Point(boxDimensions[4])])
+    
+    # return save(joinpath(homedir(), "Desktop", "validation.png"), draw!(load(imagePath), box))
     
 #     #Arguments
 # * `center::Point` : the center of the polygon
