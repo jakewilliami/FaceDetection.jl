@@ -12,6 +12,7 @@ Adapted from https://github.com/Simon-Hohberg/Viola-Jones/
 println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
 
 include("src/FaceDetection.jl")
+include(joinpath("src", "FaceDetection.jl"))
 
 using .FaceDetection
 using Printf: @printf

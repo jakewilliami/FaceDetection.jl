@@ -4,11 +4,38 @@
     "${BASH_SOURCE[0]}" "$@"
     =#
 
-include(joinpath(homedir(), "FaceDetection.jl", "src", "FaceDetection.jl"))
+include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl")) # ../src/FaceDetection.jl
 
 using .FaceDetection
 using Test: @test
 
-# write your own tests here
-@test 1 == 1
-@test sumRegion(toIntegralImage([1 7 4 2 9; 7 2 3 8 2; 1 8 7 9 1; 3 2 3 1 5; 2 9 5 6 6]), (4,4), (5,5)) == 18
+# IntegralImage.jl
+@test isequal(FaceDetection.sumRegion(FaceDetection.toIntegralImage([1 7 4 2 9; 7 2 3 8 2; 1 8 7 9 1; 3 2 3 1 5; 2 9 5 6 6]), (4,4), (5,5)), 18)
+@test typeof(FaceDetection.sumRegion(FaceDetection.toIntegralImage([1 7 4 2 9.9; 7 2 3 8 2; 1 8 7 9 1; 3 2 3 1 5; 2 9 5 6 6]), (4,4), (5,5))) <: AbstractFloat
+@test FaceDetection.sumRegion(FaceDetection.toIntegralImage([1 7 4 2 9.9; 7 2 3 8 2; 1 8 7 9 1; 3 2 3 1 5; 2 9 5 6 6]), (4,4), (5,5)) isa AbstractFloat
+
+# HaarLikeFeature.jl
+a = (rand(Int), rand(Int))
+b = (rand(Int), rand(Int))
+c = rand(Int)
+d = rand(Int)
+e = rand((0, 1))
+f = rand((0, 1))
+arr = rand(Int, 100, 100)
+@test FaceDetection.HaarLikeObject(a, b, c, d, e, f) isa HaarLikeObject
+@test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).featureType isa Tuple{Int, Int}
+@test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).position isa Tuple{Int, Int}
+@test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).topLeft isa Tuple{Int, Int}
+@test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).bottomRight isa Tuple{Int, Int}
+@test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).width isa Int
+@test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).height isa Int
+@test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).threshold ∈ [0, 1]
+@test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).polarity ∈ [0, 1]
+@test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).weight ∈ [0, 1]
+@test FaceDetection.getVote(FaceDetection.HaarLikeObject(a, b, c, d, e, f), arr) ∈ [-1, 1]
+
+# AdaBoost.jl
+# @test
+
+# Utils.jl
+# @test
