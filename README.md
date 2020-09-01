@@ -37,7 +37,7 @@ For a better explanation, read [the paper from 2001](http://citeseerx.ist.psu.ed
 
 After you have setup your workspace, simply run
 ```bash
-~/FaceDetection.jl/src/FDA.jl
+~/FaceDetection.jl/example.jl
 ```
 
 ## Timeline of Progression
