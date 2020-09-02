@@ -99,6 +99,7 @@
                         fontfamily = font("Times"),
                         layout = @layout([a b]),
                         # fillcolor = [:blue, :orange],
+                        link = :y,
                         framestyle = [:box :origin] # :origin
                     )
         
