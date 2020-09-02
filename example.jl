@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
     #=
-    exec julia --project="~/FaceDetection.jl/" "${BASH_SOURCE[0]}" "$@" -e "include(popfirst!(ARGS))" \
+    exec julia --project="$(realpath $(dirname $0))/" "${BASH_SOURCE[0]}" "$@" -e "include(popfirst!(ARGS))" \
     "${BASH_SOURCE[0]}" "$@"
     =#
     
@@ -20,8 +20,8 @@ using Images: Gray, clamp01nan, save, imresize, load
 
 function main(smartChooseFeats::Bool=false, alt::Bool=false, imageReconstruction::Bool=false, featValidaton::Bool=true)
       mainPath = dirname(@__FILE__)
-      mainImagePath = joinpath(mainpath, "data", "main")
-      altImagePath = joinpath(mainpath, "data", "alt")
+      mainImagePath = joinpath(mainPath, "data", "main")
+      altImagePath = joinpath(mainPath, "data", "alt")
       
       if alt
             posTrainingPath = joinpath(altImagePath, "pos")
