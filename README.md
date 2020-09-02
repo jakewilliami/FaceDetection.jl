@@ -7,6 +7,7 @@
 
 This is a Julia implementation of [Viola-Jones' Object Detection algorithm](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.10.6807).  Although there is an [OpenCV port in Julia](https://github.com/JuliaOpenCV/OpenCV.jl), it seems to be ill-maintained.  As this algorithm was created for commercial use, there seem to be few widely-used or well-documented implementations of it on GitHub.  The implementation this repository is based off is [Simon Hohberg's Pythonic repository](https://github.com/Simon-Hohberg/Viola-Jones), as it seems to be well written (amd the most starred Python implementation on GitHub, though this is not necessarily a good measure), and Julia and Python alike are easy to read and write in &mdash; my thinking was that this would be easy enough to replicate in Julia, except for Pythonic classes, where I would have to use `struct`s (or at least easier to replicate from than, for example, [C++](https://github.com/alexdemartos/ViolaAndJones) or [JS](https://github.com/foo123/HAAR.js) &mdash; two other highly-starred repositories.).
 
+I *implore* collaboration.  I am an undergraduate student with no formal education in computer science (or computer vision of any form for that matter), and I am pretending to write an algorithm knowing very little about the ideas behind the concepts.  There is a chance that I have done something incorrect, and I am certain this code can be refined by better programmers than myself.  Please, help me out if you like!
 
 ## Installation and Set Up
 
