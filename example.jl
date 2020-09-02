@@ -16,7 +16,7 @@ include(joinpath("src", "FaceDetection.jl"))
 
 using .FaceDetection
 using Printf: @printf
-using Images: Gray, clamp01nan, save, imresize
+using Images: Gray, clamp01nan, save, imresize, load
 
 
 function main(smartChooseFeats::Bool=false, alt::Bool=false, imageReconstruction::Bool=false, featValidaton::Bool=true)
@@ -93,6 +93,9 @@ function main(smartChooseFeats::Bool=false, alt::Bool=false, imageReconstruction
       
       @printf("%10.9s %10.9s %15s\n", "Faces:", facesFrac, facesPercent)
       @printf("%10.9s %10.9s %15s\n\n", "Non-faces:", nonFacesFrac, nonFacesPercent)
+      
+      randImg = FaceDetection.getRandomImage(posTestingPath, negTestingPath, true)
+      println("For face (or non-face) ", randImg, " we have a face-likeness of ", sum([c.weight * FaceDetection.getVote(c, FaceDetection.toIntegralImage(getImageMatrix(randImg))) for c in classifiers]))
 
       if imageReconstruction
             # Just for fun: putting all Haar-like features over each other generates a face-like image
@@ -115,4 +118,4 @@ end
 
 
 
-@time main(false, false, true, true)
+@time main(false, false, false, false)

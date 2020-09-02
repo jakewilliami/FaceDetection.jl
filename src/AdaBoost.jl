@@ -18,7 +18,7 @@ using ProgressMeter: @showprogress
 using .HaarLikeFeature: FeatureTypes, HaarLikeObject, getVote
 using .Utils: notifyUser
 
-export learn #,  _get_feature_vote, _create_features
+export learn,  _get_feature_vote, _create_features
 
 
 function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassifiers::Int64=-1, minFeatureWidth::Int64=1, maxFeatureWidth::Int64=-1, minFeatureHeight::Int64=1, maxFeatureHeight::Int64=-1)#::Array{HaarLikeObject,1}
@@ -170,7 +170,7 @@ function _create_features(imgHeight::Int64, imgWidth::Int64, minFeatureWidth::In
         """)
     end
     
-    for feature in HaarLikeFeature.FeatureTypes # from HaarLikeObject.jl (FeatureTypes are just tuples)
+    for feature in HaarLikeFeature.FeatureTypes # (FeatureTypes are just tuples)
         featureStartWidth = max(minFeatureWidth, feature[1])
         for featureWidth in range(featureStartWidth, stop=maxFeatureWidth, step=feature[1])
             featureStartHeight = max(minFeatureHeight, feature[2])

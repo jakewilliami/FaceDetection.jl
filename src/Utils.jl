@@ -199,7 +199,7 @@ function getRandomImage(facePath::AbstractString, nonFacePath::AbstractString=""
         face = rand(Bool)
         fileName = rand(filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(face ? facePath : nonFacePath, join=true)))
         return fileName#, face
-    elseif ! nonFaces
+    else
         fileName = rand(filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(facePath, join=true)))
         return fileName#, face
     end

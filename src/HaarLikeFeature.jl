@@ -11,7 +11,7 @@ include("IntegralImage.jl")
 
 using .IntegralImage: sumRegion
 
-export FeatureTypes, HaarLikeObject, getScore, getVote
+export FeatureTypes, HaarLikeObject, getScore, getVote, getFacelikeness
 
 
 FeatureTypes = [(1, 2), (2, 1), (3, 1), (1, 3), (2, 2)]
@@ -111,6 +111,34 @@ function getVote(feature, intImg::AbstractArray)#function getVote(feature::HaarL
     
         
     return (feature.weight * score) < (feature.polarity * feature.threshold) ? 1 : -1
+end
+
+
+function getFacelikeness(feature, intImg::AbstractArray)
+        #=
+        Get facelikeness for a given feature.
+        
+        parameter `feature`: given Haar-like feature (parameterised replacement of Python's `self`) [type: HaarLikeObject]
+        parameter `intImg`: Integral image array [type: Abstract Array]
+        
+        return `score`: Score for given feature [type: Float]
+        =#
+        
+        score = 0
+
+        if feature.featureType == FeatureTypes[1] # two vertical
+            score = 1
+        elseif feature.featureType == FeatureTypes[2] # two horizontal
+            score = 2
+        elseif feature.featureType == FeatureTypes[3] # three horizontal
+            score = 3
+        elseif feature.featureType == FeatureTypes[4] # three vertical
+            score = 4
+        elseif feature.featureType == FeatureTypes[5] # four
+            score = 5
+        end
+        
+        return score
 end
 
 
