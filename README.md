@@ -38,7 +38,9 @@ For a better explanation, read [the paper from 2001](http://citeseerx.ist.psu.ed
 
 After you have setup your workspace, simply run
 ```bash
-~/FaceDetection.jl/example.jl
+./examples/main.jl # on a unix system
+# or
+julia --project="." ./examples/main.jl # on Windows
 ```
 
 ## Timeline of Progression
