@@ -11,7 +11,6 @@ Adapted from https://github.com/Simon-Hohberg/Viola-Jones/
 
 println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
 
-include("src/FaceDetection.jl")
 include(joinpath("src", "FaceDetection.jl"))
 
 using .FaceDetection
@@ -20,20 +19,20 @@ using Images: Gray, clamp01nan, save, imresize, load
 
 
 function main(smartChooseFeats::Bool=false, alt::Bool=false, imageReconstruction::Bool=false, featValidaton::Bool=true)
-      mainPath = "/Users/jakeireland/FaceDetection.jl/"
-      mainImagePath = "$mainPath/data/main/"
-      altImagePath = "$mainPath/data/alt/"
+      mainPath = dirname(@__FILE__)
+      mainImagePath = joinpath(mainpath, "data", "main")
+      altImagePath = joinpath(mainpath, "data", "alt")
       
       if alt
-            posTrainingPath = "$altImagePath/pos/"
-            negTrainingPath = "$altImagePath/neg/"
-            posTestingPath = "$altImagePath/testing/pos/"
-            negTestingPath = "/Users/jakeireland/Desktop/Assorted Personal Documents/Wallpapers copy/"
-      elseif ! alt
-            posTrainingPath = "$mainImagePath/trainset/faces/"
-            negTrainingPath = "$mainImagePath/trainset/non-faces/"
-            posTestingPath = "$mainImagePath/testset/faces/"#joinpath(homedir(), "Desktop", "faces")#"$mainImagePath/testset/faces/"
-            negTestingPath = "$mainImagePath/testset/non-faces/"
+            posTrainingPath = joinpath(altImagePath, "pos")
+            negTrainingPath = joinpath(altImagePath, "neg")
+            posTestingPath = joinpath(altImagePath, "testing", "pos")
+            negTestingPath = joinpath(homedir(), "Desktop", "Assorted Personal Documents", "Wallpapers copy")
+      else
+            posTrainingPath = joinpath(mainImagePath, "trainset", "faces")
+            negTrainingPath = joinpath(mainImagePath, "trainset", "non-faces")
+            posTestingPath = joinpath(mainImagePath, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$mainImagePath/testset/faces/"
+            negTestingPath = joinpath(mainImagePath, "testset", "non-faces")
       end
 
       numClassifiers = 10
