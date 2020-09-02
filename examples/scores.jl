@@ -93,7 +93,8 @@
         notifyUser("Constructing box plot with said dataset...")
         
         theme(:solarized)
-        plot = boxplot(df,
+        plot = boxplot(["" ""],
+                        df,
                         title = ["Scores of Faces" "Scores of Non-Faces"],
                         label = ["faces" "non-faces"],
                         fontfamily = font("Times"),
