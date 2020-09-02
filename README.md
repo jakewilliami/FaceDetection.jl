@@ -13,10 +13,8 @@ I *implore* collaboration.  I am an undergraduate student with no formal educati
 
 Run the following in terminal:
 ```bash
-cd ${HOME}
 git clone https://github.com/jakewilliami/FaceDetection.jl.git/
-cd FaceDetection.jl
-bash setup.sh
+bash FaceDetection.jl/setup.sh # if you are on a unix system
 ```
 
 ## How it works
