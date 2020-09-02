@@ -127,15 +127,15 @@ function getFacelikeness(feature, intImg::AbstractArray)
         score = 0
 
         if feature.featureType == FeatureTypes[1] # two vertical
-            score = 1
+            score += getVote(feature, intImg)
         elseif feature.featureType == FeatureTypes[2] # two horizontal
-            score = 2
+            score += getVote(feature, intImg)
         elseif feature.featureType == FeatureTypes[3] # three horizontal
-            score = 3
+            score += getVote(feature, intImg)
         elseif feature.featureType == FeatureTypes[4] # three vertical
-            score = 4
+            score += getVote(feature, intImg)
         elseif feature.featureType == FeatureTypes[5] # four
-            score = 5
+            score += getVote(feature, intImg)
         end
         
         return score

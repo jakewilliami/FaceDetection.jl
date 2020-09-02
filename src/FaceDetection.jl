@@ -6,7 +6,7 @@
     
 module FaceDetection
 
-export toIntegralImage, sumRegion, FeatureTypes, HaarLikeObject, getScore, getVote, learn, _get_feature_vote, _create_features, displaymatrix, notifyUser, loadImages, getImageMatrix, ensembleVote, ensembleVoteAll, reconstruct, getRandomImage, generateValidationImage
+export toIntegralImage, sumRegion, FeatureTypes, HaarLikeObject, getScore, getVote, learn, _get_feature_vote, _create_features, displaymatrix, notifyUser, loadImages, getImageMatrix, ensembleVote, ensembleVoteAll, reconstruct, getRandomImage, generateValidationImage, getFacelikeness
 
 include("IntegralImage.jl")
 include("HaarLikeFeature.jl")

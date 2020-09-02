@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
     #=
-    exec julia --project="$(realpath $(dirname $0))/" "${BASH_SOURCE[0]}" "$@" -e "include(popfirst!(ARGS))" \
+    exec julia --project="$(realpath $(dirname $(realpath $(dirname $0))))/" "${BASH_SOURCE[0]}" "$@" -e "include(popfirst!(ARGS))" \
     "${BASH_SOURCE[0]}" "$@"
     =#
     
@@ -9,17 +9,18 @@
 Adapted from https://github.com/Simon-Hohberg/Viola-Jones/
 =#
 
+
 println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
 
-include(joinpath("src", "FaceDetection.jl"))
+include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl"))
 
 using .FaceDetection
 using Printf: @printf
-using Images: Gray, clamp01nan, save, imresize, load
+using Images: imresize
 
 
-function main(smartChooseFeats::Bool=false, alt::Bool=false, imageReconstruction::Bool=false, featValidaton::Bool=true)
-      mainPath = dirname(@__FILE__)
+function main(; smartChooseFeats::Bool=false, alt::Bool=false)
+      mainPath = dirname(dirname(@__FILE__))
       mainImagePath = joinpath(mainPath, "data", "main")
       altImagePath = joinpath(mainPath, "data", "alt")
       
@@ -33,9 +34,12 @@ function main(smartChooseFeats::Bool=false, alt::Bool=false, imageReconstruction
             negTrainingPath = joinpath(mainImagePath, "trainset", "non-faces")
             posTestingPath = joinpath(mainImagePath, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$mainImagePath/testset/faces/"
             negTestingPath = joinpath(mainImagePath, "testset", "non-faces")
+            
+            # posTrainingPath = joinpath(altImagePath, "pos")
+            # negTrainingPath = joinpath(altImagePath, "neg")
       end
 
-      numClassifiers = 10
+      numClassifiers = 5
 
       if ! smartChooseFeats
             # For performance reasons restricting feature size
@@ -71,7 +75,7 @@ function main(smartChooseFeats::Bool=false, alt::Bool=false, imageReconstruction
       FaceDetection.notifyUser("Loading test non-faces..")
       
       nonFacesTesting = FaceDetection.loadImages(negTestingPath)
-      nonFacesIITesting = map(FaceDetection.toIntegralImage, nonFacesTesting)
+      nonFacesIITesting = map(i -> imresize(i, (19,19)), map(FaceDetection.toIntegralImage, nonFacesTesting))
       println("...done. ", length(nonFacesTesting), " non-faces loaded.\n")
 
       FaceDetection.notifyUser("Testing selected classifiers...")
@@ -90,31 +94,10 @@ function main(smartChooseFeats::Bool=false, alt::Bool=false, imageReconstruction
       println("...done.\n")
       FaceDetection.notifyUser("Result:\n")
       
-      @printf("%10.9s %10.9s %15s\n", "Faces:", facesFrac, facesPercent)
-      @printf("%10.9s %10.9s %15s\n\n", "Non-faces:", nonFacesFrac, nonFacesPercent)
-      
-      randImg = FaceDetection.getRandomImage(posTestingPath, negTestingPath, true)
-      println("For face (or non-face) ", randImg, " we have a face-likeness of ", sum([c.weight * FaceDetection.getVote(c, FaceDetection.toIntegralImage(getImageMatrix(randImg))) for c in classifiers]))
-
-      if imageReconstruction
-            # Just for fun: putting all Haar-like features over each other generates a face-like image
-            FaceDetection.notifyUser("Constructing an image of all Haar-like Features found...")
-            
-            reconstructedImage = FaceDetection.reconstruct(classifiers, size(facesTesting[1]))
-            save(joinpath(homedir(), "Desktop", "reconstruction.png"), Gray.(map(clamp01nan, reconstructedImage)))
-            
-            println("...done.  See ", joinpath(homedir(), "Desktop", "reconstruction.png"), ".\n")
-      end
-      
-      if featValidaton
-            FaceDetection.notifyUser("Constructing a validation image on a random image...")
-            
-            FaceDetection.generateValidationImage(FaceDetection.getRandomImage(joinpath(homedir(), "Desktop", "faces")), classifiers)
-            
-            println("...done.  See ", joinpath(homedir(), "Desktop", "validation.png"), ".\n")
-      end
+      @printf("%10.9s %10.15s %15s\n", "Faces:", facesFrac, facesPercent)
+      @printf("%10.9s %10.15s %15s\n\n", "Non-faces:", nonFacesFrac, nonFacesPercent)
 end
 
 
 
-@time main(false, false, false, false)
+@time main()
