@@ -11,6 +11,7 @@
     using .FaceDetection
     using Images: imresize
     using StatsPlots#, Plots # StatsPlots required for box plots
+    
 
     function main(smartChooseFeats::Bool=false, alt::Bool=false)
         mainPath = dirname(dirname(@__FILE__))
@@ -81,8 +82,6 @@
         notifyUser("Calculating test face scores and constructing dataset...")
         
         df = Matrix{Float64}(undef, max(length(facesIITesting), length(nonFacesIITesting)), 2)
-        # df[1:length(nonFacesIITesting),2] .= [sum([c.weight * c.polarity * getFacelikeness(c,nonFace) * FaceDetection.getVote(c,nonFace) for c in classifiers]) for nonFace in nonFacesIITesting]
-        # df[1:length(facesIITesting),1] .= [sum([c.weight * c.polarity * getFacelikeness(c,face) * FaceDetection.getVote(c,face) for c in classifiers]) for face in facesIITesting]
         df[1:length(nonFacesIITesting),2] .= [sum([getFacelikeness(c,nonFace) for c in classifiers]) for nonFace in nonFacesIITesting]
         df[1:length(facesIITesting),1] .= [sum([getFacelikeness(c,face) for c in classifiers]) for face in facesIITesting]
         
