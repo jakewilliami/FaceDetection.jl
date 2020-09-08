@@ -39,7 +39,7 @@ function main(; smartChooseFeats::Bool=false, alt::Bool=false)
             # negTrainingPath = joinpath(altImagePath, "neg")
       end
 
-      numClassifiers = 5
+      numClassifiers = 4
 
       if ! smartChooseFeats
             # For performance reasons restricting feature size
@@ -81,6 +81,9 @@ function main(; smartChooseFeats::Bool=false, alt::Bool=false)
       FaceDetection.notifyUser("Testing selected classifiers...")
       correctFaces = 0
       correctNonFaces = 0
+      
+      # correctFaces = sum([FaceDetection._get_feature_vote(face, classifiers) for face in facesIITesting])
+      # correctNonFaces = length(non_faces_testing) - sum([FaceDetection._get_feature_vote(nonFace, classifiers) for nonFace in nonFacesIITesting])
       correctFaces = sum(FaceDetection.ensembleVoteAll(facesIITesting, classifiers))
       correctNonFaces = length(nonFacesTesting) - sum(FaceDetection.ensembleVoteAll(nonFacesIITesting, classifiers))
       correctFacesPercent = (float(correctFaces) / length(facesTesting)) * 100

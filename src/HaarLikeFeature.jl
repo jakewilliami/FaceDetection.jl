@@ -11,7 +11,7 @@ include("IntegralImage.jl")
 
 using .IntegralImage: sumRegion
 
-export FeatureTypes, HaarLikeObject, getScore, getVote, getFacelikeness
+export FeatureTypes, HaarLikeObject, getScore, getVote
 
 
 FeatureTypes = [(1, 2), (2, 1), (3, 1), (1, 3), (2, 2)]
@@ -58,25 +58,30 @@ function getScore(feature, intImg::Array)#function getScore(feature::HaarLikeObj
         =#
         
         score = 0
+        mycount = 0
 
         if feature.featureType == FeatureTypes[1] # two vertical
             first = IntegralImage.sumRegion(intImg, feature.topLeft, (feature.topLeft[1] + feature.width, Int(round(feature.topLeft[2] + feature.height / 2))))
             second = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 2))), feature.bottomRight)
             score = first - second
+            mycount = 1
         elseif feature.featureType == FeatureTypes[2] # two horizontal
             first = IntegralImage.sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2] + feature.height))
             second = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2]), feature.bottomRight)
             score = first - second
+            mycount = 2
         elseif feature.featureType == FeatureTypes[3] # three horizontal
             first = IntegralImage.sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 3)), feature.topLeft[2] + feature.height))
             second = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 3)), feature.topLeft[2]), (Int(round(feature.topLeft[1] + 2 * feature.width / 3)), feature.topLeft[2] + feature.height))
             third = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + 2 * feature.width / 3)), feature.topLeft[2]), feature.bottomRight)
             score = first - second + third
+            mycount = 3
         elseif feature.featureType == FeatureTypes[4] # three vertical
             first = IntegralImage.sumRegion(intImg, feature.topLeft, (feature.bottomRight[1], Int(round(feature.topLeft[2] + feature.height / 3))))
             second = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 3))), (feature.bottomRight[1], Int(round(feature.topLeft[2] + 2 * feature.height / 3))))
             third = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + 2 * feature.height / 3))), feature.bottomRight)
             score = first - second + third
+            mycount  = 4
         elseif feature.featureType == FeatureTypes[5] # four
             # top left area
             first = IntegralImage.sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 2)), Int(round(feature.topLeft[2] + feature.height / 2))))
@@ -87,9 +92,10 @@ function getScore(feature, intImg::Array)#function getScore(feature::HaarLikeObj
             # bottom right area
             fourth = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), Int(round(feature.topLeft[2] + feature.height / 2))), feature.bottomRight)
             score = first - second - third + fourth
+            mycount = 5
         end
         
-        return score
+        return score, mycount
 end
 
 
@@ -107,38 +113,9 @@ function getVote(feature, intImg::AbstractArray)#function getVote(feature::HaarL
     [type: Integer]
     =#
     
-    score = getScore(feature, intImg)
-    
-        
+    score = getScore(feature, intImg)[1] # we only care about score here
+
     return (feature.weight * score) < (feature.polarity * feature.threshold) ? 1 : -1
-end
-
-
-function getFacelikeness(feature, intImg::AbstractArray)
-        #=
-        Get facelikeness for a given feature.
-        
-        parameter `feature`: given Haar-like feature (parameterised replacement of Python's `self`) [type: HaarLikeObject]
-        parameter `intImg`: Integral image array [type: Abstract Array]
-        
-        return `score`: Score for given feature [type: Float]
-        =#
-        
-        score = 0
-
-        if feature.featureType == FeatureTypes[1] # two vertical
-            score += feature.weight * getVote(feature, intImg)
-        elseif feature.featureType == FeatureTypes[2] # two horizontal
-            score += feature.weight * getVote(feature, intImg)
-        elseif feature.featureType == FeatureTypes[3] # three horizontal
-            score += feature.weight * getVote(feature, intImg)
-        elseif feature.featureType == FeatureTypes[4] # three vertical
-            score += feature.weight * getVote(feature, intImg)
-        elseif feature.featureType == FeatureTypes[5] # four
-            score += feature.weight * getVote(feature, intImg)
-        end
-        
-        return score
 end
 
 

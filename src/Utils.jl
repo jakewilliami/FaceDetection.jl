@@ -15,7 +15,7 @@ using ImageDraw: draw!, Polygon, Point
 using .HaarLikeFeature: FeatureTypes, getVote, getScore ,HaarLikeObject
 using .IntegralImage: toIntegralImage
 
-export displaymatrix, notifyUser, loadImages, ensembleVoteAll, reconstruct, getRandomImage, generateValidationImage #, getImageMatrix, ensembleVote
+export displaymatrix, notifyUser, loadImages, ensembleVoteAll, getFaceness, reconstruct, getRandomImage, generateValidationImage #, getImageMatrix, ensembleVote
 
 
 function displaymatrix(M::AbstractArray)
@@ -84,6 +84,11 @@ function ensembleVote(intImg::AbstractArray, classifiers::AbstractArray)
         0       otherwise
     [type: Integer]
     =#
+    
+    # evidence = sum([max(getVote(c[1], image), 0.) * c[2] for c in classifiers])
+    # weightedSum = sum([c[2] for c in classifiers])
+    # return evidence >= (weightedSum / 2) ? 1 : -1
+    
     return sum([HaarLikeFeature.getVote(c, intImg) for c in classifiers]) >= 0 ? 1 : 0
 end
 
@@ -102,6 +107,40 @@ function ensembleVoteAll(intImgs::AbstractArray, classifiers::AbstractArray)
     =#
     
     return Array(map(i -> ensembleVote(i, classifiers), intImgs))
+end
+
+
+function getFaceness(feature, intImg::AbstractArray)
+        #=
+        Get facelikeness for a given feature.
+        
+        parameter `feature`: given Haar-like feature (parameterised replacement of Python's `self`) [type: HaarLikeObject]
+        parameter `intImg`: Integral image array [type: Abstract Array]
+        
+        return `score`: Score for given feature [type: Float]
+        =#
+        
+        score, faceness = HaarLikeFeature.getScore(feature, intImg)
+        
+        return (feature.weight * score) < (feature.polarity * feature.threshold) ? faceness : 0
+        
+        # score = 0
+        # # weightedScore(feature, intImg::AbstractArray) = getScore(feature, intImg)
+        # return getVote(feature, intImg)
+        #
+        # if feature.featureType == FeatureTypes[1] # two vertical
+        #     score += weightedScore(feature, intImg)
+        # elseif feature.featureType == FeatureTypes[2] # two horizontal
+        #     score += weightedScore(feature, intImg)
+        # elseif feature.featureType == FeatureTypes[3] # three horizontal
+        #     score += weightedScore(feature, intImg)
+        # elseif feature.featureType == FeatureTypes[4] # three vertical
+        #     score += weightedScore(feature, intImg)
+        # elseif feature.featureType == FeatureTypes[5] # four
+        #     score += weightedScore(feature, intImg)
+        # end
+        #
+        # return score
 end
 
 
@@ -373,6 +412,10 @@ function generateValidationImage(imagePath::AbstractString, classifiers::Abstrac
         
         save(joinpath(homedir(), "Desktop", "validation.png"), draw!(load(imagePath), Polygon([Point(boxDimensions[1]), Point(boxDimensions[2]), Point(boxDimensions[3]), Point(boxDimensions[4])])))
     end
+    
+    
+    # with open('classifiers_' + str(T) + '_' + hex(random.getrandbits(16)) + '.pckl', 'wb') as file:
+    #     pickle.dump(classifiers, file)
     
     # box = Polygon([Point(boxDimensions[1]), Point(boxDimensions[2]), Point(boxDimensions[3]), Point(boxDimensions[4])])
     

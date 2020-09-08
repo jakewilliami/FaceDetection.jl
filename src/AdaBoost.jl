@@ -18,7 +18,7 @@ using ProgressMeter: @showprogress
 using .HaarLikeFeature: FeatureTypes, HaarLikeObject, getVote
 using .Utils: notifyUser
 
-export learn,  _get_feature_vote, _create_features
+export learn, _create_features
 
 
 function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassifiers::Int64=-1, minFeatureWidth::Int64=1, maxFeatureWidth::Int64=-1, minFeatureHeight::Int64=1, maxFeatureHeight::Int64=-1)#::Array{HaarLikeObject,1}
@@ -77,6 +77,7 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
     features = _create_features(imgHeight, imgWidth, minFeatureWidth, maxFeatureWidth, minFeatureHeight, maxFeatureHeight)
     numFeatures = length(features)
     featureIndices = Array(1:numFeatures)
+    used = []
     
     if isequal(numClassifiers, -1)
         numClassifiers = numFeatures
@@ -90,7 +91,7 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
     n = numImgs
     processes = numImgs # i.e., hypotheses
     @showprogress for t in 1:processes # bar(range(num_imgs)):
-        votes[t, :] = Array(map(f -> _get_feature_vote(f, images[t]), features))
+        votes[t, :] = Array(map(f -> getVote(f, images[t]), features))
     end # end show progress in for loop
     
     print("\n") # for a new line after the progress bar
@@ -142,9 +143,44 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
 end
 
 
-function _get_feature_vote(feature::HaarLikeObject, image::AbstractArray)
-    return HaarLikeFeature.getVote(feature, image)
-end
+#find / update threshold and coeff for each feature
+# function _feature_job(feature_nr, feature)
+#     #    if (feature_nr+1) % 1000 == 0:
+#     #        print('[ %d of %d ]'%(feature_nr+1, n_features))
+#     if feature_nr ∈ used
+#         return
+#     end
+#
+#     # find the scores for the images
+#     scores = zeros(n_img)
+#     for i, img in enumerate(images):
+#         scores[i] = feature.get_score(img)
+#     sorted_img_args = np.argsort(scores)
+#     Sp = np.zeros(n_img)  # sum weights for positive examples below current img
+#     Sn = np.zeros(n_img)  # sum weights for negative examples below current img
+#     Tp = 0
+#     Tn = 0
+#     for img_arg in np.nditer(sorted_img_args):
+#         if labels[img_arg] == 0:
+#             Tn += w[img_arg]
+#             Sn[img_arg] = Tn
+#         else:
+#             Tp += w[img_arg]
+#             Sp[img_arg] = Tp
+#
+#     # compute the formula for the threshold
+#     nerror = Sp + (Tn - Sn)  # error of classifying everything negative below threshold
+#     perror = Sn + (Tp - Sp)  # error of classifying everything positive below threshold
+#     error = np.minimum(perror, nerror)  # find minimum
+#     best_threshold_img = np.argmin(error)  # find the image with the threshold
+#     best_local_error = error[best_threshold_img]
+#     feature.threshold = scores[best_threshold_img]  # use the score we estimated for the image as new threshold
+#     # assign new polarity, based on above calculations
+#     feature.polarity = 1 if nerror[best_threshold_img] < perror[best_threshold_img] else -1
+#
+#     # store the error to find best feature
+#     errors[feature_nr] = best_local_error
+# end
 
 
 function _create_features(imgHeight::Int64, imgWidth::Int64, minFeatureWidth::Int64, maxFeatureWidth::Int64, minFeatureHeight::Int64, maxFeatureHeight::Int64)
@@ -179,6 +215,7 @@ function _create_features(imgHeight::Int64, imgWidth::Int64, minFeatureWidth::In
                     for y in 1:(imgHeight - featureHeight)
                         features = push!(features, HaarLikeFeature.HaarLikeObject(feature, (x, y), featureWidth, featureHeight, 0, 1))
                         features = push!(features, HaarLikeFeature.HaarLikeObject(feature, (x, y), featureWidth, featureHeight, 0, -1))
+                        # features = push!(features, HaarLikeFeature.HaarLikeObject(feature, (x, y), featureWidth, featureHeight, 0.11, -1))
                     end # end for y
                 end # end for x
             end # end for feature height

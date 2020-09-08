@@ -35,7 +35,7 @@ function main(; smartChooseFeats::Bool=false, alt::Bool=false, imageReconstructi
             negTestingPath = joinpath(mainImagePath, "testset", "non-faces")
       end
 
-      numClassifiers = 10
+      numClassifiers = 4
 
       if ! smartChooseFeats
             # For performance reasons restricting feature size
