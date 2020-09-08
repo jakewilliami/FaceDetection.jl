@@ -33,7 +33,7 @@ function main(smartChooseFeats::Bool=false, alt::Bool=false)
         negTestingPath = joinpath(mainImagePath, "testset", "non-faces")
     end
 
-    numClassifiers = 4
+    numClassifiers = 10
 
     if ! smartChooseFeats
         # For performance reasons restricting feature size
@@ -108,10 +108,10 @@ function main(smartChooseFeats::Bool=false, alt::Bool=false)
     gr() # set plot backend
     theme(:solarized)
     plot = StatsPlots.plot(
-                    StatsPlots.boxplot(facesScores, xaxis=false)
-                    StatsPlots.boxplot(nonFacesScores, xaxis=false),
+                    StatsPlots.boxplot(facesScores, xaxis=false, label = false),
+                    StatsPlots.boxplot(nonFacesScores, xaxis=false, label = false),
                     title = ["Scores of Faces" "Scores of Non-Faces"],
-                    label = ["faces" "non-faces"],
+                    # label = ["faces" "non-faces"],
                     fontfamily = font("Times"),
                     layout = @layout([a b]),
                     # fillcolor = [:blue, :orange],
