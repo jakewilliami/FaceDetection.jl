@@ -118,7 +118,7 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
         end
 
         # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
-        minErrorIDX = argmin(classificationErrors) # returns the index of the minimum in the array
+        minErrorIDX = argmin(classificationErrors) # returns the index of the minimum in the array # consider `findmin`
         bestError = classificationErrors[minErrorIDX]
         bestFeatureIDX = featureIndices[minErrorIDX]
 
