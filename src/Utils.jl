@@ -15,7 +15,7 @@ using ImageDraw: draw!, Polygon, Point
 using .HaarLikeFeature: FeatureTypes, getVote, getScore ,HaarLikeObject
 using .IntegralImage: toIntegralImage
 
-export displaymatrix, notifyUser, loadImages, ensembleVoteAll, getFaceness, reconstruct, getRandomImage, generateValidationImage #, getImageMatrix, ensembleVote
+export displaymatrix, notifyUser, loadImages, ensembleVoteAll, getFaceness, reconstruct, getRandomImage, generateValidationImage, determineFeatureSize, getImageMatrix, ensembleVote
 
 
 function displaymatrix(M::AbstractArray)
@@ -67,6 +67,41 @@ function getImageMatrix(imageFile::AbstractString)
     imgArr = convert(Array{Float64}, Gray.(img))
     
     return imgArr
+end
+
+
+function determineFeatureSize(posTrainingPath::AbstractString, negTrainingPath::AbstractString)
+    #=
+    Takes images and finds the best feature size for the image size.
+    
+    parameter `posTrainingPath`: the path to the positive training images [type: Abstract String (path)]
+    parameter `negTrainingPath`: the path to the negative training images [type: Abstract String (path)]
+    =#
+    
+    minFeatureHeight = 0
+    minFeatureWidth = 0
+    maxFeatureHeight = 0
+    maxFeatureWidth = 0
+
+    minSizeImg = (0, 0)
+    sizes = []
+
+    for pictureDir in [posTrainingPath, negTrainingPath]
+            for picture in filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(pictureDir, join=true, sort=false))
+                newSize = size(load(joinpath(homedir(), "FaceDetection.jl", "data", pictureDir, picture)))
+                sizes = push!(sizes, newSize)
+            end
+    end
+    
+    minSizeImg = minimum(sizes)
+    
+    maxFeatureHeight = Int(round(minSizeImg[2]*(10/19)))
+    maxFeatureWidth = Int(round(minSizeImg[1]*(10/19)))
+    minFeatureHeight = Int(round(maxFeatureHeight - maxFeatureHeight*(2/maxFeatureHeight)))
+    minFeatureWidth = Int(round(maxFeatureWidth - maxFeatureWidth*(2/maxFeatureWidth)))
+    
+    return maxFeatureWidth, maxFeatureHeight, minFeatureHeight, minFeatureWidth, minSizeImg
+    
 end
     
     

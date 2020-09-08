@@ -17,101 +17,112 @@ using .FaceDetection
 using Printf: @printf
 using Images: Gray, clamp01nan, save, imresize, load
 
+println("...done")
+
 
 function main(; smartChooseFeats::Bool=false, alt::Bool=false, imageReconstruction::Bool=true, featValidaton::Bool=true)
-      mainPath = dirname(dirname(@__FILE__))
-      mainImagePath = joinpath(mainPath, "data", "main")
-      altImagePath = joinpath(mainPath, "data", "alt")
-      
-      if alt
-            posTrainingPath = joinpath(altImagePath, "pos")
-            negTrainingPath = joinpath(altImagePath, "neg")
-            posTestingPath = joinpath(altImagePath, "testing", "pos")
-            negTestingPath = joinpath(homedir(), "Desktop", "Assorted Personal Documents", "Wallpapers copy")
-      else
-            posTrainingPath = joinpath(mainImagePath, "trainset", "faces")
-            negTrainingPath = joinpath(mainImagePath, "trainset", "non-faces")
-            posTestingPath = joinpath(mainImagePath, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$mainImagePath/testset/faces/"
-            negTestingPath = joinpath(mainImagePath, "testset", "non-faces")
-      end
+    mainPath = dirname(dirname(@__FILE__))
+    mainImagePath = joinpath(mainPath, "data", "main")
+    altImagePath = joinpath(mainPath, "data", "alt")
 
-      numClassifiers = 4
+    if alt
+      posTrainingPath = joinpath(altImagePath, "pos")
+      negTrainingPath = joinpath(altImagePath, "neg")
+      # posTestingPath = joinpath(altImagePath, "testing", "pos")
+      # negTestingPath = joinpath(homedir(), "Desktop", "Assorted Personal Documents", "Wallpapers copy")
+      posTestingPath = joinpath(mainImagePath, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$mainImagePath/testset/faces/"
+      negTestingPath = joinpath(mainImagePath, "testset", "non-faces")
+    else
+        posTrainingPath = joinpath(mainImagePath, "trainset", "faces")
+        negTrainingPath = joinpath(mainImagePath, "trainset", "non-faces")
+        posTestingPath = joinpath(mainImagePath, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$mainImagePath/testset/faces/"
+        negTestingPath = joinpath(mainImagePath, "testset", "non-faces")
+    end
 
-      if ! smartChooseFeats
-            # For performance reasons restricting feature size
-            minFeatureHeight = 8
-            maxFeatureHeight = 10
-            minFeatureWidth = 8
-            maxFeatureWidth = 10
-      end
+    numClassifiers = 10
+
+    minSizeImg = (19, 19) # default for our test dataset
+    if smartChooseFeats
+      # For performance reasons restricting feature size
+      notifyUser("Selecting best feature width and height...")
+      
+      maxFeatureWidth, maxFeatureHeight, minFeatureHeight, minFeatureWidth, minSizeImg = determineFeatureSize(posTrainingPath, negTrainingPath)
+      
+      println("...done.  Maximum feature width selected is $maxFeatureWidth pixels; minimum feature width is $minFeatureWidth; maximum feature height is $maxFeatureHeight pixels; minimum feature height is $minFeatureHeight.")
+    else
+      minFeatureHeight = 8
+      maxFeatureHeight = 10
+      minFeatureWidth = 8
+      maxFeatureWidth = 10
+    end
 
 
-      FaceDetection.notifyUser("Loading faces...")
-      
-      facesTraining = FaceDetection.loadImages(posTrainingPath)
-      facesIITraining = map(FaceDetection.toIntegralImage, facesTraining) # list(map(...))
-      println("...done. ", length(facesTraining), " faces loaded.")
-      
-      FaceDetection.notifyUser("Loading non-faces...")
-      
-      nonFacesTraining = FaceDetection.loadImages(negTrainingPath)
-      nonFacesIITraining = map(FaceDetection.toIntegralImage, nonFacesTraining) # list(map(...))
-      println("...done. ", length(nonFacesTraining), " non-faces loaded.\n")
+    FaceDetection.notifyUser("Loading faces...")
 
-      # classifiers are haar like features
-      classifiers = FaceDetection.learn(facesIITraining, nonFacesIITraining, numClassifiers, minFeatureHeight, maxFeatureHeight, minFeatureWidth, maxFeatureWidth)
+    facesTraining = FaceDetection.loadImages(posTrainingPath)
+    facesIITraining = map(FaceDetection.toIntegralImage, facesTraining) # list(map(...))
+    println("...done. ", length(facesTraining), " faces loaded.")
 
-      FaceDetection.notifyUser("Loading test faces...")
-      
-      facesTesting = FaceDetection.loadImages(posTestingPath)
-      # facesIITesting = map(FaceDetection.toIntegralImage, facesTesting)
-      facesIITesting = map(i -> imresize(i, (19,19)), map(FaceDetection.toIntegralImage, facesTesting))
-      println("...done. ", length(facesTesting), " faces loaded.")
-      
-      FaceDetection.notifyUser("Loading test non-faces..")
-      
-      nonFacesTesting = FaceDetection.loadImages(negTestingPath)
-      nonFacesIITesting = map(i -> imresize(i, (19,19)), map(FaceDetection.toIntegralImage, nonFacesTesting))
-      println("...done. ", length(nonFacesTesting), " non-faces loaded.\n")
+    FaceDetection.notifyUser("Loading non-faces...")
 
-      FaceDetection.notifyUser("Testing selected classifiers...")
-      correctFaces = 0
-      correctNonFaces = 0
-      correctFaces = sum(FaceDetection.ensembleVoteAll(facesIITesting, classifiers))
-      correctNonFaces = length(nonFacesTesting) - sum(FaceDetection.ensembleVoteAll(nonFacesIITesting, classifiers))
-      correctFacesPercent = (float(correctFaces) / length(facesTesting)) * 100
-      correctNonFacesPercent = (float(correctNonFaces) / length(nonFacesTesting)) * 100
+    nonFacesTraining = FaceDetection.loadImages(negTrainingPath)
+    nonFacesIITraining = map(FaceDetection.toIntegralImage, nonFacesTraining) # list(map(...))
+    println("...done. ", length(nonFacesTraining), " non-faces loaded.\n")
 
-      facesFrac = string(correctFaces, "/", length(facesTesting))
-      facesPercent = string("(", correctFacesPercent, "% of faces were recognised as faces)")
-      nonFacesFrac = string(correctNonFaces, "/", length(nonFacesTesting))
-      nonFacesPercent = string("(", correctNonFacesPercent, "% of non-faces were identified as non-faces)")
+    # classifiers are haar like features
+    classifiers = FaceDetection.learn(facesIITraining, nonFacesIITraining, numClassifiers, minFeatureHeight, maxFeatureHeight, minFeatureWidth, maxFeatureWidth)
 
-      println("...done.\n")
-      FaceDetection.notifyUser("Result:\n")
-      
-      @printf("%10.9s %10.15s %15s\n", "Faces:", facesFrac, facesPercent)
-      @printf("%10.9s %10.15s %15s\n\n", "Non-faces:", nonFacesFrac, nonFacesPercent)
-      
-      if imageReconstruction
-            # Just for fun: putting all Haar-like features over each other generates a face-like image
-            FaceDetection.notifyUser("Constructing an image of all Haar-like Features found...")
-            
-            reconstructedImage = FaceDetection.reconstruct(classifiers, size(facesTesting[1]))
-            save(joinpath(homedir(), "Desktop", "reconstruction.png"), Gray.(map(clamp01nan, reconstructedImage)))
-            
-            println("...done.  See ", joinpath(homedir(), "Desktop", "reconstruction.png"), ".\n")
-      end
-      
-      if featValidaton
-            FaceDetection.notifyUser("Constructing a validation image on a random image...")
-            
-            FaceDetection.generateValidationImage(FaceDetection.getRandomImage(joinpath(homedir(), "Desktop", "faces")), classifiers)
-            
-            println("...done.  See ", joinpath(homedir(), "Desktop", "validation.png"), ".\n")
-      end
+    FaceDetection.notifyUser("Loading test faces...")
+
+    facesTesting = FaceDetection.loadImages(posTestingPath)
+    # facesIITesting = map(FaceDetection.toIntegralImage, facesTesting)
+    facesIITesting = map(i -> imresize(i, minSizeImg), map(FaceDetection.toIntegralImage, facesTesting))
+    println("...done. ", length(facesTesting), " faces loaded.")
+
+    FaceDetection.notifyUser("Loading test non-faces..")
+
+    nonFacesTesting = FaceDetection.loadImages(negTestingPath)
+    nonFacesIITesting = map(i -> imresize(i, minSizeImg), map(FaceDetection.toIntegralImage, nonFacesTesting))
+    println("...done. ", length(nonFacesTesting), " non-faces loaded.\n")
+
+    FaceDetection.notifyUser("Testing selected classifiers...")
+    correctFaces = 0
+    correctNonFaces = 0
+    correctFaces = sum(FaceDetection.ensembleVoteAll(facesIITesting, classifiers))
+    correctNonFaces = length(nonFacesTesting) - sum(FaceDetection.ensembleVoteAll(nonFacesIITesting, classifiers))
+    correctFacesPercent = (float(correctFaces) / length(facesTesting)) * 100
+    correctNonFacesPercent = (float(correctNonFaces) / length(nonFacesTesting)) * 100
+
+    facesFrac = string(correctFaces, "/", length(facesTesting))
+    facesPercent = string("(", correctFacesPercent, "% of faces were recognised as faces)")
+    nonFacesFrac = string(correctNonFaces, "/", length(nonFacesTesting))
+    nonFacesPercent = string("(", correctNonFacesPercent, "% of non-faces were identified as non-faces)")
+
+    println("...done.\n")
+    FaceDetection.notifyUser("Result:\n")
+
+    @printf("%10.9s %10.15s %15s\n", "Faces:", facesFrac, facesPercent)
+    @printf("%10.9s %10.15s %15s\n\n", "Non-faces:", nonFacesFrac, nonFacesPercent)
+
+    if imageReconstruction
+        # Just for fun: putting all Haar-like features over each other generates a face-like image
+        FaceDetection.notifyUser("Constructing an image of all Haar-like Features found...")
+        
+        reconstructedImage = FaceDetection.reconstruct(classifiers, size(facesTesting[1]))
+        save(joinpath(dirname(dirname(@__FILE__)), "figs", "reconstruction.png"), Gray.(map(clamp01nan, reconstructedImage)))
+        
+        println("...done.  See ", joinpath(dirname(dirname(@__FILE__)), "figs", "reconstruction.png"), ".\n")
+    end
+
+    if featValidaton
+        FaceDetection.notifyUser("Constructing a validation image on a random image...")
+        
+        FaceDetection.generateValidationImage(FaceDetection.getRandomImage(joinpath(dirname(dirname(@__FILE__)), "figs", "validation.png")), classifiers)
+        
+        println("...done.  See ", joinpath(dirname(dirname(@__FILE__)), "figs", "validation.png"), ".\n")
+    end
 end
 
 
 
-@time main(smartChooseFeats=false, alt=false, imageReconstruction=true, featValidaton=true)
+@time main(smartChooseFeats=true, alt=false, imageReconstruction=true, featValidaton=true)

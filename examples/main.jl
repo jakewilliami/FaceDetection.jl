@@ -18,8 +18,11 @@ using .FaceDetection
 using Printf: @printf
 using Images: imresize
 
+println("...done")
+
 
 function main(; smartChooseFeats::Bool=false, alt::Bool=false)
+      # we assume that `smartChooseFeats = true`
       mainPath = dirname(dirname(@__FILE__))
       mainImagePath = joinpath(mainPath, "data", "main")
       altImagePath = joinpath(mainPath, "data", "alt")
@@ -27,22 +30,28 @@ function main(; smartChooseFeats::Bool=false, alt::Bool=false)
       if alt
             posTrainingPath = joinpath(altImagePath, "pos")
             negTrainingPath = joinpath(altImagePath, "neg")
-            posTestingPath = joinpath(altImagePath, "testing", "pos")
-            negTestingPath = joinpath(homedir(), "Desktop", "Assorted Personal Documents", "Wallpapers copy")
+            # posTestingPath = joinpath(altImagePath, "testing", "pos")
+            # negTestingPath = joinpath(homedir(), "Desktop", "Assorted Personal Documents", "Wallpapers copy")
+            posTestingPath = joinpath(mainImagePath, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$mainImagePath/testset/faces/"
+            negTestingPath = joinpath(mainImagePath, "testset", "non-faces")
       else
             posTrainingPath = joinpath(mainImagePath, "trainset", "faces")
             negTrainingPath = joinpath(mainImagePath, "trainset", "non-faces")
             posTestingPath = joinpath(mainImagePath, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$mainImagePath/testset/faces/"
             negTestingPath = joinpath(mainImagePath, "testset", "non-faces")
-            
-            # posTrainingPath = joinpath(altImagePath, "pos")
-            # negTrainingPath = joinpath(altImagePath, "neg")
       end
 
-      numClassifiers = 4
-
-      if ! smartChooseFeats
+      numClassifiers = 10
+      
+      minSizeImg = (19, 19) # default for our test dataset
+      if smartChooseFeats
             # For performance reasons restricting feature size
+            notifyUser("Selecting best feature width and height...")
+            
+            maxFeatureWidth, maxFeatureHeight, minFeatureHeight, minFeatureWidth, minSizeImg = determineFeatureSize(posTrainingPath, negTrainingPath)
+            
+            println("...done.  Maximum feature width selected is $maxFeatureWidth pixels; minimum feature width is $minFeatureWidth; maximum feature height is $maxFeatureHeight pixels; minimum feature height is $minFeatureHeight.")
+      else
             minFeatureHeight = 8
             maxFeatureHeight = 10
             minFeatureWidth = 8
@@ -69,13 +78,13 @@ function main(; smartChooseFeats::Bool=false, alt::Bool=false)
       
       facesTesting = FaceDetection.loadImages(posTestingPath)
       # facesIITesting = map(FaceDetection.toIntegralImage, facesTesting)
-      facesIITesting = map(i -> imresize(i, (19,19)), map(FaceDetection.toIntegralImage, facesTesting))
+      facesIITesting = map(i -> imresize(i, minSizeImg), map(FaceDetection.toIntegralImage, facesTesting))
       println("...done. ", length(facesTesting), " faces loaded.")
       
       FaceDetection.notifyUser("Loading test non-faces..")
       
       nonFacesTesting = FaceDetection.loadImages(negTestingPath)
-      nonFacesIITesting = map(i -> imresize(i, (19,19)), map(FaceDetection.toIntegralImage, nonFacesTesting))
+      nonFacesIITesting = map(i -> imresize(i, minSizeImg), map(FaceDetection.toIntegralImage, nonFacesTesting))
       println("...done. ", length(nonFacesTesting), " non-faces loaded.\n")
 
       FaceDetection.notifyUser("Testing selected classifiers...")
@@ -103,4 +112,4 @@ end
 
 
 
-@time main()
+@time main(smartChooseFeats=true, alt=true)

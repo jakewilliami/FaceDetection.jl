@@ -15,17 +15,21 @@ using CSV: write
 using DataFrames: DataFrame
 using HypothesisTests: UnequalVarianceTTest
 
+println("...done")
 
-function main(smartChooseFeats::Bool=false, alt::Bool=false)
+
+function main(; smartChooseFeats::Bool=false, alt::Bool=false)
     mainPath = dirname(dirname(@__FILE__))
     mainImagePath = joinpath(mainPath, "data", "main")
     altImagePath = joinpath(mainPath, "data", "alt")
 
     if alt
         posTrainingPath = joinpath(altImagePath, "pos")
-        negTrainingPath = joinpath(altImagePath, "neg")
-        posTestingPath = joinpath(altImagePath, "testing", "pos")
-        negTestingPath = joinpath(homedir(), "Desktop", "Assorted Personal Documents", "Wallpapers copy")
+            negTrainingPath = joinpath(altImagePath, "neg")
+            # posTestingPath = joinpath(altImagePath, "testing", "pos")
+            # negTestingPath = joinpath(homedir(), "Desktop", "Assorted Personal Documents", "Wallpapers copy")
+            posTestingPath = joinpath(mainImagePath, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$mainImagePath/testset/faces/"
+            negTestingPath = joinpath(mainImagePath, "testset", "non-faces")
     else
         posTrainingPath = joinpath(mainImagePath, "trainset", "faces")
         negTrainingPath = joinpath(mainImagePath, "trainset", "non-faces")
@@ -35,8 +39,15 @@ function main(smartChooseFeats::Bool=false, alt::Bool=false)
 
     numClassifiers = 10
 
-    if ! smartChooseFeats
+    minSizeImg = (19, 19) # default for our test dataset
+    if smartChooseFeats
         # For performance reasons restricting feature size
+        notifyUser("Selecting best feature width and height...")
+        
+        maxFeatureWidth, maxFeatureHeight, minFeatureHeight, minFeatureWidth, minSizeImg = determineFeatureSize(posTrainingPath, negTrainingPath)
+        
+        println("...done.  Maximum feature width selected is $maxFeatureWidth pixels; minimum feature width is $minFeatureWidth; maximum feature height is $maxFeatureHeight pixels; minimum feature height is $minFeatureHeight.")
+    else
         minFeatureHeight = 8
         maxFeatureHeight = 10
         minFeatureWidth = 8
@@ -63,13 +74,13 @@ function main(smartChooseFeats::Bool=false, alt::Bool=false)
 
     facesTesting = FaceDetection.loadImages(posTestingPath)
     # facesIITesting = map(FaceDetection.toIntegralImage, facesTesting)
-    facesIITesting = map(i -> imresize(i, (19,19)), map(FaceDetection.toIntegralImage, facesTesting))
+    facesIITesting = map(i -> imresize(i, minSizeImg), map(FaceDetection.toIntegralImage, facesTesting))
     println("...done. ", length(facesTesting), " faces loaded.")
 
     FaceDetection.notifyUser("Loading test non-faces..")
 
     nonFacesTesting = FaceDetection.loadImages(negTestingPath)
-    nonFacesIITesting = map(i -> imresize(i, (19,19)), map(FaceDetection.toIntegralImage, nonFacesTesting))
+    nonFacesIITesting = map(i -> imresize(i, minSizeImg), map(FaceDetection.toIntegralImage, nonFacesTesting))
     println("...done. ", length(nonFacesTesting), " non-faces loaded.\n")
     
     notifyUser("Calculating test face scores and constructing dataset...")
@@ -80,8 +91,8 @@ function main(smartChooseFeats::Bool=false, alt::Bool=false)
     facesScores = zeros(length(facesIITesting))
     nonFacesScores = zeros(length(nonFacesIITesting))
     
-    facesScores[1:length(facesScores)] .= [sum([FaceDetection.getFaceness(c,face) for c in classifiers]) for face in facesIITesting]
-    nonFacesScores[1:length(nonFacesScores)] .= [sum([FaceDetection.getFaceness(c,nonFace) for c in classifiers]) for nonFace in nonFacesIITesting]
+    facesScores[:] .= [sum([FaceDetection.getFaceness(c,face) for c in classifiers]) for face in facesIITesting]
+    nonFacesScores[:] .= [sum([FaceDetection.getFaceness(c,nonFace) for c in classifiers]) for nonFace in nonFacesIITesting]
     
     # filling in the dataset with missing to easily write to csv
     dfFaces = facesScores
@@ -93,7 +104,7 @@ function main(smartChooseFeats::Bool=false, alt::Bool=false)
     end
     
     # write score data
-    write(joinpath(homedir(), "Desktop", "facelikeness-data.csv"), DataFrame(hcat(dfFaces, dfNonFaces)), writeheader=false)
+    write(joinpath(dirname(dirname(@__FILE__)), "data", "facelikeness-data.csv"), DataFrame(hcat(dfFaces, dfNonFaces)), writeheader=false)
     
     println("...done.\n")
     
@@ -127,5 +138,4 @@ function main(smartChooseFeats::Bool=false, alt::Bool=false)
 end
 
 
-
-@time main(false, false)
+@time main(smartChooseFeats=true, alt=true)

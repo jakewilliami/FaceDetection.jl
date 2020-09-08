@@ -16,10 +16,8 @@ ALT="${FD_HOME}/data/alt/"
 
 
 setupWD() {
-	mkdir -p ${MAIN}/testing/pos/
-	mkdir -p ${MAIN}/testing/neg/
-	mkdir -p ${MAIN}/testing/testing/pos/
-	mkdir -p ${MAIN}/testing/testing/neg/
+	mkdir -p ${ALT}/testing/testing/pos/
+	mkdir -p ${ALT}/testing/testing/neg/
 }
 
 
@@ -48,18 +46,10 @@ checkPackages() {
 
 obtainDatasetAlt() {
 	echo "Downloading alternative face detection training data"
-	if [[ -d ${FD_HOME}/face-detection-data/ ]]
-	then
-		rm -rf ${FD_HOME}/face-detection-data/
-	fi
-	if [[ -d ${ALT}/pos/ ]]
-	then
-		rm -rf ${ALT}/pos/
-	fi
-	if [[ -d ${ALT}/neg/ ]]
-	then
-		rm -rf ${ALT}/neg/
-	fi
+	[[ -d ${FD_HOME}/face-detection-data/ ]] && rm -rf ${FD_HOME}/face-detection-data/
+	[[ -d ${ALT}/pos/ ]] && rm -rf ${ALT}/pos/
+	[[ -d ${ALT}/neg/ ]] && rm -rf ${ALT}/neg/
+	
 	cd ${FD_HOME}/ && \
 		git clone https://github.com/OlegTheCat/face-detection-data && \
 		mv ${FD_HOME}/face-detection-data/pos/ ${ALT}/ && \
@@ -75,18 +65,10 @@ obtainDatasetAlt() {
 
 obtainDatasetMain() {
 	echo "Dowloading training data"
-	if [[ -d ${FD_HOME}/Viola-Jones/ ]]
-	then
-		rm -rf ${FD_HOME}/Viola-Jones/
-	fi
-	if [[ -d ${MAIN}/testset/ ]]
-	then
-		rm -rf ${MAIN}/testset/
-	fi
-	if [[ -d ${MAIN}/trainset/ ]]
-	then
-		rm -rf ${MAIN}/trainset/
-	fi
+	[[ -d ${FD_HOME}/Viola-Jones/ ]] && rm -rf ${FD_HOME}/Viola-Jones/
+	[[ -d ${MAIN}/testset/ ]] && rm -rf ${MAIN}/testset/
+	[[ -d ${MAIN}/trainset/ ]] && rm -rf ${MAIN}/trainset/
+	
 	mkdir -p ${MAIN}/
 	cd ${FD_HOME}/ && \
 		git clone https://github.com/INVASIS/Viola-Jones/ && \
