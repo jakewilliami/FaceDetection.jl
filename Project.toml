@@ -2,6 +2,8 @@
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
+Gadfly = "c91e804a-d5a3-530f-b6f0-dfbca275c004"
+HypothesisTests = "09f84164-cd44-5f33-b23f-e6b0d136a0d5"
 ImageDraw = "4381153b-2b60-58ae-a1ba-fd683676385f"
 ImageIO = "82e4d734-157c-48bb-816b-45c225c6df19"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"

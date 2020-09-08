@@ -10,9 +10,10 @@ include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl"))
 
 using .FaceDetection
 using Images: imresize
-using StatsPlots#, Plots # StatsPlots required for box plots
+using StatsPlots  # StatsPlots required for box plots # plot boxplot @layout :origin savefig
 using CSV: write
 using DataFrames: DataFrame
+using HypothesisTests: UnequalVarianceTTest
 
 
 function main(smartChooseFeats::Bool=false, alt::Bool=false)
@@ -70,70 +71,56 @@ function main(smartChooseFeats::Bool=false, alt::Bool=false)
     nonFacesTesting = FaceDetection.loadImages(negTestingPath)
     nonFacesIITesting = map(i -> imresize(i, (19,19)), map(FaceDetection.toIntegralImage, nonFacesTesting))
     println("...done. ", length(nonFacesTesting), " non-faces loaded.\n")
-
-    FaceDetection.notifyUser("Testing selected classifiers...")
-    correctFaces = 0
-    correctNonFaces = 0
-    correctFaces = sum(FaceDetection.ensembleVoteAll(facesIITesting, classifiers))
-    correctNonFaces = length(nonFacesTesting) - sum(FaceDetection.ensembleVoteAll(nonFacesIITesting, classifiers))
-    correctFacesPercent = (float(correctFaces) / length(facesTesting)) * 100
-    correctNonFacesPercent = (float(correctNonFaces) / length(nonFacesTesting)) * 100
-
-    println("...done.\n")
     
     notifyUser("Calculating test face scores and constructing dataset...")
     
-    dfFaces = Matrix{Union{Float64, Missing}}(undef, length(facesIITesting), 1)
-    dfNonFaces = Matrix{Union{Float64, Missing}}(undef, length(nonFacesIITesting), 1)
-    dfFaces[1:length(facesIITesting)] .= [sum([FaceDetection.getFaceness(c,face) for c in classifiers]) for face in facesIITesting]
-    dfNonFaces[1:length(nonFacesIITesting)] .= [sum([FaceDetection.getFaceness(c,nonFace) for c in classifiers]) for nonFace in nonFacesIITesting]
+    # get scores
+    # facesScores = Matrix{Float64}(undef, length(facesIITesting), 1)
+    # nonFacesScores = Matrix{Float64}(undef, length(nonFacesIITesting), 1)
+    facesScores = zeros(length(facesIITesting))
+    nonFacesScores = zeros(length(nonFacesIITesting))
     
+    facesScores[1:length(facesScores)] .= [sum([FaceDetection.getFaceness(c,face) for c in classifiers]) for face in facesIITesting]
+    nonFacesScores[1:length(nonFacesScores)] .= [sum([FaceDetection.getFaceness(c,nonFace) for c in classifiers]) for nonFace in nonFacesIITesting]
     
-    # displaymatrix(dfFaces)
-    # displaymatrix(dfNonFaces)
+    # filling in the dataset with missing to easily write to csv
+    dfFaces = facesScores
+    dfNonFaces = nonFacesScores
+    if length(facesScores) < length(nonFacesScores)
+        dfFaces = vcat(dfFaces, Matrix{Union{Float64, Missing}}(undef, length(nonFacesIITesting) - length(facesIITesting), 1))
+    elseif length(facesScores) > length(nonFacesScores)
+        dfNonFaces = vcat(dfNonFaces, Matrix{Union{Float64, Missing}}(undef, length(facesIITesting) - length(nonFacesIITesting), 1))
+    end
+    
+    # write score data
+    write(joinpath(homedir(), "Desktop", "facelikeness-data.csv"), DataFrame(hcat(dfFaces, dfNonFaces)), writeheader=false)
     
     println("...done.\n")
     
+    notifyUser("Computing differences in scores between faces and non-faces...")
+    
+    welch_t = UnequalVarianceTTest(facesScores, nonFacesScores)
+    
+    println("...done.  $welch_t\n")
+    
     notifyUser("Constructing box plot with said dataset...")
     
+    gr() # set plot backend
     theme(:solarized)
-    plot = boxplot(["" ""],# titles?
-                    dfFaces, dfNonFaces,
+    plot = StatsPlots.plot(
+                    StatsPlots.boxplot(facesScores, xaxis=false)
+                    StatsPlots.boxplot(nonFacesScores, xaxis=false),
                     title = ["Scores of Faces" "Scores of Non-Faces"],
                     label = ["faces" "non-faces"],
                     fontfamily = font("Times"),
                     layout = @layout([a b]),
                     # fillcolor = [:blue, :orange],
                     link = :y,
-                    framestyle = [:origin :origin]
+                    # framestyle = [:origin :origin]
                 )
-                
-    plot(
-        boxplot(dfFaces,
-                        title = "Scores of Faces",
-                        label = "faces",
-                        fontfamily = font("Times"),
-                        # fillcolor = [:blue, :orange],
-                        link = :y,
-                        framestyle = [:origin :origin]
-                    )
-        boxplot(dfNonFaces,
-                        title = "Scores of Non-Faces",
-                        label = non-faces",
-                        fontfamily = font("Times"),
-                        framestyle = [:origin :origin]
-                    )
-    )
     
-    if length(dfFaces) < length(dfNonFaces) # filling in the dataset
-        dfFaces = vcat(dfFaces, Matrix{Union{Float64, Missing}}(undef, length(nonFacesIITesting) - length(facesIITesting), 1))
-    elseif length(dfFaces) > length(dfNonFaces)
-        dfNonFaces = vcat(dfNonFaces, Matrix{Union{Float64, Missing}}(undef, length(facesIITesting) - length(nonFacesIITesting), 1))
-    end
-    
-    write(joinpath(homedir(), "Desktop", "facelikeness-data.csv"), DataFrame(hcat(dfFaces, dfNonFaces)), writeheader=false)
-    
-    savefig(plot, joinpath(dirname(dirname(@__FILE__)), "figs", "scores.pdf"))
+    # save plot
+    StatsPlots.savefig(plot, joinpath(dirname(dirname(@__FILE__)), "figs", "scores.pdf"))
     
     println("...done.  Plot created at ", joinpath(dirname(dirname(@__FILE__)), "figs", "scores.pdf"), "\n")
 
