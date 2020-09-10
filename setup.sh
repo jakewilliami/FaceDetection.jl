@@ -116,6 +116,18 @@ obtainFDDBDataset() {
 }
 
 
+obtainLabelledFacesInTheWildDataset() {
+	URL="http://vis-www.cs.umass.edu/lfw/lfw.tgz"
+	cd ${FD_HOME}/data/
+    wget "${URL}" || echo -e "An error has occurred whilst trying to download the FDDB dataset."
+    DOWNLOADED_FILE="${URL##*/}"
+    tar xvzf "${DOWNLOADED_FILE}"
+    EXTRACTED_DIR="${DOWNLOADED_FILE%%.*}"
+	rm "${DOWNLOADED_FILE}"
+    cd - > /dev/null
+}
+
+
 convertPGM() {
 #### The following step was only for python testing code.  Netpbm.jl is powerful and fixed this.
 
