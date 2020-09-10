@@ -48,7 +48,7 @@ function main(; smartChooseFeats::Bool=false, alt::Bool=false, imageReconstructi
       
       maxFeatureWidth, maxFeatureHeight, minFeatureHeight, minFeatureWidth, minSizeImg = determineFeatureSize(posTrainingPath, negTrainingPath)
       
-      println("...done.  Maximum feature width selected is $maxFeatureWidth pixels; minimum feature width is $minFeatureWidth; maximum feature height is $maxFeatureHeight pixels; minimum feature height is $minFeatureHeight.")
+      println("...done.  Maximum feature width selected is $maxFeatureWidth pixels; minimum feature width is $minFeatureWidth; maximum feature height is $maxFeatureHeight pixels; minimum feature height is $minFeatureHeight.\n")
     else
       minFeatureHeight = 8
       maxFeatureHeight = 10
@@ -76,13 +76,13 @@ function main(; smartChooseFeats::Bool=false, alt::Bool=false, imageReconstructi
 
     facesTesting = FaceDetection.loadImages(posTestingPath)
     # facesIITesting = map(FaceDetection.toIntegralImage, facesTesting)
-    facesIITesting = map(i -> imresize(i, minSizeImg), map(FaceDetection.toIntegralImage, facesTesting))
+    facesIITesting = map(FaceDetection.toIntegralImage, facesTesting)
     println("...done. ", length(facesTesting), " faces loaded.")
 
     FaceDetection.notifyUser("Loading test non-faces..")
 
     nonFacesTesting = FaceDetection.loadImages(negTestingPath)
-    nonFacesIITesting = map(i -> imresize(i, minSizeImg), map(FaceDetection.toIntegralImage, nonFacesTesting))
+    nonFacesIITesting = map(FaceDetection.toIntegralImage, nonFacesTesting)
     println("...done. ", length(nonFacesTesting), " non-faces loaded.\n")
 
     FaceDetection.notifyUser("Testing selected classifiers...")
