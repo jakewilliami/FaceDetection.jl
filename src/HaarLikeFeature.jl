@@ -58,30 +58,30 @@ function getScore(feature, intImg::Array)#function getScore(feature::HaarLikeObj
         =#
         
         score = 0
-        mycount = 0
+        faceness = 0
 
         if feature.featureType == FeatureTypes[1] # two vertical
             first = IntegralImage.sumRegion(intImg, feature.topLeft, (feature.topLeft[1] + feature.width, Int(round(feature.topLeft[2] + feature.height / 2))))
             second = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 2))), feature.bottomRight)
             score = first - second
-            mycount = 1
+            faceness = 1
         elseif feature.featureType == FeatureTypes[2] # two horizontal
             first = IntegralImage.sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2] + feature.height))
             second = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2]), feature.bottomRight)
             score = first - second
-            mycount = 2
+            faceness = 2
         elseif feature.featureType == FeatureTypes[3] # three horizontal
             first = IntegralImage.sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 3)), feature.topLeft[2] + feature.height))
             second = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 3)), feature.topLeft[2]), (Int(round(feature.topLeft[1] + 2 * feature.width / 3)), feature.topLeft[2] + feature.height))
             third = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + 2 * feature.width / 3)), feature.topLeft[2]), feature.bottomRight)
             score = first - second + third
-            mycount = 3
+            faceness = 3
         elseif feature.featureType == FeatureTypes[4] # three vertical
             first = IntegralImage.sumRegion(intImg, feature.topLeft, (feature.bottomRight[1], Int(round(feature.topLeft[2] + feature.height / 3))))
             second = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 3))), (feature.bottomRight[1], Int(round(feature.topLeft[2] + 2 * feature.height / 3))))
             third = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + 2 * feature.height / 3))), feature.bottomRight)
             score = first - second + third
-            mycount  = 4
+            faceness  = 4
         elseif feature.featureType == FeatureTypes[5] # four
             # top left area
             first = IntegralImage.sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 2)), Int(round(feature.topLeft[2] + feature.height / 2))))
@@ -92,7 +92,7 @@ function getScore(feature, intImg::Array)#function getScore(feature::HaarLikeObj
             # bottom right area
             fourth = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), Int(round(feature.topLeft[2] + feature.height / 2))), feature.bottomRight)
             score = first - second - third + fourth
-            mycount = 5
+            faceness = 5
         end
         
         
@@ -100,27 +100,27 @@ function getScore(feature, intImg::Array)#function getScore(feature::HaarLikeObj
         #     first = IntegralImage.sumRegion(intImg, feature.topLeft, (feature.topLeft[1] + feature.width, Int(round(feature.topLeft[2] + feature.height / 2))))
         #     second = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 2))), feature.bottomRight)
         #     score = first - second
-        #     mycount += 1
+        #     faceness += 1
         # end
         # if feature.featureType == FeatureTypes[2] # two horizontal
         #     first = IntegralImage.sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2] + feature.height))
         #     second = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2]), feature.bottomRight)
         #     score = first - second
-        #     mycount += 1
+        #     faceness += 1
         # end
         # if feature.featureType == FeatureTypes[3] # three horizontal
         #     first = IntegralImage.sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 3)), feature.topLeft[2] + feature.height))
         #     second = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 3)), feature.topLeft[2]), (Int(round(feature.topLeft[1] + 2 * feature.width / 3)), feature.topLeft[2] + feature.height))
         #     third = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + 2 * feature.width / 3)), feature.topLeft[2]), feature.bottomRight)
         #     score = first - second + third
-        #     mycount += 1
+        #     faceness += 1
         # end
         # if feature.featureType == FeatureTypes[4] # three vertical
         #     first = IntegralImage.sumRegion(intImg, feature.topLeft, (feature.bottomRight[1], Int(round(feature.topLeft[2] + feature.height / 3))))
         #     second = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 3))), (feature.bottomRight[1], Int(round(feature.topLeft[2] + 2 * feature.height / 3))))
         #     third = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + 2 * feature.height / 3))), feature.bottomRight)
         #     score = first - second + third
-        #     mycount += 1
+        #     faceness += 1
         # end
         # if feature.featureType == FeatureTypes[5] # four
         #     # top left area
@@ -132,10 +132,10 @@ function getScore(feature, intImg::Array)#function getScore(feature::HaarLikeObj
         #     # bottom right area
         #     fourth = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), Int(round(feature.topLeft[2] + feature.height / 2))), feature.bottomRight)
         #     score = first - second - third + fourth
-        #     mycount += 1
+        #     faceness += 1
         # end
         
-        return score, mycount
+        return score, faceness
 end
 
 
