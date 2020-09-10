@@ -15,83 +15,104 @@ module AdaBoost
 include("Utils.jl")
 
 using ProgressMeter: @showprogress
-# using .HaarLikeFeature: FeatureTypes, HaarLikeObject, getVote
-using .Utils: notifyUser, FeatureTypes, HaarLikeObject, getVote
+# using .HaarLikeFeature: feature_types, HaarLikeObject, get_vote
+using .Utils: notify_user, feature_types, HaarLikeObject, get_vote
 
-export learn, _create_features
+export learn
 
+#=
+    learn(
+        positive_iis::AbstractArray,
+        negative_iis::AbstractArray,
+        num_classifiers::Int64=-1,
+        min_feature_width::Int64=1,
+        max_feature_width::Int64=-1,
+        min_feature_height::Int64=1,
+        max_feature_height::Int64=-1
+    ) ->::Array{HaarLikeObject,1}
 
-function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassifiers::Int64=-1, minFeatureWidth::Int64=1, maxFeatureWidth::Int64=-1, minFeatureHeight::Int64=1, maxFeatureHeight::Int64=-1)#::Array{HaarLikeObject,1}
-    #=
-    The boosting algorithm for learning a query online.  $T$ hypotheses are constructed, each using a single feature.  The final hypothesis is a weighted linear combination of the $T$ hypotheses, where the weights are inversely proportional to the training errors.
-    This function selects a set of classifiers. Iteratively takes the best classifiers based on a weighted error.
-    
-    parameter `positiveIIs`: List of positive integral image examples [type: Abstracy Array]
-    parameter `negativeIIs`: List of negative integral image examples [type: Abstract Array]
-    parameter `numClassifiers`: Number of classifiers to select. -1 will use all
-    classifiers [type: Integer]
-    
-    return `classifiers`: List of selected features [type: HaarLikeObject]
-    =#
-    
-    
+The boosting algorithm for learning a query online.  $T$ hypotheses are constructed, each using a single feature.
+The final hypothesis is a weighted linear combination of the $T$ hypotheses, where the weights are inversely proportional to the training errors.
+This function selects a set of classifiers. Iteratively takes the best classifiers based on a weighted error.
+
+# Arguments
+
+- `positive_iis::AbstractArray`: List of positive integral image examples
+- `negative_iis::AbstractArray`: List of negative integral image examples
+- `num_classifiers::Integer`: Number of classifiers to select. -1 will use all classifiers
+- `min_feature_width::Integer`: the minimum width of the feature
+- `max_feature_width::Integer`: the maximum width of the feature
+- `min_feature_height::Integer`: the minimum height of the feature
+- `max_feature_width::Integer`: the maximum height of the feature
+
+# Returns `classifiers::Array{HaarLikeObject, 1}`: List of selected features
+=#
+function learn(
+    positive_iis::AbstractArray,
+    negative_iis::AbstractArray,
+    num_classifiers::Integer=-1,
+    min_feature_width::Integer=1,
+    max_feature_width::Integer=-1,
+    min_feature_height::Integer=1,
+    max_feature_height::Integer=-1
+)#::Array{HaarLikeObject,1}
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
-    numPos = length(positiveIIs)
-    numNeg = length(negativeIIs)
-    numImgs = numPos + numNeg
+    num_pos = length(positive_iis)
+    num_neg = length(negative_iis)
+    num_imgs = num_pos + num_neg
     
     # get image height and width
-    imgHeight, imgWidth = size(positiveIIs[1])
+    img_height, img_width = size(positive_iis[1])
     
     # Maximum feature width and height default to image width and height
-    if isequal(maxFeatureHeight, -1)
-        maxFeatureHeight = imgHeight
+    if isequal(max_feature_height, -1)
+        max_feature_height = img_height
     end
-    if isequal(maxFeatureWidth, -1)
-        maxFeatureWidth = imgWidth
+    if isequal(max_feature_width, -1)
+        max_feature_width = img_width
     end
     
     # Initialise weights $w_{1,i} = \frac{1}{2m}, \frac{1}{2l}$, for $y_i=0,1$ for negative and positive examples respectively
-    posWeights = float(ones(numPos)) / (2 * numPos)
-    negWeights = float(ones(numNeg)) / (2 * numNeg)
+    pos_weights = float(ones(num_pos)) / (2 * num_pos)
+    neg_weights = float(ones(num_neg)) / (2 * num_neg)
     #=
     Consider the original code,
         ```
         $ python3 -c 'import numpy; a=[1,2,3]; b=[4,5,6]; print(numpy.hstack((a,b)))'
         [1 2 3 4 5 6]
         ```
-    This is *not* comparablt to Julia's `hcat`.  Here,
+    This is *not* comparable to Julia's `hcat`.  Here,
         ```
         numpy.hstack((a,b)) ≡ vcat(a,b)
         ```
     =#
     
     # Concatenate positive and negative weights into one `weights` array
-    weights = vcat(posWeights, negWeights)
-    labels = vcat(ones(numPos), ones(numNeg) * -1)
+    weights = vcat(pos_weights, neg_weights)
+    labels = vcat(ones(num_pos), ones(num_neg) * -1)
     
     # get list of images (global because of @everywhere scope)
-    images = vcat(positiveIIs, negativeIIs)
+    images = vcat(positive_iis, negative_iis)
 
     # Create features for all sizes and locations
-    features = _create_features(imgHeight, imgWidth, minFeatureWidth, maxFeatureWidth, minFeatureHeight, maxFeatureHeight)
-    numFeatures = length(features)
-    featureIndices = Array(1:numFeatures)
+    features = _create_features(img_height, img_width, min_feature_width, max_feature_width, min_feature_height, max_feature_height)
+    num_features = length(features)
+    feature_indices = Array(1:num_features)
     used = []
     
-    if isequal(numClassifiers, -1)
-        numClassifiers = numFeatures
+    if isequal(num_classifiers, -1)
+        num_classifiers = num_features
     end
     
-    Utils.notifyUser("Calculating scores for images...")
+    Utils.notify_user("Calculating scores for images...")
     
-    # create an empty array (of zeroes) with dimensions (numImgs, numFeautures)
-    votes = zeros((numImgs, numFeatures)) # necessarily different from `zero.((numImgs, numFeatures))`; previously zerosarray
+    # create an empty array (of zeroes) with dimensions (num_imgs, numFeautures)
+    votes = zeros((num_imgs, num_features)) # necessarily different from `zero.((num_imgs, num_features))`; previously zerosarray
 
-    n = numImgs
-    processes = numImgs # i.e., hypotheses
+    n = num_imgs
+    processes = num_imgs # i.e., hypotheses
     @showprogress for t in 1:processes # bar(range(num_imgs)):
-        votes[t, :] = Array(map(f -> getVote(f, images[t]), features))
+        votes[t, :] = Array(map(f -> get_vote(f, images[t]), features))
     end # end show progress in for loop
     
     print("\n") # for a new line after the progress bar
@@ -99,49 +120,47 @@ function learn(positiveIIs::AbstractArray, negativeIIs::AbstractArray, numClassi
     # select classifiers
     classifiers = []
 
-    Utils.notifyUser("Selecting classifiers...")
+    Utils.notify_user("Selecting classifiers...")
     
-    n = numClassifiers
-    @showprogress for t in 1:numClassifiers
-        classificationErrors = zeros(length(featureIndices)) # previously, zerosarray
+    n = num_classifiers
+    @showprogress for t in 1:num_classifiers
+        classification_errors = zeros(length(feature_indices)) # previously, zerosarray
 
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
         weights = float(weights) / sum(weights)
 
         # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
-        for j in 1:length(featureIndices)
-            fIDX = featureIndices[j]
+        for j in 1:length(feature_indices)
+            f_idx = feature_indices[j]
             # classifier error is the sum of image weights where the classifier is right
-            ε = sum(map(imgIDX -> labels[imgIDX] ≠ votes[imgIDX, fIDX] ? weights[imgIDX] : 0, 1:numImgs))
+            ε = sum(map(img_idx -> labels[img_idx] ≠ votes[img_idx, f_idx] ? weights[img_idx] : 0, 1:num_imgs))
             
-            classificationErrors[j] = ε
+            classification_errors[j] = ε
         end
 
         # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
-        minErrorIDX = argmin(classificationErrors) # returns the index of the minimum in the array # consider `findmin`
-        bestError = classificationErrors[minErrorIDX]
-        bestFeatureIDX = featureIndices[minErrorIDX]
+        min_error_idx = argmin(classification_errors) # returns the index of the minimum in the array # consider `findmin`
+        best_error = classification_errors[min_error_idx]
+        best_feature_idx = feature_indices[min_error_idx]
 
         # set feature weight
-        bestFeature = features[bestFeatureIDX]
-        featureWeight = 0.5 * log((1 - bestError) / bestError) # β
-        bestFeature.weight = featureWeight
+        best_feature = features[best_feature_idx]
+        feature_weight = 0.5 * log((1 - best_error) / best_error) # β
+        best_feature.weight = feature_weight
 
-        classifiers = push!(classifiers, bestFeature)
+        classifiers = push!(classifiers, best_feature)
 
         # update image weights $w_{t+1,i}=w_{t,i}\beta_{t}^{1-e_i}$
-        weights = Array(map(i -> labels[i] ≠ votes[i, bestFeatureIDX] ? weights[i] * sqrt((1 - bestError) / bestError) : weights[i] * sqrt(bestError / (1 - bestError)), 1:numImgs))
+        weights = Array(map(i -> labels[i] ≠ votes[i, best_feature_idx] ? weights[i] * sqrt((1 - best_error) / best_error) : weights[i] * sqrt(best_error / (1 - best_error)), 1:num_imgs))
 
         # remove feature (a feature can't be selected twice)
-        featureIndices = filter!(e -> e ∉ bestFeatureIDX, featureIndices) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`
+        feature_indices = filter!(e -> e ∉ best_feature_idx, feature_indices) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`
     end
     
     print("\n") # for a new line after the progress bar
     
     return classifiers
-    
 end
-
 
 #find / update threshold and coeff for each feature
 # function _feature_job(feature_nr, feature)
@@ -182,40 +201,57 @@ end
 #     errors[feature_nr] = best_local_error
 # end
 
+#=
+    _create_features(
+        img_height::Integer,
+        img_width::Integer,
+        min_feature_width::Integer,
+        max_feature_width::Integer,
+        min_feature_height::Integer,
+        max_feature_height::Integer
+    ) -> Array{HaarLikeObject, 1}
 
-function _create_features(imgHeight::Int64, imgWidth::Int64, minFeatureWidth::Int64, maxFeatureWidth::Int64, minFeatureHeight::Int64, maxFeatureHeight::Int64)
-    #=
-    Iteratively creates the Haar-like feautures
-    
-    parameter `imgHeight`: The height of the image [type: Integer]
-    parameter `imgWidth`: The width of the image [type: Integer]
-    parameter `minFeatureWidth`: The minimum width of the feature (used for computation efficiency purposes) [type: Integer]
-    parameter `maxFeatureWidth`: The maximum width of the feature [type: Integer]
-    parameter `minFeatureHeight`: The minimum height of the feature [type: Integer]
-    parameter `maxFeatureHeight`: The maximum height of the feature [type: Integer]
-    
-    return `features`: an array of Haar-like features found for an image [type: Abstract Array]
-    =#
-    
-    Utils.notifyUser("Creating Haar-like features...")
+Iteratively creates the Haar-like feautures
+
+# Arguments
+
+- `img_height::Integer`: The height of the image
+- `img_width::Integer`: The width of the image
+- `min_feature_width::Integer`: The minimum width of the feature (used for computation efficiency purposes)
+- `max_feature_width::Integer`: The maximum width of the feature
+- `min_feature_height::Integer`: The minimum height of the feature
+- `max_feature_height::Integer`: The maximum height of the feature
+
+# Returns
+
+- `features::AbstractArray`: an array of Haar-like features found for an image
+=#
+function _create_features(
+    img_height::Integer,
+    img_width::Integer,
+    min_feature_width::Integer,
+    max_feature_width::Integer,
+    min_feature_height::Integer,
+    max_feature_height::Integer
+)
+    Utils.notify_user("Creating Haar-like features...")
     features = []
     
-    if imgWidth < maxFeatureWidth || imgHeight < maxFeatureHeight
+    if img_width < max_feature_width || img_height < max_feature_height
         error("""
-        Cannot possibly find classifiers whose size is greater than the image itself [(width,height) = ($imgWidth,$imgHeight)].
+        Cannot possibly find classifiers whose size is greater than the image itself [(width,height) = ($img_width,$img_height)].
         """)
     end
     
-    for feature in Utils.FeatureTypes # (FeatureTypes are just tuples)
-        featureStartWidth = max(minFeatureWidth, feature[1])
-        for featureWidth in range(featureStartWidth, stop=maxFeatureWidth, step=feature[1])
-            featureStartHeight = max(minFeatureHeight, feature[2])
-            for featureHeight in range(featureStartHeight, stop=maxFeatureHeight, step=feature[2])
-                for x in 1:(imgWidth - featureWidth)
-                    for y in 1:(imgHeight - featureHeight)
-                        features = push!(features, Utils.HaarLikeObject(feature, (x, y), featureWidth, featureHeight, 0, 1))
-                        features = push!(features, Utils.HaarLikeObject(feature, (x, y), featureWidth, featureHeight, 0, -1))
-                        # features = push!(features, Utils.HaarLikeObject(feature, (x, y), featureWidth, featureHeight, 0.11, -1))
+    for feature in Utils.feature_types # (feature_types are just tuples)
+        feature_start_width = max(min_feature_width, feature[1])
+        for feature_width in range(feature_start_width, stop=max_feature_width, step=feature[1])
+            feature_start_height = max(min_feature_height, feature[2])
+            for feature_height in range(feature_start_height, stop=max_feature_height, step=feature[2])
+                for x in 1:(img_width - feature_width)
+                    for y in 1:(img_height - feature_height)
+                        features = push!(features, Utils.HaarLikeObject(feature, (x, y), feature_width, feature_height, 0, 1))
+                        features = push!(features, Utils.HaarLikeObject(feature, (x, y), feature_width, feature_height, 0, -1))
                     end # end for y
                 end # end for x
             end # end for feature height
@@ -226,6 +262,5 @@ function _create_features(imgHeight::Int64, imgWidth::Int64, minFeatureWidth::In
     
     return features
 end
-
 
 end # end module

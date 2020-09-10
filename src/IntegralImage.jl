@@ -19,37 +19,35 @@ module IntegralImage
 import Base: size, getindex, LinearIndices
 using Images: Images, coords_spatial
 
-
-export toIntegralImage, sumRegion
-
+export to_integral_image, sum_region
 
 struct IntegralArray{T, N, A} <: AbstractArray{T, N}
 	data::A
 end
 
+#=
+	to_integral_image(img_arr::AbstractArray) -> AbstractArray
 
-function toIntegralImage(imgArr::AbstractArray)
-	#=
-    Calculates the integral image based on this instance's original image data.
-    
-    parameter `imgArr`: Image source data [type: Abstract Array]
-    
-    return `integralImageArr`: Integral image for given image [type: Abstract Array]
-    
-    https://www.ipol.im/pub/art/2014/57/article_lr.pdf, p. 346
-    
-    This function is adapted from https://github.com/JuliaImages/IntegralArrays.jl/blob/a2aa5bb7c2d26512f562ab98f43497d695b84701/src/IntegralArrays.jl
-    =#
-	
-	arraySize = size(imgArr)
-    integralImageArr = Array{Images.accum(eltype(imgArr))}(undef, arraySize)
-    sd = coords_spatial(imgArr)
-    cumsum!(integralImageArr, imgArr; dims=sd[1])#length(arraySize)
+Calculates the integral image based on this instance's original image data.
+
+# Arguments
+
+- `img_arr::AbstractArray`: Image source data
+
+# Returns
+
+ - `integral_image_arr::AbstractArray`: Integral image for given image
+=#
+function to_integral_image(img_arr::AbstractArray)
+	array_size = size(img_arr)
+    integral_image_arr = Array{Images.accum(eltype(img_arr))}(undef, array_size)
+    sd = coords_spatial(img_arr)
+    cumsum!(integral_image_arr, img_arr; dims=sd[1])#length(array_size)
     for i = 2:length(sd)
-        cumsum!(integralImageArr, integralImageArr; dims=sd[i])
+        cumsum!(integral_image_arr, integral_image_arr; dims=sd[i])
     end
 	
-    return Array{eltype(imgArr), ndims(imgArr)}(integralImageArr)
+    return Array{eltype(img_arr), ndims(img_arr)}(integral_image_arr)
 end
 
 LinearIndices(A::IntegralArray) = Base.LinearFast()
@@ -57,21 +55,32 @@ size(A::IntegralArray) = size(A.data)
 getindex(A::IntegralArray, i::Int...) = A.data[i...]
 getindex(A::IntegralArray, ids::Tuple...) = getindex(A, ids[1]...)
 
+#=
+	sum_region(
+		integral_image_arr::AbstractArray,
+		top_left::Tuple{Int64,Int64},
+		bottom_right::Tuple{Int64,Int64}
+	) -> Number
 
-function sumRegion(integralImageArr::AbstractArray, topLeft::Tuple{Int64,Int64}, bottomRight::Tuple{Int64,Int64})
-    #=
-    parameter `integralImageArr`: The intermediate Integral Image [type: Abstract Array]
-    Calculates the sum in the rectangle specified by the given tuples:
-        parameter `topLeft`: (x,y) of the rectangle's top left corner [type: Tuple]
-        parameter `bottomRight`: (x,y) of the rectangle's bottom right corner [type: Tuple]
-    
-    return: The sum of all pixels in the given rectangle defined by the parameters topLeft and bottomRight
-    =#
-	
-	sum = integralImageArr[bottomRight[2], bottomRight[1]]
-    sum -= topLeft[1] > 1 ? integralImageArr[bottomRight[2], topLeft[1] - 1] : 0
-    sum -= topLeft[2] > 1 ? integralImageArr[topLeft[2] - 1, bottomRight[1]] : 0
-    sum += topLeft[2] > 1 && topLeft[1] > 1 ? integralImageArr[topLeft[2] - 1, topLeft[1] - 1] : 0
+# Arguments
+
+- `integral_image_arr::AbstractArray`: The intermediate Integral Image
+- `top_left::Tuple{Integer, Integer}`: (x,y) of the rectangle's top left corner
+- `bottom_right::Tuple{Integer, Integer}`: (x,y) of the rectangle's bottom right corner
+
+# Returns
+
+- `sum::Number` The sum of all pixels in the given rectangle defined by the parameters top_left and bottom_right
+=#
+function sum_region(
+	integral_image_arr::AbstractArray,
+	top_left::Tuple{Int64,Int64},
+	bottom_right::Tuple{Int64,Int64}
+)
+	sum = integral_image_arr[bottom_right[2], bottom_right[1]]
+    sum -= top_left[1] > 1 ? integral_image_arr[bottom_right[2], top_left[1] - 1] : 0
+    sum -= top_left[2] > 1 ? integral_image_arr[top_left[2] - 1, bottom_right[1]] : 0
+    sum += top_left[2] > 1 && top_left[1] > 1 ? integral_image_arr[top_left[2] - 1, top_left[1] - 1] : 0
 	
     return sum
 end

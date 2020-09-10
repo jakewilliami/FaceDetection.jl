@@ -9,154 +9,161 @@ module HaarLikeFeature
 
 include("IntegralImage.jl")
 
-using .IntegralImage: sumRegion
+using .IntegralImage: sum_region
 
-export FeatureTypes, HaarLikeObject, getScore, getVote
+export feature_types, HaarLikeObject, get_score, get_vote
 
-
-FeatureTypes = [(1, 2), (2, 1), (3, 1), (1, 3), (2, 2)]
-
+feature_types = [(1, 2), (2, 1), (3, 1), (1, 3), (2, 2)]
 
 abstract type HaarFeatureAbstractType end
 # abstract type AbstractHaarLikeObject <: HaarFeatureAbstractType end
 
-# make structure
+#=
+Struct representing a Haar-like feature.
+=#
 mutable struct HaarLikeObject <: HaarFeatureAbstractType
-    #=
-    Struct representing a Haar-like feature.
-    =#
-    
-    featureType::Tuple{Int64, Int64}
-    position::Tuple{Int64, Int64}
-    topLeft::Tuple{Int64, Int64}
-    bottomRight::Tuple{Int64, Int64}
-    width::Int64
-    height::Int64
-    threshold::Int64
-    polarity::Int64
-    weight::Float64
+    feature_type::Tuple{Integer, Integer}
+    position::Tuple{Integer, Integer}
+    top_left::Tuple{Integer, Integer}
+    bottom_right::Tuple{Integer, Integer}
+    width::Integer
+    height::Integer
+    threshold::Integer
+    polarity::Integer
+    weight::AbstractFloat
     
     # constructor; equivalent of __init__ method within class
-    function HaarLikeObject(featureType::Tuple{Int64,Int64}, position::Tuple{Int64, Int64}, width::Int64, height::Int64, threshold::Int64, polarity::Int64)
-        topLeft = position
-        bottomRight = (position[1] + width, position[2] + height)
+    function HaarLikeObject(
+        feature_type::Tuple{Integer, Integer},
+        position::Tuple{Integer, Integer},
+        width::Integer,
+        height::Integer,
+        threshold::Integer,
+        polarity::Integer
+    )
+        top_left = position
+        bottom_right = (position[1] + width, position[2] + height)
         weight = 1
         
-        new(featureType, position, topLeft, bottomRight, width, height, threshold, polarity, weight)
+        new(feature_type, position, top_left, bottom_right, width, height, threshold, polarity, weight)
     end # end constructor
 end # end structure
 
+#=
+    get_score(feature::HaarLikeObject, int_img::Array) -> Tuple{Number, Number}
+    
+Get score for given integral image array.
 
-function getScore(feature, intImg::Array)#function getScore(feature::HaarLikeObject, intImg::Array)
-        #=
-        Get score for given integral image array.
-        
-        parameter `feature`: given Haar-like feature (parameterised replacement of Python's `self`) [type: HaarLikeObject]
-        parameter `intImg`: Integral image array [type: Abstract Array]
-        
-        return `score`: Score for given feature [type: Float]
-        =#
-        
-        score = 0
-        faceness = 0
+# Arguments
 
-        if feature.featureType == FeatureTypes[1] # two vertical
-            first = IntegralImage.sumRegion(intImg, feature.topLeft, (feature.topLeft[1] + feature.width, Int(round(feature.topLeft[2] + feature.height / 2))))
-            second = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 2))), feature.bottomRight)
-            score = first - second
-            faceness = 1
-        elseif feature.featureType == FeatureTypes[2] # two horizontal
-            first = IntegralImage.sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2] + feature.height))
-            second = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2]), feature.bottomRight)
-            score = first - second
-            faceness = 2
-        elseif feature.featureType == FeatureTypes[3] # three horizontal
-            first = IntegralImage.sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 3)), feature.topLeft[2] + feature.height))
-            second = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 3)), feature.topLeft[2]), (Int(round(feature.topLeft[1] + 2 * feature.width / 3)), feature.topLeft[2] + feature.height))
-            third = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + 2 * feature.width / 3)), feature.topLeft[2]), feature.bottomRight)
-            score = first - second + third
-            faceness = 3
-        elseif feature.featureType == FeatureTypes[4] # three vertical
-            first = IntegralImage.sumRegion(intImg, feature.topLeft, (feature.bottomRight[1], Int(round(feature.topLeft[2] + feature.height / 3))))
-            second = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 3))), (feature.bottomRight[1], Int(round(feature.topLeft[2] + 2 * feature.height / 3))))
-            third = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + 2 * feature.height / 3))), feature.bottomRight)
-            score = first - second + third
-            faceness  = 4
-        elseif feature.featureType == FeatureTypes[5] # four
-            # top left area
-            first = IntegralImage.sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 2)), Int(round(feature.topLeft[2] + feature.height / 2))))
-            # top right area
-            second = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2]), (feature.bottomRight[1], Int(round(feature.topLeft[2] + feature.height / 2))))
-            # bottom left area
-            third = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 2))), (Int(round(feature.topLeft[1] + feature.width / 2)), feature.bottomRight[2]))
-            # bottom right area
-            fourth = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), Int(round(feature.topLeft[2] + feature.height / 2))), feature.bottomRight)
-            score = first - second - third + fourth
-            faceness = 5
-        end
-        
-        
-        # if feature.featureType == FeatureTypes[1] # two vertical
-        #     first = IntegralImage.sumRegion(intImg, feature.topLeft, (feature.topLeft[1] + feature.width, Int(round(feature.topLeft[2] + feature.height / 2))))
-        #     second = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 2))), feature.bottomRight)
-        #     score = first - second
-        #     faceness += 1
-        # end
-        # if feature.featureType == FeatureTypes[2] # two horizontal
-        #     first = IntegralImage.sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2] + feature.height))
-        #     second = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2]), feature.bottomRight)
-        #     score = first - second
-        #     faceness += 1
-        # end
-        # if feature.featureType == FeatureTypes[3] # three horizontal
-        #     first = IntegralImage.sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 3)), feature.topLeft[2] + feature.height))
-        #     second = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 3)), feature.topLeft[2]), (Int(round(feature.topLeft[1] + 2 * feature.width / 3)), feature.topLeft[2] + feature.height))
-        #     third = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + 2 * feature.width / 3)), feature.topLeft[2]), feature.bottomRight)
-        #     score = first - second + third
-        #     faceness += 1
-        # end
-        # if feature.featureType == FeatureTypes[4] # three vertical
-        #     first = IntegralImage.sumRegion(intImg, feature.topLeft, (feature.bottomRight[1], Int(round(feature.topLeft[2] + feature.height / 3))))
-        #     second = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 3))), (feature.bottomRight[1], Int(round(feature.topLeft[2] + 2 * feature.height / 3))))
-        #     third = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + 2 * feature.height / 3))), feature.bottomRight)
-        #     score = first - second + third
-        #     faceness += 1
-        # end
-        # if feature.featureType == FeatureTypes[5] # four
-        #     # top left area
-        #     first = IntegralImage.sumRegion(intImg, feature.topLeft, (Int(round(feature.topLeft[1] + feature.width / 2)), Int(round(feature.topLeft[2] + feature.height / 2))))
-        #     # top right area
-        #     second = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), feature.topLeft[2]), (feature.bottomRight[1], Int(round(feature.topLeft[2] + feature.height / 2))))
-        #     # bottom left area
-        #     third = IntegralImage.sumRegion(intImg, (feature.topLeft[1], Int(round(feature.topLeft[2] + feature.height / 2))), (Int(round(feature.topLeft[1] + feature.width / 2)), feature.bottomRight[2]))
-        #     # bottom right area
-        #     fourth = IntegralImage.sumRegion(intImg, (Int(round(feature.topLeft[1] + feature.width / 2)), Int(round(feature.topLeft[2] + feature.height / 2))), feature.bottomRight)
-        #     score = first - second - third + fourth
-        #     faceness += 1
-        # end
-        
-        return score, faceness
+- `feature::HaarLikeObject`: given Haar-like feature (parameterised replacement of Python's `self`)
+- `int_img::AbstractArray`: Integral image array
+
+# Returns
+
+- `score::Number`: Score for given feature
+=#
+function get_score(feature, int_img::Array)#function get_score(feature::HaarLikeObject, int_img::Array)
+    score = 0
+    faceness = 0
+
+    if feature.feature_type == feature_types[1] # two vertical
+        first = IntegralImage.sum_region(int_img, feature.top_left, (feature.top_left[1] + feature.width, Int(round(feature.top_left[2] + feature.height / 2))))
+        second = IntegralImage.sum_region(int_img, (feature.top_left[1], Int(round(feature.top_left[2] + feature.height / 2))), feature.bottom_right)
+        score = first - second
+        faceness = 1
+    elseif feature.feature_type == feature_types[2] # two horizontal
+        first = IntegralImage.sum_region(int_img, feature.top_left, (Int(round(feature.top_left[1] + feature.width / 2)), feature.top_left[2] + feature.height))
+        second = IntegralImage.sum_region(int_img, (Int(round(feature.top_left[1] + feature.width / 2)), feature.top_left[2]), feature.bottom_right)
+        score = first - second
+        faceness = 2
+    elseif feature.feature_type == feature_types[3] # three horizontal
+        first = IntegralImage.sum_region(int_img, feature.top_left, (Int(round(feature.top_left[1] + feature.width / 3)), feature.top_left[2] + feature.height))
+        second = IntegralImage.sum_region(int_img, (Int(round(feature.top_left[1] + feature.width / 3)), feature.top_left[2]), (Int(round(feature.top_left[1] + 2 * feature.width / 3)), feature.top_left[2] + feature.height))
+        third = IntegralImage.sum_region(int_img, (Int(round(feature.top_left[1] + 2 * feature.width / 3)), feature.top_left[2]), feature.bottom_right)
+        score = first - second + third
+        faceness = 3
+    elseif feature.feature_type == feature_types[4] # three vertical
+        first = IntegralImage.sum_region(int_img, feature.top_left, (feature.bottom_right[1], Int(round(feature.top_left[2] + feature.height / 3))))
+        second = IntegralImage.sum_region(int_img, (feature.top_left[1], Int(round(feature.top_left[2] + feature.height / 3))), (feature.bottom_right[1], Int(round(feature.top_left[2] + 2 * feature.height / 3))))
+        third = IntegralImage.sum_region(int_img, (feature.top_left[1], Int(round(feature.top_left[2] + 2 * feature.height / 3))), feature.bottom_right)
+        score = first - second + third
+        faceness  = 4
+    elseif feature.feature_type == feature_types[5] # four
+        # top left area
+        first = IntegralImage.sum_region(int_img, feature.top_left, (Int(round(feature.top_left[1] + feature.width / 2)), Int(round(feature.top_left[2] + feature.height / 2))))
+        # top right area
+        second = IntegralImage.sum_region(int_img, (Int(round(feature.top_left[1] + feature.width / 2)), feature.top_left[2]), (feature.bottom_right[1], Int(round(feature.top_left[2] + feature.height / 2))))
+        # bottom left area
+        third = IntegralImage.sum_region(int_img, (feature.top_left[1], Int(round(feature.top_left[2] + feature.height / 2))), (Int(round(feature.top_left[1] + feature.width / 2)), feature.bottom_right[2]))
+        # bottom right area
+        fourth = IntegralImage.sum_region(int_img, (Int(round(feature.top_left[1] + feature.width / 2)), Int(round(feature.top_left[2] + feature.height / 2))), feature.bottom_right)
+        score = first - second - third + fourth
+        faceness = 5
+    end
+    
+    # if feature.feature_type == feature_types[1] # two vertical
+    #     first = IntegralImage.sum_region(int_img, feature.top_left, (feature.top_left[1] + feature.width, Int(round(feature.top_left[2] + feature.height / 2))))
+    #     second = IntegralImage.sum_region(int_img, (feature.top_left[1], Int(round(feature.top_left[2] + feature.height / 2))), feature.bottom_right)
+    #     score = first - second
+    #     faceness += 1
+    # end
+    # if feature.feature_type == feature_types[2] # two horizontal
+    #     first = IntegralImage.sum_region(int_img, feature.top_left, (Int(round(feature.top_left[1] + feature.width / 2)), feature.top_left[2] + feature.height))
+    #     second = IntegralImage.sum_region(int_img, (Int(round(feature.top_left[1] + feature.width / 2)), feature.top_left[2]), feature.bottom_right)
+    #     score = first - second
+    #     faceness += 1
+    # end
+    # if feature.feature_type == feature_types[3] # three horizontal
+    #     first = IntegralImage.sum_region(int_img, feature.top_left, (Int(round(feature.top_left[1] + feature.width / 3)), feature.top_left[2] + feature.height))
+    #     second = IntegralImage.sum_region(int_img, (Int(round(feature.top_left[1] + feature.width / 3)), feature.top_left[2]), (Int(round(feature.top_left[1] + 2 * feature.width / 3)), feature.top_left[2] + feature.height))
+    #     third = IntegralImage.sum_region(int_img, (Int(round(feature.top_left[1] + 2 * feature.width / 3)), feature.top_left[2]), feature.bottom_right)
+    #     score = first - second + third
+    #     faceness += 1
+    # end
+    # if feature.feature_type == feature_types[4] # three vertical
+    #     first = IntegralImage.sum_region(int_img, feature.top_left, (feature.bottom_right[1], Int(round(feature.top_left[2] + feature.height / 3))))
+    #     second = IntegralImage.sum_region(int_img, (feature.top_left[1], Int(round(feature.top_left[2] + feature.height / 3))), (feature.bottom_right[1], Int(round(feature.top_left[2] + 2 * feature.height / 3))))
+    #     third = IntegralImage.sum_region(int_img, (feature.top_left[1], Int(round(feature.top_left[2] + 2 * feature.height / 3))), feature.bottom_right)
+    #     score = first - second + third
+    #     faceness += 1
+    # end
+    # if feature.feature_type == feature_types[5] # four
+    #     # top left area
+    #     first = IntegralImage.sum_region(int_img, feature.top_left, (Int(round(feature.top_left[1] + feature.width / 2)), Int(round(feature.top_left[2] + feature.height / 2))))
+    #     # top right area
+    #     second = IntegralImage.sum_region(int_img, (Int(round(feature.top_left[1] + feature.width / 2)), feature.top_left[2]), (feature.bottom_right[1], Int(round(feature.top_left[2] + feature.height / 2))))
+    #     # bottom left area
+    #     third = IntegralImage.sum_region(int_img, (feature.top_left[1], Int(round(feature.top_left[2] + feature.height / 2))), (Int(round(feature.top_left[1] + feature.width / 2)), feature.bottom_right[2]))
+    #     # bottom right area
+    #     fourth = IntegralImage.sum_region(int_img, (Int(round(feature.top_left[1] + feature.width / 2)), Int(round(feature.top_left[2] + feature.height / 2))), feature.bottom_right)
+    #     score = first - second - third + fourth
+    #     faceness += 1
+    # end
+    
+    return score, faceness
 end
 
+#=
+    get_vote(feature::HaarLikeObject, int_img::AbstractArray) -> Integer
 
+Get vote of this feature for given integral image.
 
-function getVote(feature, intImg::AbstractArray)#function getVote(feature::HaarLikeObject, intImg::AbstractArray)
-    #=
-    Get vote of this feature for given integral image.
-    
-    parameter `feature`: given Haar-like feature (parameterised replacement of Python's `self`) [type: HaarLikeObject]
-    parameter `intImg`: Integral image array [type: Abstract Array]
-    
-    return:
-        1       ⟺ this feature votes positively
-        -1      otherwise
-    [type: Integer]
-    =#
-    
-    score = getScore(feature, intImg)[1] # we only care about score here
+# Arguments
+
+- `feature::HaarLikeObject`: given Haar-like feature (parameterised replacement of Python's `self`)
+- `int_img::AbstractArray`: Integral image array [type: Abstract Array]
+
+# Returns
+
+ - `vote::Integer`:
+    1       ⟺ this feature votes positively
+    -1      otherwise
+=#
+function get_vote(feature, int_img::AbstractArray)#function get_vote(feature::HaarLikeObject, int_img::AbstractArray)
+    score = get_score(feature, int_img)[1] # we only care about score here
 
     return (feature.weight * score) < (feature.polarity * feature.threshold) ? 1 : -1
 end
-
 
 end # end module

@@ -17,120 +17,121 @@ using HypothesisTests: UnequalVarianceTTest
 
 println("...done")
 
-
-function main(; smartChooseFeats::Bool=false, alt::Bool=false)
-    mainPath = dirname(dirname(@__FILE__))
-    dataPath = joinpath(mainPath, "data")
-    mainImagePath = joinpath(mainPath, "data", "main")
-    altImagePath = joinpath(mainPath, "data", "alt")
+function main(;
+    smart_choose_feats::Bool=false, alt::Bool=false
+)
+    main_path = dirname(dirname(@__FILE__))
+    data_path = joinpath(main_path, "data")
+    main_image_path = joinpath(main_path, "data", "main")
+    alt_image_path = joinpath(main_path, "data", "alt")
 
     if alt
-        posTrainingPath = joinpath(altImagePath, "pos")
-            negTrainingPath = joinpath(altImagePath, "neg")
-            # posTestingPath = joinpath(altImagePath, "testing", "pos")
-            # negTestingPath = joinpath(homedir(), "Desktop", "Assorted Personal Documents", "Wallpapers copy")
-            posTestingPath = joinpath(mainImagePath, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$mainImagePath/testset/faces/"
-            negTestingPath = joinpath(mainImagePath, "testset", "non-faces")
+        pos_training_path = joinpath(alt_image_path, "pos")
+        neg_training_path = joinpath(alt_image_path, "neg")
+        # pos_testing_path = joinpath(alt_image_path, "testing", "pos")
+        # neg_testing_path = joinpath(homedir(), "Desktop", "Assorted Personal Documents", "Wallpapers copy")
+        pos_testing_path = joinpath(main_image_path, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$main_image_path/testset/faces/"
+        neg_testing_path = joinpath(main_image_path, "testset", "non-faces")
     else
-        posTrainingPath = joinpath(mainImagePath, "trainset", "faces")
-        negTrainingPath = joinpath(mainImagePath, "trainset", "non-faces")
-        posTestingPath = joinpath(mainImagePath, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$mainImagePath/testset/faces/"
-        negTestingPath = joinpath(mainImagePath, "testset", "non-faces")
+        pos_training_path = joinpath(main_image_path, "trainset", "faces")
+        neg_training_path = joinpath(main_image_path, "trainset", "non-faces")
+        pos_testing_path = joinpath(main_image_path, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$main_image_path/testset/faces/"
+        neg_testing_path = joinpath(main_image_path, "testset", "non-faces")
     end
     
-    # posTrainingPath = joinpath(dataPath, "lfw-all")
-    # negTrainingPath = joinpath(dataPath, "all-non-faces")
-    # posTestingPath = joinpath(dataPath, "lizzie-testset", "faces")
-    # negTestingPath = joinpath(dataPath, "lizzie-testset", "nonfaces")
+    # pos_training_path = joinpath(data_path, "lfw-all")
+    # neg_training_path = joinpath(data_path, "all-non-faces")
+    # pos_testing_path = joinpath(data_path, "lizzie-testset", "faces")
+    # neg_testing_path = joinpath(data_path, "lizzie-testset", "nonfaces")
 
-    numClassifiers = 10
+    num_classifiers = 10
 
-    minSizeImg = (19, 19) # default for our test dataset
-    if smartChooseFeats
+    min_size_img = (19, 19) # default for our test dataset
+    if smart_choose_feats
         # For performance reasons restricting feature size
-        notifyUser("Selecting best feature width and height...")
+        notify_user("Selecting best feature width and height...")
         
-        maxFeatureWidth, maxFeatureHeight, minFeatureHeight, minFeatureWidth, minSizeImg = determineFeatureSize(posTrainingPath, negTrainingPath)
+        max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = determine_feature_size(pos_training_path, neg_training_path)
         
-        println("...done.  Maximum feature width selected is $maxFeatureWidth pixels; minimum feature width is $minFeatureWidth; maximum feature height is $maxFeatureHeight pixels; minimum feature height is $minFeatureHeight.\n")
+        println("...done.  Maximum feature width selected is $max_feature_width pixels; minimum feature width is $min_feature_width; maximum feature height is $max_feature_height pixels; minimum feature height is $min_feature_height.\n")
     else
-        minFeatureHeight = 8
-        maxFeatureHeight = 10
-        minFeatureWidth = 8
-        maxFeatureWidth = 10
+        min_feature_height = 8
+        max_feature_height = 10
+        min_feature_width = 8
+        max_feature_width = 10
     end
 
 
-    FaceDetection.notifyUser("Loading faces...")
+    FaceDetection.notify_user("Loading faces...")
 
-    facesTraining, trainingFaceNames = FaceDetection.loadImages(posTrainingPath)
-    facesIITraining = map(FaceDetection.toIntegralImage, facesTraining) # list(map(...))
-    println("...done. ", length(facesTraining), " faces loaded.")
+    faces_training = FaceDetection.load_images(pos_training_path)[1]
+    faces_ii_training = map(FaceDetection.to_integral_image, faces_training) # list(map(...))
+    println("...done. ", length(faces_training), " faces loaded.")
 
-    FaceDetection.notifyUser("Loading non-faces...")
+    FaceDetection.notify_user("Loading non-faces...")
 
-    nonFacesTraining, trainingNonFaceNames = FaceDetection.loadImages(negTrainingPath)
-    nonFacesIITraining = map(FaceDetection.toIntegralImage, nonFacesTraining) # list(map(...))
-    println("...done. ", length(nonFacesTraining), " non-faces loaded.\n")
+    non_faces_training = FaceDetection.load_images(neg_training_path)[1]
+    non_faces_ii_training = map(FaceDetection.to_integral_image, non_faces_training) # list(map(...))
+    println("...done. ", length(non_faces_training), " non-faces loaded.\n")
 
     # classifiers are haar like features
-    classifiers = FaceDetection.learn(facesIITraining, nonFacesIITraining, numClassifiers, minFeatureHeight, maxFeatureHeight, minFeatureWidth, maxFeatureWidth)
+    classifiers = FaceDetection.learn(faces_ii_training, non_faces_ii_training, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width)
 
-    FaceDetection.notifyUser("Loading test faces...")
+    FaceDetection.notify_user("Loading test faces...")
 
-    facesTesting, faceNames = FaceDetection.loadImages(posTestingPath)
-    # facesIITesting = map(FaceDetection.toIntegralImage, facesTesting)
-    facesIITesting = map(FaceDetection.toIntegralImage, facesTesting)
-    println("...done. ", length(facesTesting), " faces loaded.")
+    faces_testing, face_names = FaceDetection.load_images(pos_testing_path)
+    # faces_ii_testing = map(FaceDetection.to_integral_image, faces_testing)
+    faces_ii_testing = map(FaceDetection.to_integral_image, faces_testing)
+    println("...done. ", length(faces_testing), " faces loaded.")
 
-    FaceDetection.notifyUser("Loading test non-faces..")
+    FaceDetection.notify_user("Loading test non-faces..")
 
-    nonFacesTesting, nonFaceNames = FaceDetection.loadImages(negTestingPath)
-    nonFacesIITesting = map(FaceDetection.toIntegralImage, nonFacesTesting)
-    println("...done. ", length(nonFacesTesting), " non-faces loaded.\n")
+    non_faces_testing, non_face_names = FaceDetection.load_images(neg_testing_path)
+    non_faces_ii_testing = map(FaceDetection.to_integral_image, non_faces_testing)
+    println("...done. ", length(non_faces_testing), " non-faces loaded.\n")
     
-    notifyUser("Calculating test face scores and constructing dataset...")
+    notify_user("Calculating test face scores and constructing dataset...")
     
     # get scores
-    # facesScores = Matrix{Float64}(undef, length(facesIITesting), 1)
-    # nonFacesScores = Matrix{Float64}(undef, length(nonFacesIITesting), 1)
-    facesScores = zeros(length(facesIITesting))
-    nonFacesScores = zeros(length(nonFacesIITesting))
+    # faces_scores = Matrix{Float64}(undef, length(faces_ii_testing), 1)
+    # non_faces_scores = Matrix{Float64}(undef, length(non_faces_ii_testing), 1)
+    faces_scores = zeros(length(faces_ii_testing))
+    non_faces_scores = zeros(length(non_faces_ii_testing))
     
-    facesScores[:] .= [sum([FaceDetection.getFaceness(c,face) for c in classifiers]) for face in facesIITesting]
-    nonFacesScores[:] .= [sum([FaceDetection.getFaceness(c,nonFace) for c in classifiers]) for nonFace in nonFacesIITesting]
+    faces_scores[:] .= [sum([FaceDetection.get_faceness(c,face) for c in classifiers]) for face in faces_ii_testing]
+    non_faces_scores[:] .= [sum([FaceDetection.get_faceness(c,nonFace) for c in classifiers]) for nonFace in non_faces_ii_testing]
     
     # filling in the dataset with missing to easily write to csv
-    dfFaces = facesScores
-    dfNonFaces = nonFacesScores
-    if length(facesScores) < length(nonFacesScores)
-        toAdd = length(nonFacesIITesting) - length(facesIITesting)
-        dfFaces = vcat(dfFaces, Matrix{Union{Float64, Missing}}(undef, toAdd, 1))
-        faceNames = vcat(faceNames, Matrix{Union{Float64, Missing}}(undef, toAdd, 1))
-    elseif length(facesScores) > length(nonFacesScores)
-        length(facesIITesting) - length(nonFacesIITesting)
-        dfNonFaces = vcat(dfNonFaces, Matrix{Union{Float64, Missing}}(undef, toAdd, 1))
-        nonFaceNames = vcat(nonFaceNames, Matrix{Union{Float64, Missing}}(undef, toAdd, 1))
+    df_faces = faces_scores
+    df_non_faces = non_faces_scores
+    if length(faces_scores) < length(non_faces_scores)
+        to_add = length(non_faces_ii_testing) - length(faces_ii_testing)
+        df_faces = vcat(df_faces, Matrix{Union{Float64, Missing}}(undef, to_add, 1))
+        face_names = vcat(face_names, Matrix{Union{Float64, Missing}}(undef, to_add, 1))
+    elseif length(faces_scores) > length(non_faces_scores)
+        length(faces_ii_testing) - length(non_faces_ii_testing)
+        df_non_faces = vcat(df_non_faces, Matrix{Union{Float64, Missing}}(undef, to_add, 1))
+        non_face_names = vcat(non_face_names, Matrix{Union{Float64, Missing}}(undef, to_add, 1))
     end
     
     # write score data
-    write(joinpath(dirname(dirname(@__FILE__)), "data", "faceness-scores.csv"), DataFrame(hcat(faceNames, dfFaces, nonFaceNames, dfNonFaces)), writeheader=false)
+    write(joinpath(dirname(dirname(@__FILE__)), "data", "faceness-scores.csv"), DataFrame(hcat(face_names, df_faces, non_face_names, df_non_faces)), writeheader=false)
     
     println("...done.\n")
     
-    notifyUser("Computing differences in scores between faces and non-faces...")
+    notify_user("Computing differences in scores between faces and non-faces...")
     
-    welch_t = UnequalVarianceTTest(facesScores, nonFacesScores)
+    welch_t = UnequalVarianceTTest(faces_scores, non_faces_scores)
     
     println("...done.  $welch_t\n")
     
-    notifyUser("Constructing box plot with said dataset...")
+    notify_user("Constructing box plot with said dataset...")
     
     gr() # set plot backend
     theme(:solarized)
     plot = StatsPlots.plot(
-                    StatsPlots.boxplot(facesScores, xaxis=false, label = false),
-                    StatsPlots.boxplot(nonFacesScores, xaxis=false, label = false),
+                    StatsPlots.boxplot(faces_scores, xaxis=false, label = false),
+                    StatsPlots.boxplot(non_faces_scores, xaxis=false, label = false),
                     title = ["Scores of Faces" "Scores of Non-Faces"],
                     # label = ["faces" "non-faces"],
                     fontfamily = font("Times"),
@@ -144,8 +145,6 @@ function main(; smartChooseFeats::Bool=false, alt::Bool=false)
     StatsPlots.savefig(plot, joinpath(dirname(dirname(@__FILE__)), "figs", "scores.pdf"))
     
     println("...done.  Plot created at ", joinpath(dirname(dirname(@__FILE__)), "figs", "scores.pdf"), "\n")
-
 end
 
-
-@time main(smartChooseFeats=true, alt=false)
+@time main(smart_choose_feats=true, alt=false)

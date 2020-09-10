@@ -12,232 +12,263 @@ include("IntegralImage.jl")
 
 using Images: save, load, Colors, clamp01nan, Gray, imresize
 using ImageDraw: draw!, Polygon, Point
-using .HaarLikeFeature: FeatureTypes, getVote, getScore ,HaarLikeObject
-using .IntegralImage: toIntegralImage
+using .HaarLikeFeature: feature_types, get_vote, get_score ,HaarLikeObject
+using .IntegralImage: to_integral_image
 
-export displaymatrix, notifyUser, loadImages, ensembleVoteAll, getFaceness, reconstruct, getRandomImage, generateValidationImage, determineFeatureSize, getImageMatrix, ensembleVote
-export FeatureTypes, HaarLikeObject, getScore, getVote
+export displaymatrix, notify_user, load_images, ensemble_vote_all, get_faceness, reconstruct, get_random_image, generate_validation_image, determine_feature_size, get_image_matrix
+export feature_types, HaarLikeObject, get_score, get_vote
 
+#=
+    displaymatrix(M::AbstractArray) -> AbstractString
+
+A function to show a big matrix on one console screen (similar to default `print` of numpy arrays in Python).
+
+# Arguments
+
+- `M::AbstractArray`: Some array
+
+# Returns
+- `A::AbstractString`: A nice array to print
+=#
 function displaymatrix(M::AbstractArray)
-    #=
-    A function to show a big matrix on one console screen (similar to default `print` of numpy arrays in Python).
-    
-    parameter `M`: Some array [type: Abstract Array]
-    
-    return: A nice array to print [type: plain text
-    =#
     return show(IOContext(stdout, :limit => true, :compact => true, :short => true), "text/plain", M)
 end
 
+#=
+    notify_user(message::AbstractString) -> AbstractString
 
-function notifyUser(message::AbstractString)
+A function to pretty print a message to the user
+
+# Arguments
+
+- `message::AbstractString`: Some message to print
+
+# Returns
+- `A::AbstractString`: A message to print to the user
+=#
+function notify_user(message::AbstractString)
     return println("\033[1;34m===>\033[0;38m\033[1;38m\t$message\033[0;38m")
 end
 
+#=
+    load_images(image_dir::AbstractString) -> Tuple{AbstractArray, AbstractArray}
 
-function loadImages(imageDir::AbstractString)
-    #=
-    Given a path to a directory of images, recursively loads those
-    
-    parameter `imageDir`: path to a directory of images [type: Abstract String (path)]
-    
-    return `images`: a list of images from the path provided [type: Abstract Array]
-    =#
-    
-    files = filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(imageDir, join=true, sort=false))
+Given a path to a directory of images, recursively loads those
+
+# Arguments
+
+- `image_dir::AbstractString`: path to a directory of images
+
+# Returns
+
+- `images::AbstractArray`: a list of images from the path provided
+= `files::AbstractArray`: a list of file names of the images
+=#
+function load_images(image_dir::AbstractString)
+    files = filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(image_dir, join=true, sort=false))
     images = []
     
     for file in files
-        images = push!(images, getImageMatrix(file))
+        images = push!(images, get_image_matrix(file))
     end
     
     return images, files
 end
 
+#=
+    get_image_matrix(image_file::AbstractString) -> AbstractArray
+    
+Takes an image and constructs a matrix of greyscale intensity values based on it.
 
-function getImageMatrix(imageFile::AbstractString)
-    #=
-    Takes an image and constructs a matrix of greyscale intensity values based on it.
+# Arguments
+
+- `image_file::AbstractString`: the path of the file of the image to be turned into an array
+
+# Returns
+
+- `img_arr::AbstractArray`: The array of greyscale intensity values from the image
+=#
+function get_image_matrix(image_file::AbstractString)
+    img = load(image_file)
+    img_arr = convert(Array{Float64}, Gray.(img))
     
-    parameter `imageFile`: the path of the file of the image to be turned into an array [type: Abstract String (path)]
-    
-    return `imgArr`: The array of greyscale intensity values from the image [type: Absrtact Array]
-    =#
-    
-    img = load(imageFile)
-    imgArr = convert(Array{Float64}, Gray.(img))
-    
-    return imgArr
+    return img_arr
 end
 
+#=
+    determine_feature_size(
+        pos_training_path::AbstractString,
+        neg_training_path::AbstractString
+    ) -> Tuple{Integer, Integer, Integer, Integer, Tuple{Integer, Integer}}
 
-function determineFeatureSize(posTrainingPath::AbstractString, negTrainingPath::AbstractString)
-    #=
-    Takes images and finds the best feature size for the image size.
-    
-    parameter `posTrainingPath`: the path to the positive training images [type: Abstract String (path)]
-    parameter `negTrainingPath`: the path to the negative training images [type: Abstract String (path)]
-    
-    return: min and max parameters of feature, and minimum image size [type: multiple tuples for integers]
-    =#
-    
-    minFeatureHeight = 0
-    minFeatureWidth = 0
-    maxFeatureHeight = 0
-    maxFeatureWidth = 0
+Takes images and finds the best feature size for the image size.
 
-    minSizeImg = (0, 0)
+# Arguments
+
+- `pos_training_path::AbstractString`: the path to the positive training images
+- `neg_training_path::AbstractString`: the path to the negative training images
+
+# Returns
+
+- `max_feature_width::Integer`: the maximum width of the feature
+- `max_feature_height::Integer`: the maximum height of the feature
+- `min_feature_height::Integer`: the minimum height of the feature
+- `min_feature_width::Integer`: the minimum width of the feature
+- `min_size_img::Tuple{Integer, Integer}`: the minimum-sized image in the image directories
+=#
+function determine_feature_size(
+    pos_training_path::AbstractString,
+    neg_training_path::AbstractString
+)
+    min_feature_height = 0
+    min_feature_width = 0
+    max_feature_height = 0
+    max_feature_width = 0
+
+    min_size_img = (0, 0)
     sizes = []
 
-    for pictureDir in [posTrainingPath, negTrainingPath]
-            for picture in filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(pictureDir, join=true, sort=false))
-                newSize = size(load(joinpath(homedir(), "FaceDetection.jl", "data", pictureDir, picture)))
-                sizes = push!(sizes, newSize)
+    for picture_dir in [pos_training_path, neg_training_path]
+            for picture in filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(picture_dir, join=true, sort=false))
+                new_size = size(load(joinpath(homedir(), "FaceDetection.jl", "data", picture_dir, picture)))
+                sizes = push!(sizes, new_size)
             end
     end
     
-    minSizeImg = minimum(sizes)
+    min_size_img = minimum(sizes)
     
-    maxFeatureHeight = Int(round(minSizeImg[2]*(10/19)))
-    maxFeatureWidth = Int(round(minSizeImg[1]*(10/19)))
-    minFeatureHeight = Int(round(maxFeatureHeight - maxFeatureHeight*(2/maxFeatureHeight)))
-    minFeatureWidth = Int(round(maxFeatureWidth - maxFeatureWidth*(2/maxFeatureWidth)))
+    max_feature_height = Int(round(min_size_img[2]*(10/19)))
+    max_feature_width = Int(round(min_size_img[1]*(10/19)))
+    min_feature_height = Int(round(max_feature_height - max_feature_height*(2/max_feature_height)))
+    min_feature_width = Int(round(max_feature_width - max_feature_width*(2/max_feature_width)))
     
-    return maxFeatureWidth, maxFeatureHeight, minFeatureHeight, minFeatureWidth, minSizeImg
+    return max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img
     
 end
-    
-    
-function ensembleVote(intImg::AbstractArray, classifiers::AbstractArray)
-    #=
-    Classifies given integral image (Abstract Array) using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
-    
-    That is, the final strong classifier is $h(x)=\begin{cases}1&\text{if }\sum_{t=1}^{T}\alpha_th_t(x)\geq \frac{1}{2}\sum_{t=1}^{T}\alpha_t\\0&\text{otherwise}\end{cases}$, where $\alpha_t=\log{\left(\frac{1}{\beta_t}\right)}$
-    
-    parameter `intImg`: Integral image to be classified [type: AbstractArray]
-    parameter `classifiers`: List of classifiers [type: AbstractArray (array of HaarLikeObjects)]
 
-    return:
-        1       ⟺ sum of classifier votes > 0
-        0       otherwise
-    [type: Integer]
-    =#
-    
-    # evidence = sum([max(getVote(c[1], image), 0.) * c[2] for c in classifiers])
+#=
+    _ensemble_vote(int_img::AbstractArray, classifiers::AbstractArray) -> Integer
+
+Classifies given integral image (Abstract Array) using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
+
+That is, the final strong classifier is $h(x)=\begin{cases}1&\text{if }\sum_{t=1}^{T}\alpha_th_t(x)\geq \frac{1}{2}\sum_{t=1}^{T}\alpha_t\\0&\text{otherwise}\end{cases}$, where $\alpha_t=\log{\left(\frac{1}{\beta_t}\right)}$
+
+# Arguments
+
+- `int_img::AbstractArray`: Integral image to be classified
+- `classifiers::Array{HaarLikeObject, 1}`: List of classifiers
+
+# Returns
+
+- `vote::Integer`
+    1       ⟺ sum of classifier votes > 0
+    0       otherwise
+=#
+function _ensemble_vote(int_img::AbstractArray, classifiers::AbstractArray)
+    # evidence = sum([max(get_vote(c[1], image), 0.) * c[2] for c in classifiers])
     # weightedSum = sum([c[2] for c in classifiers])
     # return evidence >= (weightedSum / 2) ? 1 : -1
     
-    return sum([HaarLikeFeature.getVote(c, intImg) for c in classifiers]) >= 0 ? 1 : 0
+    return sum([HaarLikeFeature.get_vote(c, int_img) for c in classifiers]) >= 0 ? 1 : 0
 end
 
+#=
+    ensemble_vote_all(int_imgs::AbstractArray, classifiers::AbstractArray) -> AbstractArray
+Classifies given integral image (Abstract Array) using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
 
-function ensembleVoteAll(intImgs::AbstractArray, classifiers::AbstractArray)
-    #=
-    Classifies given integral image (Abstract Array) using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
-    
-    parameter `intImg`: Integral image to be classified [type: AbstractArray]
-    parameter `classifiers`: List of classifiers [type: AbstractArray (array of HaarLikeObjects)]
+# Arguments
+- `int_img::AbstractArray`: Integral image to be classified
+- `classifiers::Array{HaarLikeObject, 1}`: List of classifiers
 
-    return list of assigned labels:
-        1       if image was classified positively
-        0       otherwise
-    [type: Abstract Arrays (array of Integers)]
-    =#
-    
-    return Array(map(i -> ensembleVote(i, classifiers), intImgs))
+# Returns
+
+`votes::AbstractArray`: A list of assigned votes (see _ensemble_vote).
+=#
+function ensemble_vote_all(int_imgs::AbstractArray, classifiers::AbstractArray)
+    return Array(map(i -> _ensemble_vote(i, classifiers), int_imgs))
 end
 
+#=
+    get_faceness(feature, int_img::AbstractArray) -> Number
 
-function getFaceness(feature, intImg::AbstractArray)
-        #=
-        Get facelikeness for a given feature.
-        
-        parameter `feature`: given Haar-like feature (parameterised replacement of Python's `self`) [type: HaarLikeObject]
-        parameter `intImg`: Integral image array [type: Abstract Array]
-        
-        return `score`: Score for given feature [type: Float]
-        =#
-        
-        score, faceness = HaarLikeFeature.getScore(feature, intImg)
+Get facelikeness for a given feature.
+
+# Arguments
+
+- `feature::HaarLikeObject`: given Haar-like feature (parameterised replacement of Python's `self`)
+- `int_img::AbstractArray`: Integral image array
+
+# Returns
+
+- `score::Number`: Score for given feature
+=#
+function get_faceness(feature, int_img::AbstractArray)
+        score, faceness = HaarLikeFeature.get_score(feature, int_img)
         
         return (feature.weight * score) < (feature.polarity * feature.threshold) ? faceness : 0
-        
-        # score = 0
-        # # weightedScore(feature, intImg::AbstractArray) = getScore(feature, intImg)
-        # return getVote(feature, intImg)
-        #
-        # if feature.featureType == FeatureTypes[1] # two vertical
-        #     score += weightedScore(feature, intImg)
-        # elseif feature.featureType == FeatureTypes[2] # two horizontal
-        #     score += weightedScore(feature, intImg)
-        # elseif feature.featureType == FeatureTypes[3] # three horizontal
-        #     score += weightedScore(feature, intImg)
-        # elseif feature.featureType == FeatureTypes[4] # three vertical
-        #     score += weightedScore(feature, intImg)
-        # elseif feature.featureType == FeatureTypes[5] # four
-        #     score += weightedScore(feature, intImg)
-        # end
-        #
-        # return score
 end
 
+#=
+    reconstruct(classifiers::AbstractArray, img_size::Tuple) -> AbstractArray
 
-function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
-    #=
-    Creates an image by putting all given classifiers on top of each other producing an archetype of the learned class of object.
-    
-    parameter `classifiers`: List of classifiers [type: Abstract Array (array of HaarLikeObjects)]
-    parameter `imgSize`: Tuple of width and height [Tuple]
+Creates an image by putting all given classifiers on top of each other producing an archetype of the learned class of object.
 
-    return `result`: Reconstructed image [type: PIL.Image??]
-    =#
-    
-    image = zeros(imgSize)
+# Arguments
+
+- `classifiers::Array{HaarLikeObject, 1}`: List of classifiers
+- `img_size::Tuple{Integer, Integer}`: Tuple of width and height
+
+# Returns
+
+- `result::AbstractArray`: Reconstructed image
+=#
+function reconstruct(classifiers::AbstractArray, img_size::Tuple)
+    image = zeros(img_size)
     
     for c in classifiers
         # map polarity: -1 -> 0, 1 -> 1
         polarity = ((1 + c.polarity)^2)/4
-        if c.featureType == HaarLikeFeature.FeatureTypes[1] # two vertical
+        if c.feature_type == HaarLikeFeature.feature_types[1] # two vertical
             for x in 1:c.width
                 sign = polarity
                 for y in 1:c.height
                     if y >= c.height/2
                         sign = mod((sign + 1), 2)
                     end
-                    image[c.topLeft[2] + y, c.topLeft[1] + x] += 1 * sign * c.weight
+                    image[c.top_left[2] + y, c.top_left[1] + x] += 1 * sign * c.weight
                 end
             end
-        elseif c.featureType == HaarLikeFeature.FeatureTypes[2] # two horizontal
+        elseif c.feature_type == HaarLikeFeature.feature_types[2] # two horizontal
             sign = polarity
             for x in 1:c.width
                 if x >= c.width/2
                     sign = mod((sign + 1), 2)
                 end
                 for y in 1:c.height
-                    image[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
+                    image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.featureType == HaarLikeFeature.FeatureTypes[3] # three horizontal
+        elseif c.feature_type == HaarLikeFeature.feature_types[3] # three horizontal
             sign = polarity
             for x in 1:c.width
                 if iszero(mod(x, c.width/3))
                     sign = mod((sign + 1), 2)
                 end
                 for y in 1:c.height
-                    image[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
+                    image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.featureType == HaarLikeFeature.FeatureTypes[4] # three vertical
+        elseif c.feature_type == HaarLikeFeature.feature_types[4] # three vertical
             for x in 1:c.width
                 sign = polarity
                 for y in 1:c.height
                     if iszero(mod(x, c.height/3))
                         sign = mod((sign + 1), 2)
                     end
-                    image[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
+                    image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.featureType == HaarLikeFeature.FeatureTypes[5] # four
+        elseif c.feature_type == HaarLikeFeature.feature_types[5] # four
             sign = polarity
             for x in 1:c.width
                 if iszero(mod(x, c.width/2))
@@ -247,7 +278,7 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
                     if iszero(mod(x, c.height/2))
                         sign = mod((sign + 1), 2)
                     end
-                    image[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
+                    image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
         end
@@ -261,157 +292,197 @@ function reconstruct(classifiers::AbstractArray, imgSize::Tuple)
     return image
 end
 
+#=
+    get_random_image(
+        face_path::AbstractString,
+        non_face_path::AbstractString="",
+        non_faces::Bool=false
+    ) -> AbstractString
 
-function getRandomImage(facePath::AbstractString, nonFacePath::AbstractString="", nonFaces::Bool=false)
-    #=
-    Chooses a random image from a given two directories.
+Chooses a random image from a given two directories.
+
+# Arguments
+
+- `face_path::AbstractString`: The path to the faces directory
+- `non_face_path::AbstractString`: The path to the non-faces directory
+
+# Returns
+
+- `file_name::AbstractString`: The path to the file randomly chosen
+=#
+function get_random_image(
+    face_path::AbstractString,
+    non_face_path::AbstractString="",
+    non_faces::Bool=false
+)
+    file_name = ""
     
-    parameter `facePath`: The path to the faces directory [type: Abstract String (path)]
-    parameter `nonFacePath`: The path to the non-faces directory [type: Abstract String (path)]
-    
-    return `fileName`: The path to the file randomly chosen [type: Abstract String (path)]
-    =#
-    
-    if nonFaces
+    if non_faces
         face = rand(Bool)
-        fileName = rand(filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(face ? facePath : nonFacePath, join=true)))
-        return fileName#, face
+        file_name = rand(filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(face ? face_path : non_face_path, join=true)))
     else
-        fileName = rand(filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(facePath, join=true)))
-        return fileName#, face
+        file_name = rand(filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(face_path, join=true)))
     end
+    
+    return file_name
 end
 
+#=
+    scale_box(
+        top_left::Tuple{Integer, Integer},
+        bottom_right::Tuple{Integer, Integer},
+        genisis_size::Tuple{Integer, Integer},
+        img_size::Tuple{Integer, Integer}
+    ) -> NTuple{::Tuple{Integer, Integer}, 4}
 
-function scaleBox(topLeft::Tuple{Int64, Int64}, bottomRight::Tuple{Int64, Int64}, genisisSize::Tuple{Int64, Int64}, imgSize::Tuple{Int64, Int64})
-    #=
-    Scales the bounding box around classifiers if the image we are pasting it on is a different size to the original image.
+Scales the bounding box around classifiers if the image we are pasting it on is a different size to the original image.
+
+# Arguments
+
+- `top_left::Tuple{Integer, Integer}`: the top left of the Haar-like feature
+- `bottom_right::Tuple{Integer, Integer}`: the bottom right of the Haar-like feature
+- `genisis_size::Tuple{Integer, Integer}`: the size of the test images
+- `img_size::Tuple{Integer, Integer}`: the size of the image which we are pasting the bounding box on top of
+
+# Returns
+
+- `top_left::Tuple{Integer, Integer},`: new top left of box after scaling
+- `bottom_left::Tuple{Integer, Integer},`: new bottom left of box after scaling
+- `bottom_right::Tuple{Integer, Integer},`: new bottom right of box after scaling
+- `top_right::Tuple{Integer, Integer},`: new top right of box after scaling
+=#
+function scale_box(
+    top_left::Tuple{Integer, Integer},
+    bottom_right::Tuple{Integer, Integer},
+    genisis_size::Tuple{Integer, Integer},
+    img_size::Tuple{Integer, Integer}
+)
+    image_ratio = (img_size[1]/genisis_size[1], img_size[2]/genisis_size[2])
     
-    parameter `topLeft`: the top left of the Haar-like feature [type: Tuple]
-    parameter `bottomRight`: the bottom right of the Haar-like feature [type: Tuple]
-    parameter `genisisSize`: the size of the test images [type: Tuple]
-    parameter `imgSize`: the size of the image which we are pasting the bounding box on top of [type: Tuple]
+    bottom_left = (top_left[1], bottom_right[2])
+    top_right = (bottom_right[1], top_left[2])
     
-    return: the corners of the bounding box [type: Tuples]
-    =#
+    top_left = convert.(Int, round.(top_left .* image_ratio))
+    bottom_right = convert.(Int, round.(bottom_right .* image_ratio))
+    bottom_left = convert.(Int, round.(bottom_left .* image_ratio))
+    top_right = convert.(Int, round.(top_right .* image_ratio))
     
-    imageRatio = (imgSize[1]/genisisSize[1], imgSize[2]/genisisSize[2])
-    
-    bottomLeft = (topLeft[1], bottomRight[2])
-    topRight = (bottomRight[1], topLeft[2])
-    
-    topLeft = convert.(Int, round.(topLeft .* imageRatio))
-    bottomRight = convert.(Int, round.(bottomRight .* imageRatio))
-    bottomLeft = convert.(Int, round.(bottomLeft .* imageRatio))
-    topRight = convert.(Int, round.(topRight .* imageRatio))
-    
-    return topLeft, bottomLeft, bottomRight, topRight
+    return top_left, bottom_left, bottom_right, top_right
 end
 
+#=
+    generate_validation_image(image_path::AbstractString, classifiers::AbstractArray) -> AbstractArray
+    
+Generates a bounding box around the face of a random image.
 
-function generateValidationImage(imagePath::AbstractString, classifiers::AbstractArray)
-    #=
-    ...?
-    =#
+# Arguments
+
+- `image_path::AbstractString`: The path to images
+- `classifiers::Array{HaarLikeObject, 1}`: List of classifiers/haar like features
+
+# Returns
+
+- `validation_image::AbstractArray`: The new image with a bounding box
+=#
+function generate_validation_image(image_path::AbstractString, classifiers::AbstractArray)
+    img = to_integral_image(get_image_matrix(image_path))
+    img_size = size(img)
     
-    img = toIntegralImage(getImageMatrix(imagePath))
-    imgSize = size(img)
-    
-    topLeft = (0,0)
-    bottomRight = (0,0)
-    bottomLeft = (0,0)
-    topRight = (0,0)
+    top_left = (0,0)
+    bottom_right = (0,0)
+    bottom_left = (0,0)
+    top_right = (0,0)
     
     features = []
     
     for c in classifiers
-        features = push!(features, (c.topLeft, c.bottomRight))
-        # if c.featureType == HaarLikeFeature.FeatureTypes[1] # two vertical
-        #     features = push!(features, (c.topLeft, c.bottomRight))
-        # elseif c.featureType == HaarLikeFeature.FeatureTypes[2] # two horizontal
-        # elseif c.featureType == HaarLikeFeature.FeatureTypes[3] # three horizontal
-        # elseif c.featureType == HaarLikeFeature.FeatureTypes[4] # three vertical
-        # elseif c.featureType == HaarLikeFeature.FeatureTypes[5] # four
+        features = push!(features, (c.top_left, c.bottom_right))
+        # if c.feature_type == HaarLikeFeature.feature_types[1] # two vertical
+        #     features = push!(features, (c.top_left, c.bottom_right))
+        # elseif c.feature_type == HaarLikeFeature.feature_types[2] # two horizontal
+        # elseif c.feature_type == HaarLikeFeature.feature_types[3] # three horizontal
+        # elseif c.feature_type == HaarLikeFeature.feature_types[4] # three vertical
+        # elseif c.feature_type == HaarLikeFeature.feature_types[5] # four
         # end
     end
     
     # todo: figure out rectangles over boxes.  This includes finding the smallest image in size and converting the random input to that size if needed (requires importing another module).  bottom right needs to have smallest y but greatest x, etc.
     # todo: IF face is not a non-face, then draw box.  Don't force a box.
     
-    chosenTopLeft = (0, 0)
-    chosenBottomRight = (0, 0)
+    chosen_top_left = (0, 0)
+    chosen_bottom_right = (0, 0)
     
     for f in features # iterate through elements in features (e.g., Any[((9, 2), (17, 12)), ((11, 8), (19, 16))])
         # for t in f # iterate through inner tuples
-            chosenTopLeft = chosenTopLeft < f[1] || chosenTopLeft < f[1] ? chosenTopLeft : f[1]
-            chosenBottomRight = chosenBottomRight > f[2] || chosenBottomRight > f[2] ? chosenBottomRight : f[2]
+            chosen_top_left = chosen_top_left < f[1] || chosen_top_left < f[1] ? chosen_top_left : f[1]
+            chosen_bottom_right = chosen_bottom_right > f[2] || chosen_bottom_right > f[2] ? chosen_bottom_right : f[2]
         # end
     end
     
-    # reasonableProportion = Int(round(0.26 * minimum(imgSize)))
+    # reasonableProportion = Int(round(0.26 * minimum(img_size)))
     #
-    # topLeft = (reasonableProportion, reasonableProportion)
-    # bottomRight = (imgSize[1] - reasonableProportion, imgSize[2] - reasonableProportion)
-    # bottomLeft = (reasonableProportion, imgSize[2] - reasonableProportion)
-    # topRight = (imgSize[1] - reasonableProportion, reasonableProportion)
+    # top_left = (reasonableProportion, reasonableProportion)
+    # bottom_right = (img_size[1] - reasonableProportion, img_size[2] - reasonableProportion)
+    # bottom_left = (reasonableProportion, img_size[2] - reasonableProportion)
+    # top_right = (img_size[1] - reasonableProportion, reasonableProportion)
     
-    topLeft = chosenTopLeft
-    bottomRight = chosenBottomRight
-    bottomLeft = (chosenTopLeft[1], chosenBottomRight[2])
-    topRight = (chosenBottomRight[1], chosenTopLeft[2])
+    top_left = chosen_top_left
+    bottom_right = chosen_bottom_right
+    bottom_left = (chosen_top_left[1], chosen_bottom_right[2])
+    top_right = (chosen_bottom_right[1], chosen_top_left[2])
     
-    boxDimensions = scaleBox(topLeft, bottomRight, (19, 19), imgSize)
-    
-    
+    box_dimensions = scale_box(top_left, bottom_right, (19, 19), img_size)
     
     
     
-    boxes = zeros(imgSize)
+    
+    
+    boxes = zeros(img_size)
     
     for c in classifiers
         # map polarity: -1 -> 0, 1 -> 1
         polarity = ((1 + c.polarity)^2)/4
-        if c.featureType == HaarLikeFeature.FeatureTypes[1] # two vertical
+        if c.feature_type == HaarLikeFeature.feature_types[1] # two vertical
             for x in 1:c.width
                 sign = polarity
                 for y in 1:c.height
                     if y >= c.height/2
                         sign = mod((sign + 1), 2)
                     end
-                    boxes[c.topLeft[2] + y, c.topLeft[1] + x] += 1 * sign * c.weight
+                    boxes[c.top_left[2] + y, c.top_left[1] + x] += 1 * sign * c.weight
                 end
             end
-        elseif c.featureType == HaarLikeFeature.FeatureTypes[2] # two horizontal
+        elseif c.feature_type == HaarLikeFeature.feature_types[2] # two horizontal
             sign = polarity
             for x in 1:c.width
                 if x >= c.width/2
                     sign = mod((sign + 1), 2)
                 end
                 for y in 1:c.height
-                    boxes[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
+                    boxes[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.featureType == HaarLikeFeature.FeatureTypes[3] # three horizontal
+        elseif c.feature_type == HaarLikeFeature.feature_types[3] # three horizontal
             sign = polarity
             for x in 1:c.width
                 if iszero(mod(x, c.width/3))
                     sign = mod((sign + 1), 2)
                 end
                 for y in 1:c.height
-                    boxes[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
+                    boxes[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.featureType == HaarLikeFeature.FeatureTypes[4] # three vertical
+        elseif c.feature_type == HaarLikeFeature.feature_types[4] # three vertical
             for x in 1:c.width
                 sign = polarity
                 for y in 1:c.height
                     if iszero(mod(x, c.height/3))
                         sign = mod((sign + 1), 2)
                     end
-                    boxes[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
+                    boxes[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.featureType == HaarLikeFeature.FeatureTypes[5] # four
+        elseif c.feature_type == HaarLikeFeature.feature_types[5] # four
             sign = polarity
             for x in 1:c.width
                 if iszero(mod(x, c.width/2))
@@ -421,13 +492,13 @@ function generateValidationImage(imagePath::AbstractString, classifiers::Abstrac
                     if iszero(mod(x, c.height/2))
                         sign = mod((sign + 1), 2)
                     end
-                    boxes[c.topLeft[1] + x, c.topLeft[2] + y] += 1 * sign * c.weight
+                    boxes[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
         end
     end # end for c in classifiers
     
-    # validationImage = load(imagePath) .+ boxes
+    # validationImage = load(image_path) .+ boxes
     #
     # println(typeof(img))
     # println(typeof(boxes))
@@ -440,24 +511,24 @@ function generateValidationImage(imagePath::AbstractString, classifiers::Abstrac
     
     # img = imresize(img, (19, 19))
     
-    # [println(c.featureType) for c in classifiers]
+    # [println(c.feature_type) for c in classifiers]
     #
     for c in classifiers
         
-        # boxDimensions = [c.topLeft, (c.topLeft[1], c.bottomRight[2]), c.bottomRight, (c.bottomRight[1], c.topLeft[2])]
+        # box_dimensions = [c.top_left, (c.top_left[1], c.bottom_right[2]), c.bottom_right, (c.bottom_right[1], c.top_left[2])]
         
-        boxDimensions = scaleBox(c.topLeft, c.bottomRight, (19, 19), imgSize)
+        box_dimensions = scale_box(c.top_left, c.bottom_right, (19, 19), img_size)
         
-        save(joinpath(homedir(), "Desktop", "validation.png"), draw!(load(imagePath), Polygon([Point(boxDimensions[1]), Point(boxDimensions[2]), Point(boxDimensions[3]), Point(boxDimensions[4])])))
+        save(joinpath(homedir(), "Desktop", "validation.png"), draw!(load(image_path), Polygon([Point(box_dimensions[1]), Point(box_dimensions[2]), Point(box_dimensions[3]), Point(box_dimensions[4])])))
     end
     
     
     # with open('classifiers_' + str(T) + '_' + hex(random.getrandbits(16)) + '.pckl', 'wb') as file:
     #     pickle.dump(classifiers, file)
     
-    # box = Polygon([Point(boxDimensions[1]), Point(boxDimensions[2]), Point(boxDimensions[3]), Point(boxDimensions[4])])
+    # box = Polygon([Point(box_dimensions[1]), Point(box_dimensions[2]), Point(box_dimensions[3]), Point(box_dimensions[4])])
     
-    # return save(joinpath(homedir(), "Desktop", "validation.png"), draw!(load(imagePath), box))
+    # return save(joinpath(homedir(), "Desktop", "validation.png"), draw!(load(image_path), box))
     
 #     #Arguments
 # * `center::Point` : the center of the polygon
@@ -468,6 +539,5 @@ function generateValidationImage(imagePath::AbstractString, classifiers::Abstrac
     
     # save("/Users/jakeireland/Desktop/test.png", Gray.(map(clamp01nan, newImg)))
 end
-
 
 end # end module

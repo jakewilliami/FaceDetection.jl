@@ -1,7 +1,7 @@
 <h1 align="center">
    FaceDetection using Viola-Jones' Robust Algorithm for Object Detection
 </h1>
-
+[![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle)
 
 ## Introduction
 
