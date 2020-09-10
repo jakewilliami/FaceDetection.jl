@@ -29,10 +29,5 @@ docs/site/
 # environment.
 Manifest.toml
 
-# 
-data/main/
-data/alt/
-data/lizzie-testset/
-data/lfw/
-data/all-non-faces/
-data/lfw-all/
+# output data
+data/
