@@ -7,6 +7,8 @@ trap "exit" INT
 # 	echo "OpenCV has been ported to Julia, but has only been tested on OSX.  Please keep this in mind when using this implementation of Viola-Jone."
 # fi
 
+# https://github.com/betars/Face-Resources
+
 #echo "Please ensure FaceDetection.jl is installed in your home directory..."
 #sleep 5
 FD_HOME="$(dirname $0)"
@@ -87,6 +89,30 @@ obtainDatasetMain() {
 #		do
 #			rm "${file}"
 #		done
+}
+
+
+obtainMITDataset() {
+	URL="http://cbcl.mit.edu/projects/cbcl/software-datasets/faces.tar.gz"
+	cd ${FD_HOME}/data/
+    wget "${URL}" || echo -e "An error has occurred whilst trying to download the CMU/MIT dataset."
+    DOWNLOADED_FILE="${URL##*/}"
+    tar xvzf "${DOWNLOADED_FILE}"
+    EXTRACTED_DIR="${DOWNLOADED_FILE%%.*}"
+	rm "${DOWNLOADED_FILE}"
+    cd - > /dev/null
+}
+
+
+obtainFDDBDataset() {
+	URL="http://tamaraberg.com/faceDataset/originalPics.tar.gz"
+	cd ${FD_HOME}/data/
+    wget "${URL}" || echo -e "An error has occurred whilst trying to download the FDDB dataset."
+    DOWNLOADED_FILE="${URL##*/}"
+    tar xvzf "${DOWNLOADED_FILE}"
+    EXTRACTED_DIR="${DOWNLOADED_FILE%%.*}"
+	rm "${DOWNLOADED_FILE}"
+    cd - > /dev/null
 }
 
 

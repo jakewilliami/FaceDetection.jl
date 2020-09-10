@@ -32,3 +32,5 @@ Manifest.toml
 # 
 data/main/
 data/alt/
+data/lizzie-testset/
+data/lfw/

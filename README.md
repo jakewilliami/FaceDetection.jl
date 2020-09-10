@@ -53,7 +53,7 @@ julia --project="." ./examples/main.jl # on Windows
 
 ## To-do Notes
 
- - At the moment, `QuartzImageIO` is required to read `.jpg` files, but the programme is not set up to do so.  At the minute, this programme only accepts `.png` and `.pgm` files (thanks to `ImageIO` and `Netpbm` respectively).
+ - At the moment, `QuartzImageIO`, `FileIO` and `ImageMagick` is required to read `.jpg` files, but the programme is not set up to do so.  At the minute, this programme only accepts `.png` and `.pgm` files (thanks to `ImageIO` and `Netpbm` respectively).
  - I am unsure at the moment whether this programme will work if the test images are of differing dimensionality to the training faces.  I suspect it won't, but I will test this soon.
 
 ## Acknowledgements
