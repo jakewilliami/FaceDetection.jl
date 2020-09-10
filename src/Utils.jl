@@ -16,7 +16,7 @@ using .HaarLikeFeature: FeatureTypes, getVote, getScore ,HaarLikeObject
 using .IntegralImage: toIntegralImage
 
 export displaymatrix, notifyUser, loadImages, ensembleVoteAll, getFaceness, reconstruct, getRandomImage, generateValidationImage, determineFeatureSize, getImageMatrix, ensembleVote
-
+export FeatureTypes, HaarLikeObject, getScore, getVote
 
 function displaymatrix(M::AbstractArray)
     #=
