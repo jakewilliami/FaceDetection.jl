@@ -11,12 +11,12 @@
 
 module AdaBoost
 
-include("HaarLikeFeature.jl")
+# include("HaarLikeFeature.jl")
 include("Utils.jl")
 
 using ProgressMeter: @showprogress
-using .HaarLikeFeature: FeatureTypes, HaarLikeObject, getVote
-using .Utils: notifyUser
+# using .HaarLikeFeature: FeatureTypes, HaarLikeObject, getVote
+using .Utils: notifyUser, FeatureTypes, HaarLikeObject, getVote
 
 export learn, _create_features
 
@@ -206,16 +206,16 @@ function _create_features(imgHeight::Int64, imgWidth::Int64, minFeatureWidth::In
         """)
     end
     
-    for feature in HaarLikeFeature.FeatureTypes # (FeatureTypes are just tuples)
+    for feature in Utils.FeatureTypes # (FeatureTypes are just tuples)
         featureStartWidth = max(minFeatureWidth, feature[1])
         for featureWidth in range(featureStartWidth, stop=maxFeatureWidth, step=feature[1])
             featureStartHeight = max(minFeatureHeight, feature[2])
             for featureHeight in range(featureStartHeight, stop=maxFeatureHeight, step=feature[2])
                 for x in 1:(imgWidth - featureWidth)
                     for y in 1:(imgHeight - featureHeight)
-                        features = push!(features, HaarLikeFeature.HaarLikeObject(feature, (x, y), featureWidth, featureHeight, 0, 1))
-                        features = push!(features, HaarLikeFeature.HaarLikeObject(feature, (x, y), featureWidth, featureHeight, 0, -1))
-                        # features = push!(features, HaarLikeFeature.HaarLikeObject(feature, (x, y), featureWidth, featureHeight, 0.11, -1))
+                        features = push!(features, Utils.HaarLikeObject(feature, (x, y), featureWidth, featureHeight, 0, 1))
+                        features = push!(features, Utils.HaarLikeObject(feature, (x, y), featureWidth, featureHeight, 0, -1))
+                        # features = push!(features, Utils.HaarLikeObject(feature, (x, y), featureWidth, featureHeight, 0.11, -1))
                     end # end for y
                 end # end for x
             end # end for feature height

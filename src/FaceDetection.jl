@@ -9,12 +9,10 @@ module FaceDetection
 export toIntegralImage, sumRegion, FeatureTypes, HaarLikeObject, getScore, getVote, learn, _create_features, displaymatrix, notifyUser, loadImages, getImageMatrix, ensembleVote, ensembleVoteAll, reconstruct, getRandomImage, generateValidationImage, getFaceness, determineFeatureSize
 
 include("IntegralImage.jl")
-include("HaarLikeFeature.jl")
 include("AdaBoost.jl")
 include("Utils.jl")
 
 using .IntegralImage
-using .HaarLikeFeature
 using .AdaBoost
 using .Utils
 
