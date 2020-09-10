@@ -38,7 +38,7 @@ After you have setup your workspace, simply run
 ```bash
 ./examples/main.jl # on a unix system
 # or
-julia --project="." ./examples/main.jl # on Windows
+julia --project="." ./examples/main.jl # on Windows (because it seems to ignore the shebang)
 ```
 
 ## Timeline of Progression
@@ -49,12 +49,6 @@ julia --project="." ./examples/main.jl # on Windows
  - [f1f5b5ea](https://github.com/jakewilliami/FaceDetection.jl/commit/f1f5b5ea) &mdash; Getting along very well with bug fixing (created a `struct` for Haar-like feature; updated weighting calculations; fixed `hstack` translation with nested arrays).  Added detailed comments on each function.
  - [a9e10eb4](https://github.com/jakewilliami/FaceDetection.jl/commit/a9e10eb4) &mdash; First working draft of the algorithm (without image reconstruction)!
  - [6b35f6d5](https://github.com/jakewilliami/FaceDetection.jl/commit/6b35f6d5) &mdash; Finally, the algorithm works as it should.  Just enhancements from here on out.
-
-
-## To-do Notes
-
- - At the moment, `QuartzImageIO`, `FileIO` and `ImageMagick` is required to read `.jpg` files, but the programme is not set up to do so.  At the minute, this programme only accepts `.png` and `.pgm` files (thanks to `ImageIO` and `Netpbm` respectively).
- - I am unsure at the moment whether this programme will work if the test images are of differing dimensionality to the training faces.  I suspect it won't, but I will test this soon.
 
 ## Acknowledgements
 
