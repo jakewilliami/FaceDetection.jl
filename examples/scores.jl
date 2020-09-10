@@ -20,6 +20,7 @@ println("...done")
 
 function main(; smartChooseFeats::Bool=false, alt::Bool=false)
     mainPath = dirname(dirname(@__FILE__))
+    dataPath = joinpath(mainPath, "data")
     mainImagePath = joinpath(mainPath, "data", "main")
     altImagePath = joinpath(mainPath, "data", "alt")
 
@@ -36,8 +37,13 @@ function main(; smartChooseFeats::Bool=false, alt::Bool=false)
         posTestingPath = joinpath(mainImagePath, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$mainImagePath/testset/faces/"
         negTestingPath = joinpath(mainImagePath, "testset", "non-faces")
     end
+    
+    # posTrainingPath = joinpath(dataPath, "lfw-all")
+    # negTrainingPath = joinpath(dataPath, "all-non-faces")
+    # posTestingPath = joinpath(dataPath, "lizzie-testset", "faces")
+    # negTestingPath = joinpath(dataPath, "lizzie-testset", "nonfaces")
 
-    numClassifiers = 200
+    numClassifiers = 10
 
     minSizeImg = (19, 19) # default for our test dataset
     if smartChooseFeats
@@ -57,13 +63,13 @@ function main(; smartChooseFeats::Bool=false, alt::Bool=false)
 
     FaceDetection.notifyUser("Loading faces...")
 
-    facesTraining = FaceDetection.loadImages(posTrainingPath)
+    facesTraining, trainingFaceNames = FaceDetection.loadImages(posTrainingPath)
     facesIITraining = map(FaceDetection.toIntegralImage, facesTraining) # list(map(...))
     println("...done. ", length(facesTraining), " faces loaded.")
 
     FaceDetection.notifyUser("Loading non-faces...")
 
-    nonFacesTraining = FaceDetection.loadImages(negTrainingPath)
+    nonFacesTraining, trainingNonFaceNames = FaceDetection.loadImages(negTrainingPath)
     nonFacesIITraining = map(FaceDetection.toIntegralImage, nonFacesTraining) # list(map(...))
     println("...done. ", length(nonFacesTraining), " non-faces loaded.\n")
 
@@ -72,14 +78,14 @@ function main(; smartChooseFeats::Bool=false, alt::Bool=false)
 
     FaceDetection.notifyUser("Loading test faces...")
 
-    facesTesting = FaceDetection.loadImages(posTestingPath)
+    facesTesting, faceNames = FaceDetection.loadImages(posTestingPath)
     # facesIITesting = map(FaceDetection.toIntegralImage, facesTesting)
     facesIITesting = map(FaceDetection.toIntegralImage, facesTesting)
     println("...done. ", length(facesTesting), " faces loaded.")
 
     FaceDetection.notifyUser("Loading test non-faces..")
 
-    nonFacesTesting = FaceDetection.loadImages(negTestingPath)
+    nonFacesTesting, nonFaceNames = FaceDetection.loadImages(negTestingPath)
     nonFacesIITesting = map(FaceDetection.toIntegralImage, nonFacesTesting)
     println("...done. ", length(nonFacesTesting), " non-faces loaded.\n")
     
@@ -98,13 +104,17 @@ function main(; smartChooseFeats::Bool=false, alt::Bool=false)
     dfFaces = facesScores
     dfNonFaces = nonFacesScores
     if length(facesScores) < length(nonFacesScores)
-        dfFaces = vcat(dfFaces, Matrix{Union{Float64, Missing}}(undef, length(nonFacesIITesting) - length(facesIITesting), 1))
+        toAdd = length(nonFacesIITesting) - length(facesIITesting)
+        dfFaces = vcat(dfFaces, Matrix{Union{Float64, Missing}}(undef, toAdd, 1))
+        faceNames = vcat(faceNames, Matrix{Union{Float64, Missing}}(undef, toAdd, 1))
     elseif length(facesScores) > length(nonFacesScores)
-        dfNonFaces = vcat(dfNonFaces, Matrix{Union{Float64, Missing}}(undef, length(facesIITesting) - length(nonFacesIITesting), 1))
+        length(facesIITesting) - length(nonFacesIITesting)
+        dfNonFaces = vcat(dfNonFaces, Matrix{Union{Float64, Missing}}(undef, toAdd, 1))
+        nonFaceNames = vcat(nonFaceNames, Matrix{Union{Float64, Missing}}(undef, toAdd, 1))
     end
     
     # write score data
-    write(joinpath(dirname(dirname(@__FILE__)), "data", "facelikeness-data.csv"), DataFrame(hcat(dfFaces, dfNonFaces)), writeheader=false)
+    write(joinpath(dirname(dirname(@__FILE__)), "data", "facelikeness-data.csv"), DataFrame(hcat(faceNames, dfFaces, nonFaceNames, dfNonFaces)), writeheader=false)
     
     println("...done.\n")
     

@@ -21,51 +21,57 @@ println("...done")
 
 
 function main(; smartChooseFeats::Bool=false, alt::Bool=false, imageReconstruction::Bool=true, featValidaton::Bool=true)
-    mainPath = dirname(dirname(@__FILE__))
+  mainPath = dirname(dirname(@__FILE__))
+    dataPath = joinpath(mainPath, "data")
     mainImagePath = joinpath(mainPath, "data", "main")
     altImagePath = joinpath(mainPath, "data", "alt")
 
     if alt
-      posTrainingPath = joinpath(altImagePath, "pos")
-      negTrainingPath = joinpath(altImagePath, "neg")
-      # posTestingPath = joinpath(altImagePath, "testing", "pos")
-      # negTestingPath = joinpath(homedir(), "Desktop", "Assorted Personal Documents", "Wallpapers copy")
-      posTestingPath = joinpath(mainImagePath, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$mainImagePath/testset/faces/"
-      negTestingPath = joinpath(mainImagePath, "testset", "non-faces")
+        posTrainingPath = joinpath(altImagePath, "pos")
+            negTrainingPath = joinpath(altImagePath, "neg")
+            # posTestingPath = joinpath(altImagePath, "testing", "pos")
+            # negTestingPath = joinpath(homedir(), "Desktop", "Assorted Personal Documents", "Wallpapers copy")
+            posTestingPath = joinpath(mainImagePath, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$mainImagePath/testset/faces/"
+            negTestingPath = joinpath(mainImagePath, "testset", "non-faces")
     else
         posTrainingPath = joinpath(mainImagePath, "trainset", "faces")
         negTrainingPath = joinpath(mainImagePath, "trainset", "non-faces")
         posTestingPath = joinpath(mainImagePath, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$mainImagePath/testset/faces/"
         negTestingPath = joinpath(mainImagePath, "testset", "non-faces")
     end
+    
+    # posTrainingPath = joinpath(dataPath, "lfw-all")
+    # negTrainingPath = joinpath(dataPath, "all-non-faces")
+    # posTestingPath = joinpath(dataPath, "lizzie-testset", "faces")
+    # negTestingPath = joinpath(dataPath, "lizzie-testset", "nonfaces")
 
     numClassifiers = 10
 
     minSizeImg = (19, 19) # default for our test dataset
     if smartChooseFeats
-      # For performance reasons restricting feature size
-      notifyUser("Selecting best feature width and height...")
-      
-      maxFeatureWidth, maxFeatureHeight, minFeatureHeight, minFeatureWidth, minSizeImg = determineFeatureSize(posTrainingPath, negTrainingPath)
-      
-      println("...done.  Maximum feature width selected is $maxFeatureWidth pixels; minimum feature width is $minFeatureWidth; maximum feature height is $maxFeatureHeight pixels; minimum feature height is $minFeatureHeight.\n")
+        # For performance reasons restricting feature size
+        notifyUser("Selecting best feature width and height...")
+        
+        maxFeatureWidth, maxFeatureHeight, minFeatureHeight, minFeatureWidth, minSizeImg = determineFeatureSize(posTrainingPath, negTrainingPath)
+        
+        println("...done.  Maximum feature width selected is $maxFeatureWidth pixels; minimum feature width is $minFeatureWidth; maximum feature height is $maxFeatureHeight pixels; minimum feature height is $minFeatureHeight.\n")
     else
-      minFeatureHeight = 8
-      maxFeatureHeight = 10
-      minFeatureWidth = 8
-      maxFeatureWidth = 10
+        minFeatureHeight = 8
+        maxFeatureHeight = 10
+        minFeatureWidth = 8
+        maxFeatureWidth = 10
     end
 
 
     FaceDetection.notifyUser("Loading faces...")
 
-    facesTraining = FaceDetection.loadImages(posTrainingPath)
+    facesTraining, trainingFaceNames = FaceDetection.loadImages(posTrainingPath)
     facesIITraining = map(FaceDetection.toIntegralImage, facesTraining) # list(map(...))
     println("...done. ", length(facesTraining), " faces loaded.")
 
     FaceDetection.notifyUser("Loading non-faces...")
 
-    nonFacesTraining = FaceDetection.loadImages(negTrainingPath)
+    nonFacesTraining, trainingNonFaceNames = FaceDetection.loadImages(negTrainingPath)
     nonFacesIITraining = map(FaceDetection.toIntegralImage, nonFacesTraining) # list(map(...))
     println("...done. ", length(nonFacesTraining), " non-faces loaded.\n")
 
@@ -74,14 +80,14 @@ function main(; smartChooseFeats::Bool=false, alt::Bool=false, imageReconstructi
 
     FaceDetection.notifyUser("Loading test faces...")
 
-    facesTesting = FaceDetection.loadImages(posTestingPath)
+    facesTesting, faceNames = FaceDetection.loadImages(posTestingPath)
     # facesIITesting = map(FaceDetection.toIntegralImage, facesTesting)
     facesIITesting = map(FaceDetection.toIntegralImage, facesTesting)
     println("...done. ", length(facesTesting), " faces loaded.")
 
     FaceDetection.notifyUser("Loading test non-faces..")
 
-    nonFacesTesting = FaceDetection.loadImages(negTestingPath)
+    nonFacesTesting, nonFaceNames = FaceDetection.loadImages(negTestingPath)
     nonFacesIITesting = map(FaceDetection.toIntegralImage, nonFacesTesting)
     println("...done. ", length(nonFacesTesting), " non-faces loaded.\n")
 

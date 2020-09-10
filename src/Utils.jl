@@ -43,14 +43,16 @@ function loadImages(imageDir::AbstractString)
     
     return `images`: a list of images from the path provided [type: Abstract Array]
     =#
-        
+    
+    names = filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(imageDir, join=true, sort=false))
+    
     images = []
     
-    for file in filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(imageDir, join=true, sort=false))
+    for file in names
         images = push!(images, getImageMatrix(file))
     end
     
-    return images
+    return images, names
 end
 
 
