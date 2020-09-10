@@ -3,6 +3,8 @@
 trap "exit" INT
 
 # https://github.com/betars/Face-Resources
+# https://github.com/polarisZhao/awesome-face#-datasets
+# https://github.com/jian667/face-dataset
 
 FD_HOME="$(realpath $(dirname $0))"
 MAIN="${FD_HOME}/data/main/"
@@ -90,7 +92,7 @@ obtainFDDBDataset() {
 obtainLabelledFacesInTheWildDataset() {
 	URL="http://vis-www.cs.umass.edu/lfw/lfw.tgz"
 	cd ${FD_HOME}/data/
-    wget "${URL}" || echo -e "An error has occurred whilst trying to download the FDDB dataset."
+    wget "${URL}" || echo -e "An error has occurred whilst trying to download the LFW dataset."
     DOWNLOADED_FILE="${URL##*/}"
     tar xvzf "${DOWNLOADED_FILE}"
     EXTRACTED_DIR="${DOWNLOADED_FILE%%.*}"
@@ -127,14 +129,15 @@ main() {
 	obtainMITDataset
 	obtainFDDBDataset
 	obtainLabelledFacesInTheWildDataset
+	collateAllNonFaces
 }
 
 if [[ "$(whoami)" == "jakeireland" && "$(uname -s)" == "Darwin" ]]
 then
-	# obtainDatasetMain
-	# obtainDatasetAlt
+	obtainDatasetMain
+	obtainDatasetAlt
 	obtainLabelledFacesInTheWildDataset
-	# collateAllNonFaces
+	collateAllNonFaces
 else
 	main
 fi
