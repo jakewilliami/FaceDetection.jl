@@ -40,6 +40,7 @@ After you have setup your workspace, simply run
 # or
 julia --project="." ./examples/main.jl # on Windows (because it seems to ignore the shebang)
 ```
+You may need to change the code in `main.jl` to your appropriate training/testing directories.
 
 ## Timeline of Progression
 
