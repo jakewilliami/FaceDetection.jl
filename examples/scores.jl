@@ -114,7 +114,7 @@ function main(; smartChooseFeats::Bool=false, alt::Bool=false)
     end
     
     # write score data
-    write(joinpath(dirname(dirname(@__FILE__)), "data", "facelikeness-data.csv"), DataFrame(hcat(faceNames, dfFaces, nonFaceNames, dfNonFaces)), writeheader=false)
+    write(joinpath(dirname(dirname(@__FILE__)), "data", "faceness-scores.csv"), DataFrame(hcat(faceNames, dfFaces, nonFaceNames, dfNonFaces)), writeheader=false)
     
     println("...done.\n")
     
