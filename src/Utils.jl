@@ -76,6 +76,8 @@ function determineFeatureSize(posTrainingPath::AbstractString, negTrainingPath::
     
     parameter `posTrainingPath`: the path to the positive training images [type: Abstract String (path)]
     parameter `negTrainingPath`: the path to the negative training images [type: Abstract String (path)]
+    
+    return: min and max parameters of feature, and minimum image size [type: multiple tuples for integers]
     =#
     
     minFeatureHeight = 0
