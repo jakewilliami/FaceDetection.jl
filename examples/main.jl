@@ -24,6 +24,7 @@ println("...done")
 function main(; smartChooseFeats::Bool=false, alt::Bool=false)
       # we assume that `smartChooseFeats = true`
       mainPath = dirname(dirname(@__FILE__))
+      dataPath = joinpath(mainPath, "data")
       mainImagePath = joinpath(mainPath, "data", "main")
       altImagePath = joinpath(mainPath, "data", "alt")
       
@@ -40,6 +41,11 @@ function main(; smartChooseFeats::Bool=false, alt::Bool=false)
             posTestingPath = joinpath(mainImagePath, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$mainImagePath/testset/faces/"
             negTestingPath = joinpath(mainImagePath, "testset", "non-faces")
       end
+      
+      posTrainingPath = joinpath(dataPath, "lfw-all")
+      negTrainingPath = joinpath(dataPath, "all-non-faces")
+      posTestingPath = joinpath(dataPath, "lizzie-testset", "faces")
+      negTestingPath = joinpath(dataPath, "lizzie-testset", "faces")
 
       numClassifiers = 3
       

@@ -2,17 +2,9 @@
 
 trap "exit" INT
 
-# if [[ $(uname -s) != "Darwin" ]]
-# then
-# 	echo "OpenCV has been ported to Julia, but has only been tested on OSX.  Please keep this in mind when using this implementation of Viola-Jone."
-# fi
-
 # https://github.com/betars/Face-Resources
 
-#echo "Please ensure FaceDetection.jl is installed in your home directory..."
-#sleep 5
-FD_HOME="$(dirname $0)"
-# FD_HOME="${HOME}/FaceDetection.jl/"
+FD_HOME="$(realpath $(dirname $0))"
 MAIN="${FD_HOME}/data/main/"
 ALT="${FD_HOME}/data/alt/"
 
@@ -27,11 +19,6 @@ checkPackages() {
 	if [[ $(uname -s) == "Darwin" ]]
 	then
 		brew list > /tmp/brewlist
-		# if ! grep "^imagemagick$" /tmp/brewlist > /dev/null 2>&1
-		# then
-		# 	echo "Downloading ImageMagick"
-		# 	brew install imagemagick
-		# fi
 		if ! grep "^julia$" /tmp/brewlist > /dev/null 2>&1
 		then
 			echo "Downloading Julia"
@@ -39,6 +26,7 @@ checkPackages() {
 		fi
 	else
 		echo "Please ensure Julia is downloaded and in your path."
+		sleep 10
 	fi
 
 	echo "Downloading dependencies"
@@ -57,11 +45,6 @@ obtainDatasetAlt() {
 		mv ${FD_HOME}/face-detection-data/pos/ ${ALT}/ && \
 		mv ${FD_HOME}/face-detection-data/neg/ ${ALT}/ && \
 		rm -rf ${FD_HOME}/face-detection-data/
-	# echo "Pruning the positive training images to have the same number as the negative images, or else there will be an array mismatch when constructing the image array in src/Adaboost.jl"
-	# for i in $(seq $(ls ${ALT}/neg/ | wc -l) $(($(ls ${ALT}/pos/ | wc -l)-1))); do
-	# 	rm ${ALT}/pos/${i}.pgm
-	# 	# echo "${i}"
-	# done
 }
 
 
@@ -77,18 +60,6 @@ obtainDatasetMain() {
 		mv ${FD_HOME}/Viola-Jones/data/testset/ ${MAIN}/ && \
 		mv ${FD_HOME}/Viola-Jones/data/trainset/ ${MAIN}/ && \
 		rm -rf ${FD_HOME}/Viola-Jones
-#	echo "Pruning the positive training images to have the same number as the negative images, or else there will be an array mismatch when constructing the image array in src/Adaboost.jl"
-	# for i in $(seq $(ls ${ALT}/trainset/faces | wc -l) $(($(ls ~/FaceDetection.jl/test/images/pos/ | wc -l)-1))); do
-	# 	rm ${ALT}/trainset/non-faces/${i}.pgm
-	# 	# echo "${i}"
-	# done
-	
-#	find ${MAIN}/trainset/non-faces/ -maxdepth 1 -type f -name "*.png" -print | \
-#        head -n $(($(ls ${MAIN}/trainset/non-faces | wc -l)-$(ls ${MAIN}/trainset/faces | wc -l))) |\
-#		while IFS= read -r file
-#		do
-#			rm "${file}"
-#		done
 }
 
 
@@ -124,21 +95,28 @@ obtainLabelledFacesInTheWildDataset() {
     tar xvzf "${DOWNLOADED_FILE}"
     EXTRACTED_DIR="${DOWNLOADED_FILE%%.*}"
 	rm "${DOWNLOADED_FILE}"
+	mkdir "${FD_HOME}/data/lfw-all/"
+	find "${FD_HOME}/data/lfw/" -type f -name "*.jpg" -print | \
+	while IFS= read -r file
+	do
+		mv -v "${file}" "${FD_HOME}/data/lfw-all/"
+	done
+	rm -rf "${FD_HOME}/data/lfw/"
     cd - > /dev/null
 }
 
+collateAllNonFaces(){
+	if [[ -d ${FD_HOME}/data/all-non-faces/ ]]
+	then
+		rm -rf ${FD_HOME}/data/all-non-faces/
+	fi
+	
+	mkdir -p ${FD_HOME}/data/all-non-faces/
 
-convertPGM() {
-#### The following step was only for python testing code.  Netpbm.jl is powerful and fixed this.
-
-echo "Converting pgm files to png.  This will take a minute."
-find ../test/images/ -name "*.pgm" | \
-while IFS= read -r file; do
-	magick "${file}" "${file}.png"
-done
+	cp -rv ${FD_HOME}/data/alt/neg/ ${FD_HOME}/data/all-non-faces/
+	cp -rv ${FD_HOME}/data/main/testset/non-faces/ ${FD_HOME}/data/all-non-faces/
+	cp -rv ${FD_HOME}/data/main/trainset/non-faces/ ${FD_HOME}/data/all-non-faces/
 }
-
-
 
 
 main() {
@@ -146,10 +124,17 @@ main() {
 	checkPackages
 	obtainDatasetMain
 	obtainDatasetAlt
+	obtainMITDataset
+	obtainFDDBDataset
+	obtainLabelledFacesInTheWildDataset
 }
 
-if [[ "$(whoami)" == "jakeireland" && "$(uname -s)" == "Darwin" ]]; then
-	obtainDatasetMain
+if [[ "$(whoami)" == "jakeireland" && "$(uname -s)" == "Darwin" ]]
+then
+	# obtainDatasetMain
+	# obtainDatasetAlt
+	obtainLabelledFacesInTheWildDataset
+	# collateAllNonFaces
 else
 	main
 fi
