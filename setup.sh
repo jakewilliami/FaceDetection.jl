@@ -5,6 +5,9 @@ trap "exit" INT
 # https://github.com/betars/Face-Resources
 # https://github.com/polarisZhao/awesome-face#-datasets
 # https://github.com/jian667/face-dataset
+# https://www.wikiwand.com/en/List_of_datasets_for_machine-learning_research#/Object_detection_and_recognition
+# https://www.wikiwand.com/en/List_of_datasets_for_machine-learning_research#/Other_images
+# https://www.face-rec.org/databases/
 
 FD_HOME="$(realpath $(dirname $0))"
 MAIN="${FD_HOME}/data/main/"
