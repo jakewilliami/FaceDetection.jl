@@ -31,7 +31,7 @@ A function to show a big matrix on one console screen (similar to default `print
 - `A::AbstractString`: A nice array to print
 =#
 function displaymatrix(M::AbstractArray)
-    return show(IOContext(stdout, :limit => true, :compact => true, :short => true), "text/plain", M)
+    return show(IOContext(stdout, :limit => true, :compact => true, :short => true), "text/plain", M); print("\n")
 end
 
 #=
