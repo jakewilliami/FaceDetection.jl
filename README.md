@@ -20,6 +20,7 @@ Run the following in terminal:
 ```bash
 git clone https://github.com/jakewilliami/FaceDetection.jl.git/
 bash FaceDetection.jl/setup.sh # if you are on a unix system
+# TODO: make batch script for windows
 ```
 
 ## How it works
@@ -64,7 +65,6 @@ Thank you to:
  - [**Michael Jones**](https://www.merl.com/people/mjones) for (along with [Tirta Susilo](https://people.wgtn.ac.nz/tirta.susilo)) suggesting the method for a *facelike-ness* measure;
  - [**Mahdi Rezaei**](https://environment.leeds.ac.uk/staff/9408/dr-mahdi-rezaei) for helping me understand the full process of Viola-Jones' object detection;
  - [**Ying Bi**](https://ecs.wgtn.ac.nz/Main/GradYingBi) for always being happy to answer questions (which mainly turned out to be a lack of programming knowledge rather than conceptual);
- - [**David Peck**](https://github.com/dmipeck) for being ever so patient with my lack of understanding of programming, and helping me with conceptual translation from Python to Julia;
  - Finally, the people in the Julia slack channel, for dealing with many (probably stupid) questions.  To name a few: Micket, David Sanders, Eric Forgy, Jakob Nissen, and Roel.
 
 ## A Note on running on BSD:
