@@ -61,3 +61,7 @@ Thank you to:
  - [**Ying Bi**](https://ecs.wgtn.ac.nz/Main/GradYingBi) for always being happy to answer questions (which mainly turned out to be a lack of programming knowledge rather than conceptual);
  - [**David Peck**](https://github.com/dmipeck) for being ever so patient with my lack of understanding of programming, and helping me with conceptual translation from Python to Julia;
  - Finally, the people in the Julia slack channel, for dealing with many (probably stupid) questions.  To name a few: Micket, David Sanders, Eric Forgy, Jakob Nissen, and Roel.
+
+## A Note on running on BSD:
+
+The default JuliaPlots backend `GR` does not provide binaries for FreeBSD.  [Here's how you can build it from source.](https://github.com/jheinen/GR.jl/issues/268#issuecomment-584389111)
