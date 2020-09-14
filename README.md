@@ -1,7 +1,8 @@
 <h1 align="center">
    FaceDetection using Viola-Jones' Robust Algorithm for Object Detection
 </h1>
-[![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle)
+
+[![Code Style: Blue][code-style-img]][code-style-url]
 
 ## Introduction
 
@@ -65,3 +66,7 @@ Thank you to:
 ## A Note on running on BSD:
 
 The default JuliaPlots backend `GR` does not provide binaries for FreeBSD.  [Here's how you can build it from source.](https://github.com/jheinen/GR.jl/issues/268#issuecomment-584389111)
+
+
+[code-style-img]: https://img.shields.io/badge/code%20style-blue-4495d1.svg
+[code-style-url]: https://github.com/invenia/BlueStyle
