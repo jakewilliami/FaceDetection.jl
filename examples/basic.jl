@@ -15,6 +15,7 @@ println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will
 include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl"))
 
 using .FaceDetection
+const FD = FaceDetection
 using Printf: @printf
 using Images: imresize
 
@@ -66,42 +67,42 @@ function main(;
     end
 
 
-    FaceDetection.notify_user("Loading faces...")
+    FD.notify_user("Loading faces...")
 
-    faces_training = FaceDetection.load_images(pos_training_path)[1]
-    faces_ii_training = map(FaceDetection.to_integral_image, faces_training) # list(map(...))
+    faces_training = FD.load_images(pos_training_path)[1]
+    faces_ii_training = map(FD.to_integral_image, faces_training) # list(map(...))
     println("...done. ", length(faces_training), " faces loaded.")
 
-    FaceDetection.notify_user("Loading non-faces...")
+    FD.notify_user("Loading non-faces...")
 
-    non_faces_training = FaceDetection.load_images(neg_training_path)[1]
-    non_faces_ii_training = map(FaceDetection.to_integral_image, non_faces_training) # list(map(...))
+    non_faces_training = FD.load_images(neg_training_path)[1]
+    non_faces_ii_training = map(FD.to_integral_image, non_faces_training) # list(map(...))
     println("...done. ", length(non_faces_training), " non-faces loaded.\n")
 
     # classifiers are haar like features
-    classifiers = FaceDetection.learn(faces_ii_training, non_faces_ii_training, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width)
+    classifiers = FD.learn(faces_ii_training, non_faces_ii_training, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width)
 
-    FaceDetection.notify_user("Loading test faces...")
+    FD.notify_user("Loading test faces...")
 
-    faces_testing = FaceDetection.load_images(pos_testing_path)[1]
-    # faces_ii_testing = map(FaceDetection.to_integral_image, faces_testing)
-    faces_ii_testing = map(FaceDetection.to_integral_image, faces_testing)
+    faces_testing = FD.load_images(pos_testing_path)[1]
+    # faces_ii_testing = map(FD.to_integral_image, faces_testing)
+    faces_ii_testing = map(FD.to_integral_image, faces_testing)
     println("...done. ", length(faces_testing), " faces loaded.")
 
-    FaceDetection.notify_user("Loading test non-faces..")
+    FD.notify_user("Loading test non-faces..")
 
-    non_faces_testing = FaceDetection.load_images(neg_testing_path)[1]
-    non_faces_ii_testing = map(FaceDetection.to_integral_image, non_faces_testing)
+    non_faces_testing = FD.load_images(neg_testing_path)[1]
+    non_faces_ii_testing = map(FD.to_integral_image, non_faces_testing)
     println("...done. ", length(non_faces_testing), " non-faces loaded.\n")
 
-    FaceDetection.notify_user("Testing selected classifiers...")
+    FD.notify_user("Testing selected classifiers...")
     correct_faces = 0
     correct_non_faces = 0
 
-    # correct_faces = sum([FaceDetection._get_feature_vote(face, classifiers) for face in faces_ii_testing])
-    # correct_non_faces = length(non_faces_testing) - sum([FaceDetection._get_feature_vote(nonFace, classifiers) for nonFace in non_faces_ii_testing])
-    correct_faces = sum(FaceDetection.ensemble_vote_all(faces_ii_testing, classifiers))
-    correct_non_faces = length(non_faces_testing) - sum(FaceDetection.ensemble_vote_all(non_faces_ii_testing, classifiers))
+    # correct_faces = sum([FD._get_feature_vote(face, classifiers) for face in faces_ii_testing])
+    # correct_non_faces = length(non_faces_testing) - sum([FD._get_feature_vote(nonFace, classifiers) for nonFace in non_faces_ii_testing])
+    correct_faces = sum(FD.ensemble_vote_all(faces_ii_testing, classifiers))
+    correct_non_faces = length(non_faces_testing) - sum(FD.ensemble_vote_all(non_faces_ii_testing, classifiers))
     correct_faces_percent = (float(correct_faces) / length(faces_testing)) * 100
     correct_non_faces_percent = (float(correct_non_faces) / length(non_faces_testing)) * 100
 
@@ -111,7 +112,7 @@ function main(;
     non_faces_percent = string("(", correct_non_faces_percent, "% of non-faces were identified as non-faces)")
 
     println("...done.\n")
-    FaceDetection.notify_user("Result:\n")
+    FD.notify_user("Result:\n")
 
     @printf("%10.9s %10.15s %15s\n", "Faces:", faces_frac, faces_percent)
     @printf("%10.9s %10.15s %15s\n\n", "Non-faces:", non_faces_frac, non_faces_percent)

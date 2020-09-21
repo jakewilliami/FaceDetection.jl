@@ -9,6 +9,7 @@ println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will
 include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl"))
 
 using .FaceDetection
+const FD = FaceDetection
 using Images: imresize
 using StatsPlots  # StatsPlots required for box plots # plot boxplot @layout :origin savefig
 using CSV: write
@@ -62,32 +63,32 @@ function main(;
     end
 
 
-    FaceDetection.notify_user("Loading faces...")
+    FD.notify_user("Loading faces...")
 
-    faces_training = FaceDetection.load_images(pos_training_path)[1]
-    faces_ii_training = map(FaceDetection.to_integral_image, faces_training) # list(map(...))
+    faces_training = FD.load_images(pos_training_path)[1]
+    faces_ii_training = map(FD.to_integral_image, faces_training) # list(map(...))
     println("...done. ", length(faces_training), " faces loaded.")
 
-    FaceDetection.notify_user("Loading non-faces...")
+    FD.notify_user("Loading non-faces...")
 
-    non_faces_training = FaceDetection.load_images(neg_training_path)[1]
-    non_faces_ii_training = map(FaceDetection.to_integral_image, non_faces_training) # list(map(...))
+    non_faces_training = FD.load_images(neg_training_path)[1]
+    non_faces_ii_training = map(FD.to_integral_image, non_faces_training) # list(map(...))
     println("...done. ", length(non_faces_training), " non-faces loaded.\n")
 
     # classifiers are haar like features
-    classifiers = FaceDetection.learn(faces_ii_training, non_faces_ii_training, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width)
+    classifiers = FD.learn(faces_ii_training, non_faces_ii_training, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width)
 
-    FaceDetection.notify_user("Loading test faces...")
+    FD.notify_user("Loading test faces...")
 
-    faces_testing, face_names = FaceDetection.load_images(pos_testing_path)
-    # faces_ii_testing = map(FaceDetection.to_integral_image, faces_testing)
-    faces_ii_testing = map(FaceDetection.to_integral_image, faces_testing)
+    faces_testing, face_names = FD.load_images(pos_testing_path)
+    # faces_ii_testing = map(FD.to_integral_image, faces_testing)
+    faces_ii_testing = map(FD.to_integral_image, faces_testing)
     println("...done. ", length(faces_testing), " faces loaded.")
 
-    FaceDetection.notify_user("Loading test non-faces..")
+    FD.notify_user("Loading test non-faces..")
 
-    non_faces_testing, non_face_names = FaceDetection.load_images(neg_testing_path)
-    non_faces_ii_testing = map(FaceDetection.to_integral_image, non_faces_testing)
+    non_faces_testing, non_face_names = FD.load_images(neg_testing_path)
+    non_faces_ii_testing = map(FD.to_integral_image, non_faces_testing)
     println("...done. ", length(non_faces_testing), " non-faces loaded.\n")
     
     notify_user("Calculating test face scores and constructing dataset...")
@@ -98,8 +99,8 @@ function main(;
     faces_scores = zeros(length(faces_ii_testing))
     non_faces_scores = zeros(length(non_faces_ii_testing))
     
-    faces_scores[:] .= [sum([FaceDetection.get_faceness(c,face) for c in classifiers]) for face in faces_ii_testing]
-    non_faces_scores[:] .= [sum([FaceDetection.get_faceness(c,nonFace) for c in classifiers]) for nonFace in non_faces_ii_testing]
+    faces_scores[:] .= [sum([FD.get_faceness(c,face) for c in classifiers]) for face in faces_ii_testing]
+    non_faces_scores[:] .= [sum([FD.get_faceness(c,nonFace) for c in classifiers]) for nonFace in non_faces_ii_testing]
     
     # filling in the dataset with missing to easily write to csv
     df_faces = faces_scores
