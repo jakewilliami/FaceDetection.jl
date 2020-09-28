@@ -46,7 +46,7 @@ After you have setup your workspace, simply run
 # or
 julia --project= ./examples/basic.jl # on Windows (because it seems to ignore the shebang)
 ```
-You can also use `examples/write.jl` to train the model and write to a file, and then `examples/read.jl` to read from that file and process results.
+You can also use `examples/write.jl` to train your model and write to a file, and then `examples/read.jl` to read from
 
 You may need to change the code in `examples/constants.jl` to your appropriate training/testing directories.
 
