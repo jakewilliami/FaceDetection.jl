@@ -57,7 +57,7 @@ Get score for given integral image array.
 
 - `score::Number`: Score for given feature
 =#
-function get_score(feature, int_img::Array)#function get_score(feature::HaarLikeObject, int_img::Array)
+function get_score(feature::HaarLikeObject, int_img::Array)
     score = 0
     faceness = 0
 
@@ -154,7 +154,7 @@ Get vote of this feature for given integral image.
     1       ⟺ this feature votes positively
     -1      otherwise
 =#
-function get_vote(feature, int_img::AbstractArray)#function get_vote(feature::HaarLikeObject, int_img::AbstractArray)
+function get_vote(feature::HaarLikeObject, int_img::AbstractArray)
     score = get_score(feature, int_img)[1] # we only care about score here
 
     return (feature.weight * score) < (feature.polarity * feature.threshold) ? 1 : -1
