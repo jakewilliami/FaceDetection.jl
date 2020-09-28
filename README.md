@@ -6,7 +6,7 @@
 
 ## Note
 
-Though I have hopes for this repository to be publically available in the future, it is not at publishing level yet.  See examples for how to use this repo.
+Though I have hopes for this repository to be a registered package in the future, it is not at publishing level yet.  See examples for how to use this repo.
 
 ## Introduction
 
