@@ -11,10 +11,6 @@ include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl"))
 using .FaceDetection
 const FD = FaceDetection
 using Images: imresize
-using StatsPlots  # StatsPlots required for box plots # plot boxplot @layout :origin savefig
-using CSV: write
-using DataFrames: DataFrame
-using HypothesisTests: UnequalVarianceTTest
 using LightXML
 
 println("...done")
