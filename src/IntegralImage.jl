@@ -14,12 +14,8 @@ Original    Integral
 | . . . .   | . . . . .
 =#
 
-module IntegralImage
-
 import Base: size, getindex, LinearIndices
 using Images: Images, coords_spatial
-
-export to_integral_image, sum_region
 
 struct IntegralArray{T, N, A} <: AbstractArray{T, N}
 	data::A
@@ -84,5 +80,3 @@ function sum_region(
 	
     return sum
 end
-
-end # end module

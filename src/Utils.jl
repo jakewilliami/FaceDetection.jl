@@ -5,20 +5,11 @@
     =#
 
 
-module Utils
-
 include("HaarLikeFeature.jl")
 include("IntegralImage.jl")
 
 using Images: save, load, Colors, clamp01nan, Gray, imresize
 using ImageDraw: draw!, Polygon, Point
-using .HaarLikeFeature: feature_types, get_vote, get_score ,HaarLikeObject
-const HLF = HaarLikeFeature
-using .IntegralImage: to_integral_image
-const II = IntegralImage
-
-export displaymatrix, notify_user, load_images, ensemble_vote_all, get_faceness, reconstruct, get_random_image, generate_validation_image, determine_feature_size, get_image_matrix
-export feature_types, HaarLikeObject, get_score, get_vote
 
 #=
     displaymatrix(M::AbstractArray) -> AbstractString
@@ -171,7 +162,7 @@ function _ensemble_vote(int_img::AbstractArray, classifiers::AbstractArray)
     # weightedSum = sum([c[2] for c in classifiers])
     # return evidence >= (weightedSum / 2) ? 1 : -1
     
-    return sum([HLF.get_vote(c, int_img) for c in classifiers]) >= 0 ? 1 : 0
+    return sum([get_vote(c, int_img) for c in classifiers]) >= 0 ? 1 : 0
 end
 
 #=
@@ -205,7 +196,7 @@ Get facelikeness for a given feature.
 - `score::Number`: Score for given feature
 =#
 function get_faceness(feature, int_img::AbstractArray)
-        score, faceness = HLF.get_score(feature, int_img)
+        score, faceness = get_score(feature, int_img)
         
         return (feature.weight * score) < (feature.polarity * feature.threshold) ? faceness : 0
 end
@@ -230,7 +221,7 @@ function reconstruct(classifiers::AbstractArray, img_size::Tuple)
     for c in classifiers
         # map polarity: -1 -> 0, 1 -> 1
         polarity = ((1 + c.polarity)^2)/4
-        if c.feature_type == HLF.feature_types[1] # two vertical
+        if c.feature_type == feature_types[1] # two vertical
             for x in 1:c.width
                 sign = polarity
                 for y in 1:c.height
@@ -240,7 +231,7 @@ function reconstruct(classifiers::AbstractArray, img_size::Tuple)
                     image[c.top_left[2] + y, c.top_left[1] + x] += 1 * sign * c.weight
                 end
             end
-        elseif c.feature_type == HLF.feature_types[2] # two horizontal
+        elseif c.feature_type == feature_types[2] # two horizontal
             sign = polarity
             for x in 1:c.width
                 if x >= c.width/2
@@ -250,7 +241,7 @@ function reconstruct(classifiers::AbstractArray, img_size::Tuple)
                     image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.feature_type == HLF.feature_types[3] # three horizontal
+        elseif c.feature_type == feature_types[3] # three horizontal
             sign = polarity
             for x in 1:c.width
                 if iszero(mod(x, c.width/3))
@@ -260,7 +251,7 @@ function reconstruct(classifiers::AbstractArray, img_size::Tuple)
                     image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.feature_type == HLF.feature_types[4] # three vertical
+        elseif c.feature_type == feature_types[4] # three vertical
             for x in 1:c.width
                 sign = polarity
                 for y in 1:c.height
@@ -270,7 +261,7 @@ function reconstruct(classifiers::AbstractArray, img_size::Tuple)
                     image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.feature_type == HLF.feature_types[5] # four
+        elseif c.feature_type == feature_types[5] # four
             sign = polarity
             for x in 1:c.width
                 if iszero(mod(x, c.width/2))
@@ -399,12 +390,12 @@ function generate_validation_image(image_path::AbstractString, classifiers::Abst
     
     for c in classifiers
         features = push!(features, (c.top_left, c.bottom_right))
-        # if c.feature_type == HLF.feature_types[1] # two vertical
+        # if c.feature_type == feature_types[1] # two vertical
         #     features = push!(features, (c.top_left, c.bottom_right))
-        # elseif c.feature_type == HLF.feature_types[2] # two horizontal
-        # elseif c.feature_type == HLF.feature_types[3] # three horizontal
-        # elseif c.feature_type == HLF.feature_types[4] # three vertical
-        # elseif c.feature_type == HLF.feature_types[5] # four
+        # elseif c.feature_type == feature_types[2] # two horizontal
+        # elseif c.feature_type == feature_types[3] # three horizontal
+        # elseif c.feature_type == feature_types[4] # three vertical
+        # elseif c.feature_type == feature_types[5] # four
         # end
     end
     
@@ -444,7 +435,7 @@ function generate_validation_image(image_path::AbstractString, classifiers::Abst
     for c in classifiers
         # map polarity: -1 -> 0, 1 -> 1
         polarity = ((1 + c.polarity)^2)/4
-        if c.feature_type == HLF.feature_types[1] # two vertical
+        if c.feature_type == feature_types[1] # two vertical
             for x in 1:c.width
                 sign = polarity
                 for y in 1:c.height
@@ -454,7 +445,7 @@ function generate_validation_image(image_path::AbstractString, classifiers::Abst
                     boxes[c.top_left[2] + y, c.top_left[1] + x] += 1 * sign * c.weight
                 end
             end
-        elseif c.feature_type == HLF.feature_types[2] # two horizontal
+        elseif c.feature_type == feature_types[2] # two horizontal
             sign = polarity
             for x in 1:c.width
                 if x >= c.width/2
@@ -464,7 +455,7 @@ function generate_validation_image(image_path::AbstractString, classifiers::Abst
                     boxes[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.feature_type == HLF.feature_types[3] # three horizontal
+        elseif c.feature_type == feature_types[3] # three horizontal
             sign = polarity
             for x in 1:c.width
                 if iszero(mod(x, c.width/3))
@@ -474,7 +465,7 @@ function generate_validation_image(image_path::AbstractString, classifiers::Abst
                     boxes[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.feature_type == HLF.feature_types[4] # three vertical
+        elseif c.feature_type == feature_types[4] # three vertical
             for x in 1:c.width
                 sign = polarity
                 for y in 1:c.height
@@ -484,7 +475,7 @@ function generate_validation_image(image_path::AbstractString, classifiers::Abst
                     boxes[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.feature_type == HLF.feature_types[5] # four
+        elseif c.feature_type == feature_types[5] # four
             sign = polarity
             for x in 1:c.width
                 if iszero(mod(x, c.width/2))
@@ -541,5 +532,3 @@ function generate_validation_image(image_path::AbstractString, classifiers::Abst
     
     # save("/Users/jakeireland/Desktop/test.png", Gray.(map(clamp01nan, newImg)))
 end
-
-end # end module

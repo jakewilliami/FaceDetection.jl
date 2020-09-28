@@ -8,19 +8,10 @@
 # TODO: select optimal threshold for each feature
 # TODO: attentional cascading
 
-
-module AdaBoost
-
 # include("HaarLikeFeature.jl")
 include("Utils.jl")
 
 using ProgressMeter: @showprogress
-# using .HaarLikeFeature: feature_types, HaarLikeObject, get_vote
-using .Utils: notify_user, feature_types, HaarLikeObject, get_vote
-const U = Utils
-
-export learn
-
 #=
     learn(
         positive_iis::AbstractArray,
@@ -105,7 +96,7 @@ function learn(
         num_classifiers = num_features
     end
     
-    U.notify_user("Calculating scores for images...")
+    notify_user("Calculating scores for images...")
     
     # create an empty array (of zeroes) with dimensions (num_imgs, numFeautures)
     votes = zeros((num_imgs, num_features)) # necessarily different from `zero.((num_imgs, num_features))`; previously zerosarray
@@ -121,7 +112,7 @@ function learn(
     # select classifiers
     classifiers = []
 
-    U.notify_user("Selecting classifiers...")
+    notify_user("Selecting classifiers...")
     
     n = num_classifiers
     @showprogress for t in 1:num_classifiers
@@ -235,7 +226,7 @@ function _create_features(
     min_feature_height::Integer,
     max_feature_height::Integer
 )
-    U.notify_user("Creating Haar-like features...")
+    notify_user("Creating Haar-like features...")
     features = []
     
     if img_width < max_feature_width || img_height < max_feature_height
@@ -244,15 +235,15 @@ function _create_features(
         """)
     end
     
-    for feature in U.feature_types # (feature_types are just tuples)
+    for feature in feature_types # (feature_types are just tuples)
         feature_start_width = max(min_feature_width, feature[1])
         for feature_width in range(feature_start_width, stop=max_feature_width, step=feature[1])
             feature_start_height = max(min_feature_height, feature[2])
             for feature_height in range(feature_start_height, stop=max_feature_height, step=feature[2])
                 for x in 1:(img_width - feature_width)
                     for y in 1:(img_height - feature_height)
-                        features = push!(features, U.HaarLikeObject(feature, (x, y), feature_width, feature_height, 0, 1))
-                        features = push!(features, U.HaarLikeObject(feature, (x, y), feature_width, feature_height, 0, -1))
+                        features = push!(features, HaarLikeObject(feature, (x, y), feature_width, feature_height, 0, 1))
+                        features = push!(features, HaarLikeObject(feature, (x, y), feature_width, feature_height, 0, -1))
                     end # end for y
                 end # end for x
             end # end for feature height
@@ -263,5 +254,3 @@ function _create_features(
     
     return features
 end
-
-end # end module

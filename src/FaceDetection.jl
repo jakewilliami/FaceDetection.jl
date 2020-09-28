@@ -14,8 +14,4 @@ include("IntegralImage.jl")
 include("AdaBoost.jl")
 include("Utils.jl")
 
-using .IntegralImage
-using .AdaBoost
-using .Utils
-
 end # end module
