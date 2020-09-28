@@ -42,11 +42,13 @@ For a better explanation, read [the paper from 2001](http://citeseerx.ist.psu.ed
 
 After you have setup your workspace, simply run
 ```bash
-./examples/main.jl # on a unix system
+./examples/write.jl # on a unix system
 # or
-julia --project="." ./examples/main.jl # on Windows (because it seems to ignore the shebang)
+julia --project= ./examples/write.jl # on Windows (because it seems to ignore the shebang)
 ```
-You may need to change the code in `main.jl` to your appropriate training/testing directories.
+This will train the model and write your data to a file.  Similarly, use `examples/read.jl` (and variants of it) to use the pre-trained data.
+
+You may need to change the code in `examples/constants.jl` to your appropriate training/testing directories.
 
 ## Timeline of Progression
 
@@ -56,6 +58,8 @@ You may need to change the code in `main.jl` to your appropriate training/testin
  - [f1f5b5ea](https://github.com/jakewilliami/FaceDetection.jl/commit/f1f5b5ea) &mdash; Getting along very well with bug fixing (created a `struct` for Haar-like feature; updated weighting calculations; fixed `hstack` translation with nested arrays).  Added detailed comments on each function.
  - [a9e10eb4](https://github.com/jakewilliami/FaceDetection.jl/commit/a9e10eb4) &mdash; First working draft of the algorithm (without image reconstruction)!
  - [6b35f6d5](https://github.com/jakewilliami/FaceDetection.jl/commit/6b35f6d5) &mdash; Finally, the algorithm works as it should.  Just enhancements from here on out.
+ - [854bba32](https://github.com/jakewilliami/FaceDetection.jl/commit/854bba32) and [655e0e14](https://github.com/jakewilliami/FaceDetection.jl/commit/655e0e14) &mdash; Implemented facelike scoring and wrote score data to CSV (see [#7](https://github.com/jakewilliami/FaceDetection.jl/issues/7)).
+ - [e7295f8d](https://github.com/jakewilliami/FaceDetection.jl/commit/e7295f8d) &mdash; Implemented writing training data to file and reading from that data to save computation time.
 
 ## Acknowledgements
 
@@ -69,7 +73,7 @@ Thank you to:
 
 ## A Note on running on BSD:
 
-The default JuliaPlots backend `GR` does not provide binaries for FreeBSD.  [Here's how you can build it from source.](https://github.com/jheinen/GR.jl/issues/268#issuecomment-584389111)
+The default JuliaPlots backend `GR` does not provide binaries for FreeBSD.  [Here's how you can build it from source.](https://github.com/jheinen/GR.jl/issues/268#issuecomment-584389111).  That said, `StatsPlots` is only a dependency for an example, and not for the main package.
 
 
 [code-style-img]: https://img.shields.io/badge/code%20style-blue-4495d1.svg
