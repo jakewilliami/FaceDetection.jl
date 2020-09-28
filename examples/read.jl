@@ -26,24 +26,13 @@ function main(;
     smart_choose_feats::Bool=false, alt::Bool=false
 )
 
-	# we assume that `smart_choose_feats = true`
-    main_path = dirname(dirname(@__FILE__))
-    data_path = joinpath(main_path, "data")
-    main_image_path = joinpath(main_path, "data", "main")
-    alt_image_path = joinpath(main_path, "data", "alt")
+	include("constants.jl")
 
-    if alt
-        # pos_testing_path = joinpath(alt_image_path, "testing", "pos")
-        # neg_testing_path = joinpath(homedir(), "Desktop", "Assorted Personal Documents", "Wallpapers copy")
-        pos_testing_path = joinpath(main_image_path, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$main_image_path/testset/faces/"
-        neg_testing_path = joinpath(main_image_path, "testset", "non-faces")
-    else
-        pos_testing_path = joinpath(main_image_path, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$main_image_path/testset/faces/"
-        neg_testing_path = joinpath(main_image_path, "testset", "non-faces")
-    end
-
-    # pos_testing_path = joinpath(data_path, "lizzie-testset", "faces")
-    # neg_testing_path = joinpath(data_path, "lizzie-testset", "nonfaces")
+	if ! alt
+		include("main_data.jl")
+	else
+		include("alt_data.jl")
+	end
 	
 	if ! isfile(joinpath(dirname(@__FILE__), "data", "haar-like_features"))
 		error(throw("You do not have a data file.  Ensure you run \"write.jl\" to obtain your Haar-like features before running this script/"))

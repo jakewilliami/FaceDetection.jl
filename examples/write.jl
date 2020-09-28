@@ -25,24 +25,13 @@ println("...done")
 function main(;
     smart_choose_feats::Bool=false, alt::Bool=false
 )
-    # we assume that `smart_choose_feats = true`
-    main_path = dirname(dirname(@__FILE__))
-    data_path = joinpath(main_path, "data")
-    main_image_path = joinpath(main_path, "data", "main")
-    alt_image_path = joinpath(main_path, "data", "alt")
+	include("constants.jl")
 
-    if alt
-        pos_training_path = joinpath(alt_image_path, "pos")
-        neg_training_path = joinpath(alt_image_path, "neg")
-    else
-        pos_training_path = joinpath(main_image_path, "trainset", "faces")
-        neg_training_path = joinpath(main_image_path, "trainset", "non-faces")
-    end
-    
-    # pos_training_path = joinpath(data_path, "lfw-all")
-    # neg_training_path = joinpath(data_path, "all-non-faces")
-
-    num_classifiers = 10
+	if ! alt
+		include("main_data.jl")
+	else
+		include("alt_data.jl")
+	end
 
     min_size_img = (19, 19) # default for our test dataset
     if smart_choose_feats

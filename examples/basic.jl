@@ -24,32 +24,13 @@ println("...done")
 function main(;
     smart_choose_feats::Bool=false, alt::Bool=false
 )
-    # we assume that `smart_choose_feats = true`
-    main_path = dirname(dirname(@__FILE__))
-    data_path = joinpath(main_path, "data")
-    main_image_path = joinpath(main_path, "data", "main")
-    alt_image_path = joinpath(main_path, "data", "alt")
-
-    if alt
-        pos_training_path = joinpath(alt_image_path, "pos")
-        neg_training_path = joinpath(alt_image_path, "neg")
-        # pos_testing_path = joinpath(alt_image_path, "testing", "pos")
-        # neg_testing_path = joinpath(homedir(), "Desktop", "Assorted Personal Documents", "Wallpapers copy")
-        pos_testing_path = joinpath(main_image_path, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$main_image_path/testset/faces/"
-        neg_testing_path = joinpath(main_image_path, "testset", "non-faces")
-    else
-        pos_training_path = joinpath(main_image_path, "trainset", "faces")
-        neg_training_path = joinpath(main_image_path, "trainset", "non-faces")
-        pos_testing_path = joinpath(main_image_path, "testset", "faces")#joinpath(homedir(), "Desktop", "faces")#"$main_image_path/testset/faces/"
-        neg_testing_path = joinpath(main_image_path, "testset", "non-faces")
-    end
+    include("constants.jl")
     
-    # pos_training_path = joinpath(data_path, "lfw-all")
-    # neg_training_path = joinpath(data_path, "all-non-faces")
-    # pos_testing_path = joinpath(data_path, "lizzie-testset", "faces")
-    # neg_testing_path = joinpath(data_path, "lizzie-testset", "nonfaces")
-
-    num_classifiers = 10
+    if ! alt
+        include("main_data.jl")
+    else
+        include("alt_data.jl")
+    end
 
     min_size_img = (19, 19) # default for our test dataset
     if smart_choose_feats
