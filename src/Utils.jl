@@ -221,7 +221,7 @@ function reconstruct(classifiers::AbstractArray, img_size::Tuple)
     for c in classifiers
         # map polarity: -1 -> 0, 1 -> 1
         polarity = ((1 + c.polarity)^2)/4
-        if c.feature_type == feature_types[1] # two vertical
+        if c.feature_type == feature_types["two_vertical"]
             for x in 1:c.width
                 sign = polarity
                 for y in 1:c.height
@@ -231,7 +231,7 @@ function reconstruct(classifiers::AbstractArray, img_size::Tuple)
                     image[c.top_left[2] + y, c.top_left[1] + x] += 1 * sign * c.weight
                 end
             end
-        elseif c.feature_type == feature_types[2] # two horizontal
+        elseif c.feature_type == feature_types["two_horizontal"]
             sign = polarity
             for x in 1:c.width
                 if x >= c.width/2
@@ -241,7 +241,7 @@ function reconstruct(classifiers::AbstractArray, img_size::Tuple)
                     image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.feature_type == feature_types[3] # three horizontal
+        elseif c.feature_type == feature_types["three_horizontal"]
             sign = polarity
             for x in 1:c.width
                 if iszero(mod(x, c.width/3))
@@ -251,7 +251,7 @@ function reconstruct(classifiers::AbstractArray, img_size::Tuple)
                     image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.feature_type == feature_types[4] # three vertical
+        elseif c.feature_type == feature_types["three_vertical"]
             for x in 1:c.width
                 sign = polarity
                 for y in 1:c.height
@@ -261,7 +261,7 @@ function reconstruct(classifiers::AbstractArray, img_size::Tuple)
                     image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.feature_type == feature_types[5] # four
+        elseif c.feature_type == feature_types["four"]
             sign = polarity
             for x in 1:c.width
                 if iszero(mod(x, c.width/2))
@@ -435,7 +435,7 @@ function generate_validation_image(image_path::AbstractString, classifiers::Abst
     for c in classifiers
         # map polarity: -1 -> 0, 1 -> 1
         polarity = ((1 + c.polarity)^2)/4
-        if c.feature_type == feature_types[1] # two vertical
+        if c.feature_type == feature_types["two_vertical"]
             for x in 1:c.width
                 sign = polarity
                 for y in 1:c.height
@@ -445,7 +445,7 @@ function generate_validation_image(image_path::AbstractString, classifiers::Abst
                     boxes[c.top_left[2] + y, c.top_left[1] + x] += 1 * sign * c.weight
                 end
             end
-        elseif c.feature_type == feature_types[2] # two horizontal
+        elseif c.feature_type == feature_types["two_horizontal"]
             sign = polarity
             for x in 1:c.width
                 if x >= c.width/2
@@ -455,7 +455,7 @@ function generate_validation_image(image_path::AbstractString, classifiers::Abst
                     boxes[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.feature_type == feature_types[3] # three horizontal
+        elseif c.feature_type == feature_types["three_horizontal"]
             sign = polarity
             for x in 1:c.width
                 if iszero(mod(x, c.width/3))
@@ -465,7 +465,7 @@ function generate_validation_image(image_path::AbstractString, classifiers::Abst
                     boxes[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.feature_type == feature_types[4] # three vertical
+        elseif c.feature_type == feature_types["three_vertical"]
             for x in 1:c.width
                 sign = polarity
                 for y in 1:c.height
@@ -475,7 +475,7 @@ function generate_validation_image(image_path::AbstractString, classifiers::Abst
                     boxes[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
-        elseif c.feature_type == feature_types[5] # four
+        elseif c.feature_type == feature_types["four"]
             sign = polarity
             for x in 1:c.width
                 if iszero(mod(x, c.width/2))

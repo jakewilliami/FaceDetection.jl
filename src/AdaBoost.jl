@@ -235,7 +235,7 @@ function _create_features(
         """)
     end
     
-    for feature in feature_types # (feature_types are just tuples)
+    for feature in values(feature_types) # (feature_types are just tuples)
         feature_start_width = max(min_feature_width, feature[1])
         for feature_width in range(feature_start_width, stop=max_feature_width, step=feature[1])
             feature_start_height = max(min_feature_height, feature[2])
