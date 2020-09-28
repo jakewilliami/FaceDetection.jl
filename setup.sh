@@ -92,6 +92,7 @@ obtainFDDBDataset() {
 }
 
 
+#### BEST FACES DATASET
 obtainLabelledFacesInTheWildDataset() {
 	URL="http://vis-www.cs.umass.edu/lfw/lfw.tgz"
 	cd ${FD_HOME}/data/
@@ -110,6 +111,7 @@ obtainLabelledFacesInTheWildDataset() {
     cd - > /dev/null
 }
 
+#### BEST NON-FACES DATASET
 collateAllNonFaces(){
 	if [[ -d ${FD_HOME}/data/all-non-faces/ ]]
 	then
@@ -121,6 +123,19 @@ collateAllNonFaces(){
 	cp -rv ${FD_HOME}/data/alt/neg/ ${FD_HOME}/data/all-non-faces/
 	cp -rv ${FD_HOME}/data/main/testset/non-faces/ ${FD_HOME}/data/all-non-faces/
 	cp -rv ${FD_HOME}/data/main/trainset/non-faces/ ${FD_HOME}/data/all-non-faces/
+}
+
+openCVPreTrained() {
+	if [[ -d ${FD_HOME}/data/haarcascades/ ]]
+	then
+		rm -rf ${FD_HOME}/data/haarcascades/
+	fi
+	
+	mkdir -p ${FD_HOME}/data/haarcascades/
+	
+	git clone https://github.com/opencv/opencv/
+	mv opencv/data/haarcascades/ ${FD_HOME}/data/
+	rm -rf opencv/
 }
 
 
@@ -137,10 +152,11 @@ main() {
 
 if [[ "$(whoami)" == "jakeireland" && "$(uname -s)" == "Darwin" ]]
 then
-	obtainDatasetMain
-	obtainDatasetAlt
-	obtainLabelledFacesInTheWildDataset
-	collateAllNonFaces
+	# obtainDatasetMain
+	# obtainDatasetAlt
+	# obtainLabelledFacesInTheWildDataset
+	# collateAllNonFaces
+	openCVPreTrained
 else
 	main
 fi

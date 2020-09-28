@@ -65,7 +65,8 @@ function main(;
     classifiers = FD.learn(faces_ii_training, non_faces_ii_training, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width)
 
 	# write classifiers to file
-	serialize(joinpath(dirname(@__FILE__), "data", "haar-like_features_c$num_classifiers"), classifiers)
+	data_file = joinpath(dirname(@__FILE__), "data", "haar-like_features_c$(num_classifiers)")
+	serialize(data_file, classifiers)
 end
 
 @time main(smart_choose_feats=true, alt=false)

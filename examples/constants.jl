@@ -10,4 +10,6 @@ data_path = joinpath(main_path, "data")
 main_image_path = joinpath(main_path, "data", "main")
 alt_image_path = joinpath(main_path, "data", "alt")
 
-num_classifiers = 10
+num_classifiers = 100
+
+data_file = joinpath(dirname(@__FILE__), "data", "haar-like_features_c$(num_classifiers)")
