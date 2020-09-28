@@ -74,9 +74,9 @@ function sum_region(
 	bottom_right::Tuple{Int64,Int64}
 )
 	sum = integral_image_arr[bottom_right[2], bottom_right[1]]
-    sum -= top_left[1] > 1 ? integral_image_arr[bottom_right[2], top_left[1] - 1] : 0
-    sum -= top_left[2] > 1 ? integral_image_arr[top_left[2] - 1, bottom_right[1]] : 0
-    sum += top_left[2] > 1 && top_left[1] > 1 ? integral_image_arr[top_left[2] - 1, top_left[1] - 1] : 0
+    sum -= top_left[1] > 1 ? integral_image_arr[bottom_right[2], top_left[1] - 1] : zero(Integer)
+    sum -= top_left[2] > 1 ? integral_image_arr[top_left[2] - 1, bottom_right[1]] : zero(Integer)
+    sum += top_left[2] > 1 && top_left[1] > 1 ? integral_image_arr[top_left[2] - 1, top_left[1] - 1] : zero(Integer)
 	
     return sum
 end

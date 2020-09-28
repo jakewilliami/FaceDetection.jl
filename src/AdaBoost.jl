@@ -125,7 +125,7 @@ function learn(
         for j in 1:length(feature_indices)
             f_idx = feature_indices[j]
             # classifier error is the sum of image weights where the classifier is right
-            ε = sum(map(img_idx -> labels[img_idx] ≠ votes[img_idx, f_idx] ? weights[img_idx] : 0, 1:num_imgs))
+            ε = sum(map(img_idx -> labels[img_idx] ≠ votes[img_idx, f_idx] ? weights[img_idx] : zero(Integer), 1:num_imgs))
             
             classification_errors[j] = ε
         end
