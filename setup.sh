@@ -152,11 +152,11 @@ main() {
 
 if [[ "$(whoami)" == "jakeireland" && "$(uname -s)" == "Darwin" ]]
 then
-	# obtainDatasetMain
-	# obtainDatasetAlt
-	# obtainLabelledFacesInTheWildDataset
-	# collateAllNonFaces
+	obtainDatasetMain
+	obtainDatasetAlt
 	openCVPreTrained
+	obtainLabelledFacesInTheWildDataset
+	collateAllNonFaces
 else
 	main
 fi
