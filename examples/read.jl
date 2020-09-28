@@ -34,12 +34,12 @@ function main(;
 		include("alt_data.jl")
 	end
 	
-	if ! isfile(joinpath(dirname(@__FILE__), "data", "haar-like_features"))
+	if ! isfile(joinpath(dirname(@__FILE__), "data", "haar-like_features_c$num_classifiers"))
 		error(throw("You do not have a data file.  Ensure you run \"write.jl\" to obtain your Haar-like features before running this script/"))
 	end
 
 	# read classifiers from file
-	classifiers = deserialize(joinpath(dirname(@__FILE__), "data", "haar-like_features"))
+	classifiers = deserialize(joinpath(dirname(@__FILE__), "data", "haar-like_features_c$num_classifiers"))
 
     FD.notify_user("Loading test faces...")
 
