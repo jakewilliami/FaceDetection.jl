@@ -23,12 +23,21 @@ setupWD() {
 checkPackages() {
 	if [[ $(uname -s) == "Darwin" ]]
 	then
+		echo "Ensure your home directory is writable if you are running Catalina or this script will fail (https://stackoverflow.com/questions/58034955/read-only-file-system-when-attempting-mkdir-data-db-on-mac)"
+		sleep 10
+
 		brew list > /tmp/brewlist
 		if ! grep "^julia$" /tmp/brewlist > /dev/null 2>&1
 		then
 			echo "Downloading Julia"
 			brew cask install julia
 		fi
+		brew list > /tmp/brewlist
+        if ! grep "^wget$" /tmp/brewlist > /dev/null 2>&1
+        then
+            echo "Downloading wget"
+            brew install wget
+        fi
 	else
 		echo "Please ensure Julia is downloaded and in your path."
 		sleep 10
