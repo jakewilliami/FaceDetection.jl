@@ -38,15 +38,24 @@ checkPackages() {
             echo "Downloading wget"
             brew install wget
         fi
+		brew list > /tmp/brewlist
+        if ! grep "^coreutils$" /tmp/brewlist > /dev/null 2>&1
+        then
+            echo "Downloading coreutils"
+            brew install coreutils
+        fi
 	else
-		echo "Please ensure Julia is downloaded and in your path."
+		echo "Please ensure Julia, wget, and coreutils is downloaded and in your path."
 		sleep 10
 	fi
 
 	echo "Downloading dependencies"
-	julia -E 'import Pkg; Pkg.activate(joinpath(homedir(), "FaceDetection.jl")); Pkg.instantiate()'
+	julia -E 'import Pkg; fd_home = dirname(@__FILE__); Pkg.activate(fd_home); Pkg.instantiate(); Pkg.activate(joinpath(fd_home, "examples")); Pkg.instantiate(); Pkg.activate(joinpath(fd_home, "test")); Pkg.instantiate()'
 }
 
+FD_HOME="$(realpath $(dirname $0))"
+MAIN="${FD_HOME}/data/main/"
+ALT="${FD_HOME}/data/alt/"
 
 obtainDatasetAlt() {
 	echo "Downloading alternative face detection training data"
