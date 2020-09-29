@@ -147,6 +147,7 @@ main() {
 	obtainMITDataset
 	obtainFDDBDataset
 	obtainLabelledFacesInTheWildDataset
+	openCVPreTrained
 	collateAllNonFaces
 }
 
