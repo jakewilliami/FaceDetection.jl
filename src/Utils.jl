@@ -81,8 +81,13 @@ Takes an image and constructs a matrix of greyscale intensity values based on it
 
 - `img_arr::AbstractArray`: The array of greyscale intensity values from the image
 =#
-function get_image_matrix(image_file::AbstractString)
+function get_image_matrix(image_file::AbstractString; scale_up::Bool=true)
     img = load(image_file)
+    
+    if scale_up
+        img = imresize(img, (577, 577))
+    end
+    
     img_arr = convert(Array{Float64}, Gray.(img))
     
     return img_arr
