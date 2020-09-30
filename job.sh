@@ -7,6 +7,7 @@
 #SBATCH -e /nfs/home/irelanjake/project1.err
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=jakewilliami@icloud.com
+#SBATCH --account=psyc
 
 EXAMPLE_DIR="${HOME}/projects/FaceDetection.jl/examples/"
 
