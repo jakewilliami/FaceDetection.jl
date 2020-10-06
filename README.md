@@ -2,7 +2,7 @@
    FaceDetection using Viola-Jones' Robust Algorithm for Object Detection
 </h1>
 
-[![Code Style: Blue][code-style-img]][code-style-url] ![Project Status](https://img.shields.io/badge/status-maturing-green)
+[![Code Style: Blue][code-style-img]][code-style-url] [![Build Status](https://travis-ci.com/jakewilliami/FaceDetection.jl.svg?branch=master)](https://travis-ci.com/jakewilliami/FaceDetection.jl) ![Project Status](https://img.shields.io/badge/status-maturing-green)
 
 ## Note
 
