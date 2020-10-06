@@ -7,7 +7,7 @@
 include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl")) # ../src/FaceDetection.jl
 
 using .FaceDetection
-using Test: @test
+using Test
 
 using FaceDetection
 using Test
