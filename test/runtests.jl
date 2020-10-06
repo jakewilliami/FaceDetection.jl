@@ -9,9 +9,6 @@ include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl")) # ../s
 using .FaceDetection
 using Test
 
-using FaceDetection
-using Test
-
 @testset "FaceDetection.jl" begin
     # IntegralImage.jl
     isequal(FaceDetection.to_integral_image([17 24 1 8 15; 23 5 7 14 16; 4 6 13 20 22; 10 12 19 21 3; 11 18 25 2 9]), [17 41 42 50 65; 40 69 77 99 130; 44 79 100 142 195; 54 101 141 204 260; 65 130 195 260 325])
