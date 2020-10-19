@@ -44,56 +44,6 @@ function notify_user(message::AbstractString)
 end
 
 #=
-    load_images(image_dir::AbstractString) -> Tuple{AbstractArray, AbstractArray}
-
-Given a path to a directory of images, recursively loads those
-
-# Arguments
-
-- `image_dir::AbstractString`: path to a directory of images
-
-# Returns
-
-- `images::AbstractArray`: a list of images from the path provided
-= `files::AbstractArray`: a list of file names of the images
-=#
-function load_images(image_dir::AbstractString)
-    files = filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(image_dir, join=true, sort=false))
-    images = []
-    
-    for file in files
-        images = push!(images, get_image_matrix(file))
-    end
-    
-    return images, files
-end
-
-#=
-    get_image_matrix(image_file::AbstractString) -> AbstractArray
-    
-Takes an image and constructs a matrix of greyscale intensity values based on it.
-
-# Arguments
-
-- `image_file::AbstractString`: the path of the file of the image to be turned into an array
-
-# Returns
-
-- `img_arr::AbstractArray`: The array of greyscale intensity values from the image
-=#
-function get_image_matrix(image_file::AbstractString; scale_up::Bool=true)
-    img = load(image_file)
-    
-    # if scale_up
-        # img = imresize(img, (577, 577))
-    # end
-    
-    img_arr = convert(Array{Float64}, Gray.(img))
-    
-    return img_arr
-end
-
-#=
     determine_feature_size(
         pos_training_path::AbstractString,
         neg_training_path::AbstractString
@@ -116,7 +66,8 @@ Takes images and finds the best feature size for the image size.
 =#
 function determine_feature_size(
     pos_training_path::AbstractString,
-    neg_training_path::AbstractString
+    neg_training_path::AbstractString;
+    scale_up::Bool=false
 )
     min_feature_height = 0
     min_feature_width = 0
@@ -128,7 +79,11 @@ function determine_feature_size(
 
     for picture_dir in [pos_training_path, neg_training_path]
             for picture in filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(picture_dir, join=true, sort=false))
-                new_size = size(load(joinpath(homedir(), "FaceDetection.jl", "data", picture_dir, picture)))
+                img = load(joinpath(homedir(), "FaceDetection.jl", "data", picture_dir, picture))
+                if scale_up
+                    img = imresize(img, (577, 577))
+                end
+                new_size = size(img)
                 sizes = push!(sizes, new_size)
             end
     end

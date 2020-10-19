@@ -14,27 +14,6 @@ include("IntegralImage.jl")
 
 using ProgressMeter: @showprogress
 
-
-function load_images(image_dir::AbstractString)
-    files = filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(image_dir, join=true, sort=false))
-    images = []
-    
-    for file in files
-        images = push!(images, get_image_matrix(file))
-    end
-    
-    return images, files
-end
-function get_image_matrix(image_file::AbstractString; scale_up::Bool=true)
-    img = load(image_file)
-    
-    img_arr = convert(Array{Float64}, Gray.(img))
-    
-    return img_arr
-end
-
-
-
 #=
     learn(
         positive_iis::AbstractArray,
@@ -71,7 +50,8 @@ function learn(
     min_feature_width::Integer=1,
     max_feature_width::Integer=-1,
     min_feature_height::Integer=1,
-    max_feature_height::Integer=-1
+    max_feature_height::Integer=-1;
+    scale_up::Bool = false
 )::Array{HaarLikeObject,1}
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
     
@@ -83,8 +63,11 @@ function learn(
     num_imgs = num_pos + num_neg
     
     # get image height and width
-    temp_image = size(convert(Array{Float64}, Gray.(load(rand(positive_files)))))
-    img_height, img_width = temp_image
+    temp_image = convert(Array{Float64}, Gray.(load(rand(positive_files))))
+    if scale_up
+        temp_image = imresize(temp_image, (577, 577))
+    end
+    img_height, img_width = size(temp_image)
     temp_image = nothing # unload temporary image
     
     # Maximum feature width and height default to image width and height
@@ -127,9 +110,14 @@ function learn(
     votes = zeros((num_imgs, num_features)) # necessarily different from `zero.((num_imgs, num_features))`; previously zerosarray
     num_processed = 0
     
+    println("hello")
+    
     notify_user("Calculating scores for positive images (e.g., faces)...")
     @showprogress for positive_image in positive_files
         positive_image = convert(Array{Float64}, Gray.(load(positive_image)))
+        if scale_up
+            positive_image = imresize(positive_image, (577, 577))
+        end
         positive_ii = to_integral_image(positive_image)
         # get list of images
         # images = vcat(positive_iis, negative_iis)
@@ -144,6 +132,9 @@ function learn(
     notify_user("Calculating scores for negative images (e.g., non-faces)...")
     @showprogress for negative_image in negative_files
         negative_image = convert(Array{Float64}, Gray.(load(negative_image)))
+        if scale_up
+            negative_image = imresize(negative_image, (577, 577))
+        end
         negative_ii = to_integral_image(negative_image)
 
         # n = num_imgs
