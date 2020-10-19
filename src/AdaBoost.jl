@@ -13,6 +13,7 @@ include("Utils.jl")
 include("IntegralImage.jl")
 
 using ProgressMeter: @showprogress
+using SparseArrays: spzeros
 
 #=
     learn(
@@ -107,10 +108,9 @@ function learn(
     end
     
     # create an empty array (of zeroes) with dimensions (num_imgs, numFeautures)
-    votes = zeros((num_imgs, num_features)) # necessarily different from `zero.((num_imgs, num_features))`; previously zerosarray
+    # votes = zeros((num_imgs, num_features)) # necessarily different from `zero.((num_imgs, num_features))`; previously zerosarray
+    votes = spzeros(num_imgs, num_features)
     num_processed = 0
-    
-    println("hello")
     
     notify_user("Calculating scores for positive images (e.g., faces)...")
     @showprogress for positive_image in positive_files
