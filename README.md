@@ -16,11 +16,17 @@ I *implore* collaboration.  I am an undergraduate student with no formal educati
 
 ## Installation and Set Up
 
-Run the following in terminal:
+Run the following in terminal to download the datasets:
 ```bash
-git clone https://github.com/jakewilliami/FaceDetection.jl.git/
 bash FaceDetection.jl/setup.sh # if you are on a unix system
 # TODO: make batch script for windows
+```
+
+Now install the package and run the programme:
+```julia
+julia> ]add FaceDetection
+julia> ;mkdir examples/data
+julia> include("examples/write.jl")
 ```
 
 ## How it works
