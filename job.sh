@@ -1,13 +1,14 @@
 #!/bin/bash
-#SBATCH --cpus-per-task=2
-#SBATCH --mem-per-cpu=2G
-#SBATCH --partition=parallel
-#SBATCH --time=3-12:00
-#SBATCH -o /nfs/home/irelanjake/project1.out
-#SBATCH -e /nfs/home/irelanjake/project1.err
+#SBATCH --cpus-per-task=40
+#SBATCH --mem=1000G
+#SBATCH --partition=bigmem
+#SBATCH --time=3-00:00:00
+#SBATCH -o /nfs/home/irelanjake/fd-project1.out
+#SBATCH -e /nfs/home/irelanjake/fd-project1.err
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=jakewilliami@icloud.com
 #SBATCH --account=psyc
+#SBATCH --constraint=AVX
 
 EXAMPLE_DIR="${HOME}/projects/FaceDetection.jl/examples/"
 
@@ -38,17 +39,3 @@ ${EXAMPLE_DIR}/write.jl
 sed	's/^num_classifiers[[:space:]]=[[:space:]].*$/num_classifiers = 10/g' "${EXAMPLE_DIR}/constants.jl"
 ${EXAMPLE_DIR}/write.jl
 
-sed	's/^num_classifiers[[:space:]]=[[:space:]].*$/num_classifiers = 20/g' "${EXAMPLE_DIR}/constants.jl"
-${EXAMPLE_DIR}/write.jl
-
-sed	's/^num_classifiers[[:space:]]=[[:space:]].*$/num_classifiers = 50/g' "${EXAMPLE_DIR}/constants.jl"
-${EXAMPLE_DIR}/write.jl
-
-sed	's/^num_classifiers[[:space:]]=[[:space:]].*$/num_classifiers = 100/g' "${EXAMPLE_DIR}/constants.jl"
-${EXAMPLE_DIR}/write.jl
-
-sed	's/^num_classifiers[[:space:]]=[[:space:]].*$/num_classifiers = 200/g' "${EXAMPLE_DIR}/constants.jl"
-${EXAMPLE_DIR}/write.jl
-
-sed	's/^num_classifiers[[:space:]]=[[:space:]].*$/num_classifiers = 1000/g' "${EXAMPLE_DIR}/constants.jl"
-${EXAMPLE_DIR}/write.jl
