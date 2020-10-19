@@ -14,21 +14,6 @@ This is a Julia implementation of [Viola-Jones' Object Detection algorithm](http
 
 I *implore* collaboration.  I am an undergraduate student with no formal education in computer science (or computer vision of any form for that matter); there is a chance that I have done something incorrect, and I am certain this code can be refined/optimised by better programmers than myself.  Please, help me out if you like!
 
-## Installation and Set Up
-
-Run the following in terminal to download the datasets:
-```bash
-bash FaceDetection.jl/setup.sh # if you are on a unix system
-# TODO: make batch script for windows
-```
-
-Now install the package and run the programme:
-```julia
-julia> ]add FaceDetection
-julia> ;mkdir examples/data
-julia> include("examples/write.jl")
-```
-
 ## How it works
 
 In an over-simplified manner, the Viola-Jones algorithm has some four stages:
@@ -46,17 +31,55 @@ For a better explanation, read [the paper from 2001](http://citeseerx.ist.psu.ed
 
 ## Running the Algorithm
 
-After you have setup your workspace, simply run
-```bash
-./examples/basic.jl # on a unix system
-# or
-julia --project= ./examples/basic.jl # on Windows (because it seems to ignore the shebang)
+```julia
+julia> using FaceDetection, Serialization # Serialization is so that you can save your results
+
+julia> pos_training_path = "..." # positive images are, for example, faces
+
+julia> neg_training_path = "..." # negative images are, for example, non-faces.  However, the Viola-Jones algorithm is for object detection, not just for face detection
+
+julia> max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = (1, 2, 3, 4) # or use the function to select reasonable sized feature parameters given your maximum image size
+
+julia> determine_feature_size(pos_training_path, neg_training_path)
+
+julia> classifiers = learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width) # get classifiers/features from your training data
+
+julia> data_file = "..."
+
+julia> serialize(data_file, classifiers) # write classifiers to file
 ```
-You can also use `examples/write.jl` to train the model and write to a file, and then `examples/read.jl` to read from that file and process results.
 
-You may need to change the code in `examples/constants.jl` to your appropriate training/testing directories.
+## Caveats
 
-## Timeline of Progression
+In the current implementation of the Viola-Jones algorithm, we have not implemented scaling features.  This means that you should idealy have your training set the same size as your test set.  To make this easier while we work on scaling features, we have implemented keyword arguments to the functions `determine_feature_size` and `learn`.  E.g.,
+```julia
+julia> determine_feature_size(pos_training_path, neg_training_path; scale = true, scale_to = (200, 200))
+
+julia> classifiers = learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width; scale = true, scale_to = (200, 200))
+```
+
+## Face detection resources/datasets
+```
+# datasets
+https://github.com/INVASIS/Viola-Jones/ # main training dataset
+https://github.com/OlegTheCat/face-detection-data # alt training dataset
+http://cbcl.mit.edu/projects/cbcl/software-datasets/faces.tar.gz # MIT dataset
+http://tamaraberg.com/faceDataset/originalPics.tar.gz # FDDB dataset
+http://vis-www.cs.umass.edu/lfw/lfw.tgz # LFW dataset
+https://github.com/opencv/opencv/ # pre-trained models exist here
+https://github.com/jian667/face-dataset
+
+# resources
+https://github.com/betars/Face-Resources
+https://www.wikiwand.com/en/List_of_datasets_for_machine-learning_research#/Object_detection_and_recognition
+https://www.wikiwand.com/en/List_of_datasets_for_machine-learning_research#/Other_images
+https://www.face-rec.org/databases/
+https://github.com/polarisZhao/awesome-face#-datasets
+```
+
+## Miscellaneous Notes
+
+### Timeline of Progression
 
  - [a79ab6f9](https://github.com/jakewilliami/FaceDetection.jl/commit/a79ab6f9) &mdash; Began working on the algorithm; mainly figuring out best way to go about this implementation.
  - [fd5e645c](https://github.com/jakewilliami/FaceDetection.jl/commit/fd5e645c) &mdash; First "Julia" adaptation of the algorithm; still a *lot* of bugs to figure out.
@@ -67,7 +90,7 @@ You may need to change the code in `examples/constants.jl` to your appropriate t
  - [854bba32](https://github.com/jakewilliami/FaceDetection.jl/commit/854bba32) and [655e0e14](https://github.com/jakewilliami/FaceDetection.jl/commit/655e0e14) &mdash; Implemented facelike scoring and wrote score data to CSV (see [#7](https://github.com/jakewilliami/FaceDetection.jl/issues/7)).
  - [e7295f8d](https://github.com/jakewilliami/FaceDetection.jl/commit/e7295f8d) &mdash; Implemented writing training data to file and reading from that data to save computation time.
 
-## Acknowledgements
+### Acknowledgements
 
 Thank you to:
 
@@ -78,7 +101,7 @@ Thank you to:
  - **Mr. H. Lockwood** and **Mr. D. Peck** are Comp. Sci. students who have answered a few questions of mine;
  - Finally, the people in the Julia slack channel, for dealing with many (probably stupid) questions.  To name a few: Micket, David Sanders, Eric Forgy, Jakob Nissen, and Roel.
 
-## A Note on running on BSD:
+### A Note on running on BSD:
 
 The default JuliaPlots backend `GR` does not provide binaries for FreeBSD.  [Here's how you can build it from source.](https://github.com/jheinen/GR.jl/issues/268#issuecomment-584389111).  That said, `StatsPlots` is only a dependency for an example, and not for the main package.
 
