@@ -22,7 +22,8 @@ using Images: imresize
 println("...done")
 
 function main(;
-    smart_choose_feats::Bool=false, alt::Bool=false
+    smart_choose_feats::Bool=false,
+    alt::Bool=false
 )
     include("constants.jl")
     
@@ -37,7 +38,7 @@ function main(;
         # For performance reasons restricting feature size
         notify_user("Selecting best feature width and height...")
         
-        max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = determine_feature_size(pos_training_path, neg_training_path)
+        max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = determine_feature_size(pos_training_path, neg_training_path; scale_up = true)
         
         println("...done.  Maximum feature width selected is $max_feature_width pixels; minimum feature width is $min_feature_width; maximum feature height is $max_feature_height pixels; minimum feature height is $min_feature_height.\n")
     else
@@ -47,21 +48,8 @@ function main(;
         max_feature_width = 10
     end
 
-
-    FD.notify_user("Loading faces...")
-
-    faces_training = FD.load_images(pos_training_path)[1]
-    faces_ii_training = map(FD.to_integral_image, faces_training) # list(map(...))
-    println("...done. ", length(faces_training), " faces loaded.")
-
-    FD.notify_user("Loading non-faces...")
-
-    non_faces_training = FD.load_images(neg_training_path)[1]
-    non_faces_ii_training = map(FD.to_integral_image, non_faces_training) # list(map(...))
-    println("...done. ", length(non_faces_training), " non-faces loaded.\n")
-
     # classifiers are haar like features
-    classifiers = FD.learn(faces_ii_training, non_faces_ii_training, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width)
+    classifiers = FD.learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width; scale_up = true)
 
     FD.notify_user("Loading test faces...")
 
