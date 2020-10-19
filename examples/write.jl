@@ -17,7 +17,6 @@ include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl"))
 using .FaceDetection
 const FD = FaceDetection
 using Printf: @printf
-using Images: imresize
 using Serialization: serialize
 
 println("...done")
@@ -50,22 +49,6 @@ function main(;
 
 	# classifiers are haar like features
 	classifiers = FD.learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width; scale_up = true)
-
-
-    FD.notify_user("Loading faces...")
-
-    faces_training = FD.load_images(pos_training_path)[1]
-    faces_ii_training = map(FD.to_integral_image, faces_training) # list(map(...))
-    println("...done. ", length(faces_training), " faces loaded.")
-
-    FD.notify_user("Loading non-faces...")
-
-    non_faces_training = FD.load_images(neg_training_path)[1]
-    non_faces_ii_training = map(FD.to_integral_image, non_faces_training) # list(map(...))
-    println("...done. ", length(non_faces_training), " non-faces loaded.\n")
-
-    # classifiers are haar like features
-    classifiers = FD.learn(faces_ii_training, non_faces_ii_training, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width)
 
 	# write classifiers to file
 	data_file = joinpath(dirname(@__FILE__), "data", "haar-like_features_c$(num_classifiers)")
