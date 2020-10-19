@@ -10,8 +10,31 @@
 
 # include("HaarLikeFeature.jl")
 include("Utils.jl")
+include("IntegralImage.jl")
 
 using ProgressMeter: @showprogress
+
+
+function load_images(image_dir::AbstractString)
+    files = filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(image_dir, join=true, sort=false))
+    images = []
+    
+    for file in files
+        images = push!(images, get_image_matrix(file))
+    end
+    
+    return images, files
+end
+function get_image_matrix(image_file::AbstractString; scale_up::Bool=true)
+    img = load(image_file)
+    
+    img_arr = convert(Array{Float64}, Gray.(img))
+    
+    return img_arr
+end
+
+
+
 #=
     learn(
         positive_iis::AbstractArray,
@@ -40,21 +63,29 @@ This function selects a set of classifiers. Iteratively takes the best classifie
 # Returns `classifiers::Array{HaarLikeObject, 1}`: List of selected features
 =#
 function learn(
-    positive_iis::AbstractArray,
-    negative_iis::AbstractArray,
+    # positive_iis::AbstractArray,
+    # negative_iis::AbstractArray,
+    positive_path::AbstractString,
+    negative_path::AbstractString,
     num_classifiers::Integer=-1,
     min_feature_width::Integer=1,
     max_feature_width::Integer=-1,
     min_feature_height::Integer=1,
     max_feature_height::Integer=-1
-)#::Array{HaarLikeObject,1}
+)::Array{HaarLikeObject,1}
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
-    num_pos = length(positive_iis)
-    num_neg = length(negative_iis)
+    
+    positive_files = filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(positive_path, join=true, sort=false))
+    negative_files = filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(negative_path, join=true, sort=false))
+    
+    num_pos = length(positive_files)
+    num_neg = length(negative_files)
     num_imgs = num_pos + num_neg
     
     # get image height and width
-    img_height, img_width = size(positive_iis[1])
+    temp_image = size(convert(Array{Float64}, Gray.(load(rand(positive_files)))))
+    img_height, img_width = temp_image
+    temp_image = nothing # unload temporary image
     
     # Maximum feature width and height default to image width and height
     if isequal(max_feature_height, -1)
@@ -83,37 +114,49 @@ function learn(
     weights = vcat(pos_weights, neg_weights)
     labels = vcat(ones(num_pos), ones(num_neg) * -1)
     
-    # get list of images (global because of @everywhere scope)
-    images = vcat(positive_iis, negative_iis)
-
     # Create features for all sizes and locations
     features = _create_features(img_height, img_width, min_feature_width, max_feature_width, min_feature_height, max_feature_height)
     num_features = length(features)
     feature_indices = Array(1:num_features)
     used = []
-    
     if isequal(num_classifiers, -1)
         num_classifiers = num_features
     end
     
-    notify_user("Calculating scores for images...")
-    
     # create an empty array (of zeroes) with dimensions (num_imgs, numFeautures)
     votes = zeros((num_imgs, num_features)) # necessarily different from `zero.((num_imgs, num_features))`; previously zerosarray
-
-    n = num_imgs
-    processes = num_imgs # i.e., hypotheses
-    @showprogress for t in 1:processes # bar(range(num_imgs)):
-        votes[t, :] = Array(map(f -> get_vote(f, images[t]), features))
-    end # end show progress in for loop
+    num_processed = 0
     
+    notify_user("Calculating scores for positive images (e.g., faces)...")
+    @showprogress for positive_image in positive_files
+        positive_image = convert(Array{Float64}, Gray.(load(positive_image)))
+        positive_ii = to_integral_image(positive_image)
+        # get list of images
+        # images = vcat(positive_iis, negative_iis)
+
+        # n = num_imgs
+        # processes = num_imgs # i.e., hypotheses
+        votes[num_processed + 1, :] = Array(map(f -> get_vote(f, positive_ii), features))
+        
+        num_processed += 1
+    end # end loop through images
+    print("\n") # for a new line after the progress bar
+    notify_user("Calculating scores for negative images (e.g., non-faces)...")
+    @showprogress for negative_image in negative_files
+        negative_image = convert(Array{Float64}, Gray.(load(negative_image)))
+        negative_ii = to_integral_image(negative_image)
+
+        # n = num_imgs
+        # processes = num_imgs # i.e., hypotheses
+        votes[num_processed + 1, :] = Array(map(f -> get_vote(f, negative_ii), features))
+        
+        num_processed += 1
+    end # end loop through images
     print("\n") # for a new line after the progress bar
     
+    notify_user("Selecting classifiers...")
     # select classifiers
     classifiers = []
-
-    notify_user("Selecting classifiers...")
-    
     n = num_classifiers
     @showprogress for t in 1:num_classifiers
         classification_errors = zeros(length(feature_indices)) # previously, zerosarray
@@ -153,45 +196,6 @@ function learn(
     
     return classifiers
 end
-
-#find / update threshold and coeff for each feature
-# function _feature_job(feature_nr, feature)
-#     #    if (feature_nr+1) % 1000 == 0:
-#     #        print('[ %d of %d ]'%(feature_nr+1, n_features))
-#     if feature_nr ∈ used
-#         return
-#     end
-#
-#     # find the scores for the images
-#     scores = zeros(n_img)
-#     for i, img in enumerate(images):
-#         scores[i] = feature.get_score(img)
-#     sorted_img_args = np.argsort(scores)
-#     Sp = np.zeros(n_img)  # sum weights for positive examples below current img
-#     Sn = np.zeros(n_img)  # sum weights for negative examples below current img
-#     Tp = 0
-#     Tn = 0
-#     for img_arg in np.nditer(sorted_img_args):
-#         if labels[img_arg] == 0:
-#             Tn += w[img_arg]
-#             Sn[img_arg] = Tn
-#         else:
-#             Tp += w[img_arg]
-#             Sp[img_arg] = Tp
-#
-#     # compute the formula for the threshold
-#     nerror = Sp + (Tn - Sn)  # error of classifying everything negative below threshold
-#     perror = Sn + (Tp - Sp)  # error of classifying everything positive below threshold
-#     error = np.minimum(perror, nerror)  # find minimum
-#     best_threshold_img = np.argmin(error)  # find the image with the threshold
-#     best_local_error = error[best_threshold_img]
-#     feature.threshold = scores[best_threshold_img]  # use the score we estimated for the image as new threshold
-#     # assign new polarity, based on above calculations
-#     feature.polarity = 1 if nerror[best_threshold_img] < perror[best_threshold_img] else -1
-#
-#     # store the error to find best feature
-#     errors[feature_nr] = best_local_error
-# end
 
 #=
     _create_features(
