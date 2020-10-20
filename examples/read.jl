@@ -41,33 +41,20 @@ function main(;
 	# read classifiers from file
 	classifiers = deserialize(data_file)
 
-    FD.notify_user("Loading test faces...")
-
-    faces_testing = FD.load_images(pos_testing_path)[1]
-    # faces_ii_testing = map(FD.to_integral_image, faces_testing)
-    faces_ii_testing = map(FD.to_integral_image, faces_testing)
-    println("...done. ", length(faces_testing), " faces loaded.")
-
-    FD.notify_user("Loading test non-faces..")
-
-    non_faces_testing = FD.load_images(neg_testing_path)[1]
-    non_faces_ii_testing = map(FD.to_integral_image, non_faces_testing)
-    println("...done. ", length(non_faces_testing), " non-faces loaded.\n")
-
-    FD.notify_user("Testing selected classifiers...")
+	FD.notify_user("Testing selected classifiers...")
+	num_faces = length(filtered_ls(pos_testing_path))
+	num_non_faces = length(filtered_ls(neg_testing_path))
     correct_faces = 0
     correct_non_faces = 0
+	
+	correct_faces = sum(FD.ensemble_vote_all(pos_testing_path, classifiers))
+	correct_non_faces = num_non_faces - sum(FD.ensemble_vote_all(neg_testing_path, classifiers))
+	correct_faces_percent = (correct_faces / num_faces) * 100
+	correct_non_faces_percent = (correct_non_faces / num_non_faces) * 100
 
-    # correct_faces = sum([FD._get_feature_vote(face, classifiers) for face in faces_ii_testing])
-    # correct_non_faces = length(non_faces_testing) - sum([FD._get_feature_vote(nonFace, classifiers) for nonFace in non_faces_ii_testing])
-    correct_faces = sum(FD.ensemble_vote_all(faces_ii_testing, classifiers))
-    correct_non_faces = length(non_faces_testing) - sum(FD.ensemble_vote_all(non_faces_ii_testing, classifiers))
-    correct_faces_percent = (float(correct_faces) / length(faces_testing)) * 100
-    correct_non_faces_percent = (float(correct_non_faces) / length(non_faces_testing)) * 100
-
-    faces_frac = string(correct_faces, "/", length(faces_testing))
+    faces_frac = string(correct_faces, "/", num_faces)
     faces_percent = string("(", correct_faces_percent, "% of faces were recognised as faces)")
-    non_faces_frac = string(correct_non_faces, "/", length(non_faces_testing))
+    non_faces_frac = string(correct_non_faces, "/", num_non_faces)
     non_faces_percent = string("(", correct_non_faces_percent, "% of non-faces were identified as non-faces)")
 
     println("...done.\n")

@@ -57,18 +57,16 @@ function learn(
 )::Array{HaarLikeObject,1}
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
     
-    positive_files = filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(positive_path, join=true, sort=false))
-    negative_files = filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(negative_path, join=true, sort=false))
+    positive_files = filtered_ls(positive_path)
+    negative_files = filtered_ls(negative_path)
     
     num_pos = length(positive_files)
     num_neg = length(negative_files)
     num_imgs = num_pos + num_neg
     
     # get image height and width
-    temp_image = convert(Array{Float64}, Gray.(load(rand(positive_files))))
-    if scale
-        temp_image = imresize(temp_image, (577, 577))
-    end
+    # temp_image = convert(Array{Float64}, Gray.(load(rand(positive_files))))
+    temp_image = load_image(rand(positive_files), scale=scale, scale_to=scale_to)
     img_height, img_width = size(temp_image)
     temp_image = nothing # unload temporary image
     
@@ -113,46 +111,49 @@ function learn(
     votes = spzeros(num_imgs, num_features)
     num_processed = 0
     
-    notify_user("Calculating scores for positive images (e.g., faces)...")
-    @showprogress for positive_image in positive_files
-        positive_image = convert(Array{Float64}, Gray.(load(positive_image)))
-        if scale
-            positive_image = imresize(positive_image, (577, 577))
-        end
-        positive_ii = to_integral_image(positive_image)
+    # notify_user("Calculating scores for positive images (e.g., faces)...")
+    notify_user("Calculating scores for images...")
+    @showprogress for image_file in vcat(positive_files, negative_files)
+        # positive_image = convert(Array{Float64}, Gray.(load(positive_image)))
+        ii_img = load_image(image_file, scale=scale, scale_to=scale_to)
+        num_processed += 1
+        # if scale
+            # positive_image = imresize(positive_image, scale_to)
+        # end
+        # positive_ii = to_integral_image(positive_image)
         # get list of images
         # images = vcat(positive_iis, negative_iis)
 
         # n = num_imgs
         # processes = num_imgs # i.e., hypotheses
-        votes[num_processed + 1, :] = Array(map(f -> get_vote(f, positive_ii), features))
-        
-        num_processed += 1
+        votes[num_processed, :] = Array(map(f -> get_vote(f, ii_img), features))
+        # println(votes)
     end # end loop through images
     print("\n") # for a new line after the progress bar
-    notify_user("Calculating scores for negative images (e.g., non-faces)...")
-    @showprogress for negative_image in negative_files
-        negative_image = convert(Array{Float64}, Gray.(load(negative_image)))
-        if scale
-            negative_image = imresize(negative_image, (577, 577))
-        end
-        negative_ii = to_integral_image(negative_image)
-
-        # n = num_imgs
-        # processes = num_imgs # i.e., hypotheses
-        votes[num_processed + 1, :] = Array(map(f -> get_vote(f, negative_ii), features))
-        
-        num_processed += 1
-    end # end loop through images
-    print("\n") # for a new line after the progress bar
+    ii_img = nothing
+    # notify_user("Calculating scores for negative images (e.g., non-faces)...")
+    # @showprogress for negative_image in negative_files
+    #     # negative_image = load_image(negative_image, scale=scale, scale_to=scale_to)
+    #     negative_image = convert(Array{Float64}, Gray.(load(negative_image)))
+    #     if scale
+    #         negative_image = imresize(negative_image, scale_to)
+    #     end
+    #     negative_ii = to_integral_image(negative_image)
+    #
+    #     # n = num_imgs
+    #     # processes = num_imgs # i.e., hypotheses
+    #     votes[num_processed + 1, :] = Array(map(f -> get_vote(f, negative_ii), features))
+    #
+    #     num_processed += 1
+    # end # end loop through images
+    # print("\n") # for a new line after the progress bar
     
     notify_user("Selecting classifiers...")
     # select classifiers
     classifiers = []
     n = num_classifiers
-    @showprogress for t in 1:num_classifiers
-        classification_errors = zeros(length(feature_indices)) # previously, zerosarray
-
+    classification_errors = spzeros(length(feature_indices)) # <- this was previously in the t loop...
+    @showprogress for t in 1:num_classifiers # previously, zerosarray
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
         weights = float(weights) / sum(weights)
 

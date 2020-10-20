@@ -44,6 +44,50 @@ function notify_user(message::AbstractString)
 end
 
 #=
+    filtered_ls(path::AbstractString) -> Array{String, 1}
+    
+A function to filter the output of readdir
+
+# Arguments
+
+- `path::AbstractString`: Some path to folder
+
+# Returns
+
+- `Array{String, 1}`: An array of filtered files in the path
+=#
+function filtered_ls(path::AbstractString)::Array{String, 1}
+    return filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(path, join=true, sort=false))
+end
+
+#=
+    load_image(image_path::AbstractString) -> AbstractArray
+Loads an image as gray_scale
+
+# Arguments
+- `image_path::AbstractString`: Path to an image
+
+# Returns
+
+`AbstractArray`: An array of floating point values representing the image
+=#
+function load_image(
+    image_path::AbstractString;
+    scale::Bool=false,
+    scale_to::Tuple=(200,200)
+    )::Array{Float64, 2}
+    
+    img = load(image_path)
+    img = convert(Array{Float64}, Gray.(img))
+    
+    if scale
+        img = imresize(img, scale_to)
+    end
+    
+    return to_integral_image(img)
+end
+
+#=
     determine_feature_size(
         pos_training_path::AbstractString,
         neg_training_path::AbstractString
@@ -70,9 +114,6 @@ function determine_feature_size(
     scale::Bool=false,
     scale_to::Tuple=(200,200)
 )
-    if scale
-        scale_to = scale_to
-    end
 
     min_feature_height = 0
     min_feature_width = 0
@@ -82,15 +123,12 @@ function determine_feature_size(
     min_size_img = (0, 0)
     sizes = []
 
-    for picture_dir in [pos_training_path, neg_training_path]
-            for picture in filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(picture_dir, join=true, sort=false))
-                img = load(joinpath(homedir(), "FaceDetection.jl", "data", picture_dir, picture))
-                if scale
-                    img = imresize(img, scale_to)
-                end
-                new_size = size(img)
-                sizes = push!(sizes, new_size)
-            end
+    for picture_dir in[pos_training_path, neg_training_path]
+        for picture in filtered_ls(picture_dir)
+            img = load_image(picture, scale=scale, scale_to=scale_to)
+            new_size = size(img)
+            sizes = push!(sizes, new_size)
+        end
     end
     
     min_size_img = minimum(sizes)
@@ -105,7 +143,7 @@ function determine_feature_size(
 end
 
 #=
-    _ensemble_vote(int_img::AbstractArray, classifiers::AbstractArray) -> Integer
+    __ensemble_vote(int_img::AbstractArray, classifiers::AbstractArray) -> Integer
 
 Classifies given integral image (Abstract Array) using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
 
@@ -122,7 +160,7 @@ That is, the final strong classifier is $h(x)=\begin{cases}1&\text{if }\sum_{t=1
     1       ⟺ sum of classifier votes > 0
     0       otherwise
 =#
-function _ensemble_vote(int_img::AbstractArray, classifiers::AbstractArray)
+function __ensemble_vote(int_img::AbstractArray, classifiers::AbstractArray)
     # evidence = sum([max(get_vote(c[1], image), 0.) * c[2] for c in classifiers])
     # weightedSum = sum([c[2] for c in classifiers])
     # return evidence >= (weightedSum / 2) ? 1 : -1
@@ -140,11 +178,30 @@ Classifies given integral image (Abstract Array) using given classifiers.  I.e.,
 
 # Returns
 
-`votes::AbstractArray`: A list of assigned votes (see _ensemble_vote).
+`votes::AbstractArray`: A list of assigned votes (see __ensemble_vote).
 =#
-function ensemble_vote_all(int_imgs::AbstractArray, classifiers::AbstractArray)
-    return Array(map(i -> _ensemble_vote(i, classifiers), int_imgs))
+function ensemble_vote_all(
+    img_image_path::AbstractString,
+    classifiers::AbstractArray;
+    scale::Bool=false,
+    scale_to::Tuple=(200,200)
+    )::Array{Number, 1}
+    
+    votes = []
+    
+    for image in filtered_ls(img_path)
+        image = load_image(image)
+        int_img = to_integral_image(image)
+        push!(votes, __ensemble_vote(int_img, classifiers))
+    end
+    
+    return votes
 end
+
+
+# function ensemble_vote_all(int_imgs::AbstractArray, classifiers::AbstractArray)
+#     return Array(map(i -> __ensemble_vote(i, classifiers), int_imgs))
+# end
 
 #=
     get_faceness(feature, int_img::AbstractArray) -> Number
