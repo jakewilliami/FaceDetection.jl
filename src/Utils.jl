@@ -67,8 +67,13 @@ Takes images and finds the best feature size for the image size.
 function determine_feature_size(
     pos_training_path::AbstractString,
     neg_training_path::AbstractString;
-    scale_up::Bool=false
+    scale::Bool=false,
+    scale_to::Tuple=(200,200)
 )
+    if scale
+        scale_to = scale_to
+    end
+
     min_feature_height = 0
     min_feature_width = 0
     max_feature_height = 0
@@ -80,8 +85,8 @@ function determine_feature_size(
     for picture_dir in [pos_training_path, neg_training_path]
             for picture in filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(picture_dir, join=true, sort=false))
                 img = load(joinpath(homedir(), "FaceDetection.jl", "data", picture_dir, picture))
-                if scale_up
-                    img = imresize(img, (577, 577))
+                if scale
+                    img = imresize(img, scale_to)
                 end
                 new_size = size(img)
                 sizes = push!(sizes, new_size)

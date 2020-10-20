@@ -52,7 +52,8 @@ function learn(
     max_feature_width::Integer=-1,
     min_feature_height::Integer=1,
     max_feature_height::Integer=-1;
-    scale_up::Bool = false
+    scale::Bool = false,
+    scale_to::Tuple = (200, 200)
 )::Array{HaarLikeObject,1}
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
     
@@ -65,7 +66,7 @@ function learn(
     
     # get image height and width
     temp_image = convert(Array{Float64}, Gray.(load(rand(positive_files))))
-    if scale_up
+    if scale
         temp_image = imresize(temp_image, (577, 577))
     end
     img_height, img_width = size(temp_image)
@@ -115,7 +116,7 @@ function learn(
     notify_user("Calculating scores for positive images (e.g., faces)...")
     @showprogress for positive_image in positive_files
         positive_image = convert(Array{Float64}, Gray.(load(positive_image)))
-        if scale_up
+        if scale
             positive_image = imresize(positive_image, (577, 577))
         end
         positive_ii = to_integral_image(positive_image)
@@ -132,7 +133,7 @@ function learn(
     notify_user("Calculating scores for negative images (e.g., non-faces)...")
     @showprogress for negative_image in negative_files
         negative_image = convert(Array{Float64}, Gray.(load(negative_image)))
-        if scale_up
+        if scale
             negative_image = imresize(negative_image, (577, 577))
         end
         negative_ii = to_integral_image(negative_image)

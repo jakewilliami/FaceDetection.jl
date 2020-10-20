@@ -37,7 +37,7 @@ function main(;
 		# For performance reasons restricting feature size
 		notify_user("Selecting best feature width and height...")
 		
-		max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = determine_feature_size(pos_training_path, neg_training_path; scale_up = true)
+		max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = determine_feature_size(pos_training_path, neg_training_path; scale = false, scale_to = (577, 577))
 		
 		println("...done.  Maximum feature width selected is $max_feature_width pixels; minimum feature width is $min_feature_width; maximum feature height is $max_feature_height pixels; minimum feature height is $min_feature_height.\n")
 	else
@@ -48,7 +48,7 @@ function main(;
 	end
 
 	# classifiers are haar like features
-	classifiers = FD.learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width; scale_up = true)
+	classifiers = FD.learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width; scale = false, scale_to = (577, 577))
 
 	# write classifiers to file
 	data_file = joinpath(dirname(@__FILE__), "data", "haar-like_features_c$(num_classifiers)")
