@@ -12,7 +12,7 @@
 include("Utils.jl")
 include("IntegralImage.jl")
 
-using ProgressMeter: @showprogress
+using ProgressMeter: @showprogress, Progress, next!
 using SparseArrays: spzeros
 
 #=
@@ -113,7 +113,11 @@ function learn(
     
     # notify_user("Calculating scores for positive images (e.g., faces)...")
     notify_user("Calculating scores for images...")
-    @showprogress for image_file in vcat(positive_files, negative_files)
+    notify_user("Loading images ($(num_pos) positive and $(num_neg) negative images) and calculating their scores...")
+    # @showprogress
+    image_files = vcat(positive_files, negative_files)
+    p = Progress(length(image_files), 1)
+    Base.Threads.@threads for image_file in image_files
         # positive_image = convert(Array{Float64}, Gray.(load(positive_image)))
         ii_img = load_image(image_file, scale=scale, scale_to=scale_to)
         num_processed += 1
@@ -127,6 +131,7 @@ function learn(
         # n = num_imgs
         # processes = num_imgs # i.e., hypotheses
         votes[num_processed, :] = Array(map(f -> get_vote(f, ii_img), features))
+        next!(p)
         # println(votes)
     end # end loop through images
     print("\n") # for a new line after the progress bar
@@ -152,8 +157,8 @@ function learn(
     # select classifiers
     classifiers = []
     n = num_classifiers
-    classification_errors = spzeros(length(feature_indices)) # <- this was previously in the t loop...
     @showprogress for t in 1:num_classifiers # previously, zerosarray
+        classification_errors = spzeros(length(feature_indices))
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
         weights = float(weights) / sum(weights)
 

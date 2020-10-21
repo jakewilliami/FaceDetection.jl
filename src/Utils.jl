@@ -181,7 +181,7 @@ Classifies given integral image (Abstract Array) using given classifiers.  I.e.,
 `votes::AbstractArray`: A list of assigned votes (see __ensemble_vote).
 =#
 function ensemble_vote_all(
-    img_image_path::AbstractString,
+    image_path::AbstractString,
     classifiers::AbstractArray;
     scale::Bool=false,
     scale_to::Tuple=(200,200)
@@ -189,7 +189,7 @@ function ensemble_vote_all(
     
     votes = []
     
-    for image in filtered_ls(img_path)
+    for image in filtered_ls(image_path)
         image = load_image(image)
         int_img = to_integral_image(image)
         push!(votes, __ensemble_vote(int_img, classifiers))
