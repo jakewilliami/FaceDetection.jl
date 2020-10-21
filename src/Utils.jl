@@ -165,7 +165,7 @@ function __ensemble_vote(int_img::AbstractArray, classifiers::AbstractArray)
     # weightedSum = sum([c[2] for c in classifiers])
     # return evidence >= (weightedSum / 2) ? 1 : -1
     
-    return sum([get_vote(c, int_img) for c in classifiers]) >= 0 ? 1 : 0
+    return sum([get_vote(c, int_img) for c in classifiers]) >= 0 ? one(Integer) : zero(Integer)
 end
 
 #=
@@ -188,6 +188,13 @@ function ensemble_vote_all(
     )::Array{Number, 1}
     
     return votes = Array(map(i -> __ensemble_vote(load_image(i), classifiers), filtered_ls(image_path)))
+    
+    votes = []
+    
+    for image in filtered_ls(image_path)
+        image = load_image(image)
+        push!(votes, __ensemble_vote(int_img, classifiers))
+    end
 end
 
 
