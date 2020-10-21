@@ -111,47 +111,21 @@ function learn(
     votes = spzeros(num_imgs, num_features)
     num_processed = 0
     
-    # notify_user("Calculating scores for positive images (e.g., faces)...")
-    notify_user("Calculating scores for images...")
     notify_user("Loading images ($(num_pos) positive and $(num_neg) negative images) and calculating their scores...")
     # @showprogress
     image_files = vcat(positive_files, negative_files)
     p = Progress(length(image_files), 1)
     Base.Threads.@threads for image_file in image_files
-        # positive_image = convert(Array{Float64}, Gray.(load(positive_image)))
         ii_img = load_image(image_file, scale=scale, scale_to=scale_to)
         num_processed += 1
-        # if scale
-            # positive_image = imresize(positive_image, scale_to)
-        # end
-        # positive_ii = to_integral_image(positive_image)
-        # get list of images
-        # images = vcat(positive_iis, negative_iis)
 
         # n = num_imgs
         # processes = num_imgs # i.e., hypotheses
         votes[num_processed, :] = Array(map(f -> get_vote(f, ii_img), features))
         next!(p)
-        # println(votes)
     end # end loop through images
     print("\n") # for a new line after the progress bar
     ii_img = nothing
-    # notify_user("Calculating scores for negative images (e.g., non-faces)...")
-    # @showprogress for negative_image in negative_files
-    #     # negative_image = load_image(negative_image, scale=scale, scale_to=scale_to)
-    #     negative_image = convert(Array{Float64}, Gray.(load(negative_image)))
-    #     if scale
-    #         negative_image = imresize(negative_image, scale_to)
-    #     end
-    #     negative_ii = to_integral_image(negative_image)
-    #
-    #     # n = num_imgs
-    #     # processes = num_imgs # i.e., hypotheses
-    #     votes[num_processed + 1, :] = Array(map(f -> get_vote(f, negative_ii), features))
-    #
-    #     num_processed += 1
-    # end # end loop through images
-    # print("\n") # for a new line after the progress bar
     
     notify_user("Selecting classifiers...")
     # select classifiers
