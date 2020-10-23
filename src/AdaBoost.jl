@@ -116,11 +116,33 @@ function learn(
     
     # instead of @showprogress, need to manually create the progress bar
     p = Progress(length(image_files), 1)
-    Base.Threads.@threads for image_file in image_files
+    # get votes for images
+    
+    # allfiles = getimagepaths()
+    # results = map(Iterators.partition(allfiles, n)) do part
+    #     images = loadimages(part)
+    #     return process(images)
+    # end
+    # result = combineresults(results)
+    #
+    # n = 10
+    # map(Base.Iterators.partition(image_files, n)) do image_file
+    #     ii_imgs = load_image.(image_file, scale=scale, scale_to=scale_to)
+    #     Base.Threads.@threads for t in 1:n
+    #         votes[num_processed + t, :] = [get_vote(f, ii_imgs[t]) for f in features]
+    #         num_processed += 1
+    #     end
+    #
+    #     # increment progress bar
+    #     next!(p)
+    # end
+    
+    for image_file in image_files
         ii_img = load_image(image_file, scale=scale, scale_to=scale_to)
         num_processed += 1
-        votes[num_processed, :] = Array(map(f -> get_vote(f, ii_img), features))
-        
+        # votes[num_processed, :] = Array(map(f -> get_vote(f, ii_img), features))
+        votes[num_processed, :] = [get_vote(f, ii_img) for f in features]
+    
         # increment progress bar
         next!(p)
     end # end loop through images
@@ -139,7 +161,8 @@ function learn(
         for j in 1:length(feature_indices)
             f_idx = feature_indices[j]
             # classifier error is the sum of image weights where the classifier is right
-            ε = sum(map(img_idx -> labels[img_idx] ≠ votes[img_idx, f_idx] ? weights[img_idx] : zero(Integer), 1:num_imgs))
+            # ε = sum(map(img_idx -> labels[img_idx] ≠ votes[img_idx, f_idx] ? weights[img_idx] : zero(Integer), 1:num_imgs))
+            ε = sum([labels[img_idx] ≠ votes[img_idx, f_idx] ? weights[img_idx] : zero(Integer) for img_idx in 1:num_imgs])
             
             classification_errors[j] = ε
         end
@@ -157,7 +180,8 @@ function learn(
         classifiers = push!(classifiers, best_feature)
 
         # update image weights $w_{t+1,i}=w_{t,i}\beta_{t}^{1-e_i}$
-        weights = Array(map(i -> labels[i] ≠ votes[i, best_feature_idx] ? weights[i] * sqrt((1 - best_error) / best_error) : weights[i] * sqrt(best_error / (1 - best_error)), 1:num_imgs))
+        # weights = Array(map(i -> labels[i] ≠ votes[i, best_feature_idx] ? weights[i] * sqrt((1 - best_error) / best_error) : weights[i] * sqrt(best_error / (1 - best_error)), 1:num_imgs))
+        weights = [labels[i] ≠ votes[i, best_feature_idx] ? weights[i] * sqrt((1 - best_error) / best_error) : weights[i] * sqrt(best_error / (1 - best_error)) for i in 1:num_imgs]
 
         # remove feature (a feature can't be selected twice)
         feature_indices = filter!(e -> e ∉ best_feature_idx, feature_indices) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`

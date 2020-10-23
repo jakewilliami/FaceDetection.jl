@@ -187,7 +187,8 @@ function ensemble_vote_all(
     scale_to::Tuple=(200,200)
     )::Array{Number, 1}
     
-    return votes = Array(map(i -> __ensemble_vote(load_image(i), classifiers), filtered_ls(image_path)))
+    # return votes = Array(map(i -> __ensemble_vote(load_image(i), classifiers), filtered_ls(image_path)))
+    return votes = [__ensemble_vote(load_image(i), classifiers) for i in filtered_ls(image_path)]
     
     votes = []
     
