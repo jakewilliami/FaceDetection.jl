@@ -143,7 +143,7 @@ function determine_feature_size(
 end
 
 #=
-    __ensemble_vote(int_img::AbstractArray, classifiers::AbstractArray) -> Integer
+    ensemble_vote(int_img::AbstractArray, classifiers::AbstractArray) -> Integer
 
 Classifies given integral image (Abstract Array) using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
 
@@ -160,7 +160,7 @@ That is, the final strong classifier is $h(x)=\begin{cases}1&\text{if }\sum_{t=1
     1       ⟺ sum of classifier votes > 0
     0       otherwise
 =#
-function __ensemble_vote(int_img::AbstractArray, classifiers::AbstractArray)
+function ensemble_vote(int_img::AbstractArray, classifiers::AbstractArray)
     # evidence = sum([max(get_vote(c[1], image), 0.) * c[2] for c in classifiers])
     # weightedSum = sum([c[2] for c in classifiers])
     # return evidence >= (weightedSum / 2) ? 1 : -1
@@ -178,7 +178,7 @@ Classifies given integral image (Abstract Array) using given classifiers.  I.e.,
 
 # Returns
 
-`votes::AbstractArray`: A list of assigned votes (see __ensemble_vote).
+`votes::AbstractArray`: A list of assigned votes (see ensemble_vote).
 =#
 function ensemble_vote_all(
     image_path::AbstractString,
@@ -187,20 +187,20 @@ function ensemble_vote_all(
     scale_to::Tuple=(200,200)
     )::Array{Number, 1}
     
-    # return votes = Array(map(i -> __ensemble_vote(load_image(i), classifiers), filtered_ls(image_path)))
-    return votes = [__ensemble_vote(load_image(i), classifiers) for i in filtered_ls(image_path)]
+    # return votes = Array(map(i -> ensemble_vote(load_image(i), classifiers), filtered_ls(image_path)))
+    return votes = [ensemble_vote(load_image(i), classifiers) for i in filtered_ls(image_path)]
     
     votes = []
     
     for image in filtered_ls(image_path)
         image = load_image(image)
-        push!(votes, __ensemble_vote(int_img, classifiers))
+        push!(votes, ensemble_vote(int_img, classifiers))
     end
 end
 
 
 # function ensemble_vote_all(int_imgs::AbstractArray, classifiers::AbstractArray)
-#     return Array(map(i -> __ensemble_vote(i, classifiers), int_imgs))
+#     return Array(map(i -> ensemble_vote(i, classifiers), int_imgs))
 # end
 
 #=
