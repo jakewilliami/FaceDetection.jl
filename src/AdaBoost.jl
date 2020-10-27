@@ -122,15 +122,10 @@ function learn(
         # classification_errors = zeros(length(feature_indices))
         classification_errors = Matrix{Float64}(undef, length(feature_indices), 1)
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
-        weights = float(weights) / sum(weights)
+        weights = float.(weights) ./ sum(weights)
 
         # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
-        for j in 1:length(feature_indices)
-            f_idx = feature_indices[j]
-            # classifier error is the sum of image weights where the classifier is right
-            ε = sum(img_idx -> labels[img_idx] ≠ votes[f_idx, img_idx] ? weights[img_idx] : zero(Float64), 1:num_imgs)
-            classification_errors[j] = ε
-        end
+        map!(j -> sum(img_idx -> labels[img_idx] ≠ votes[feature_indices[j], img_idx] ? weights[img_idx] : zero(Float64), 1:num_imgs), view(classification_errors, :), 1:length(feature_indices))
 
         # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
         min_error_idx = argmin(classification_errors) # returns the index of the minimum in the array # consider `findmin`
