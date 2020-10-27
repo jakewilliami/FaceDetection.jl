@@ -107,7 +107,8 @@ function learn(
     
     # create an empty array (of zeroes) with dimensions (num_imgs, numFeautures)
     # votes = zeros((num_imgs, num_features)) # necessarily different from `zero.((num_imgs, num_features))`; previously zerosarray
-    votes = zeros(num_imgs, num_features)
+    # votes = zeros(num_imgs, num_features)
+    votes = Matrix{Union{Missing, Int8}}(undef, num_imgs, num_features)
     num_processed = 0
     
     notify_user("Loading images ($(num_pos) positive and $(num_neg) negative images) and calculating their scores...")
@@ -136,7 +137,8 @@ function learn(
     classifiers = []
     p = Progress(num_classifiers, 1)
     Base.Threads.@threads for t in 1:num_classifiers
-        classification_errors = zeros(length(feature_indices))
+        # classification_errors = zeros(length(feature_indices))
+        classification_errors = Matrix{Float64}(undef, length(feature_indices), 1)
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
         weights = float(weights) / sum(weights)
 
