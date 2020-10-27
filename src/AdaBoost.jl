@@ -123,8 +123,7 @@ function learn(
         end
 
         # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
-        min_error_idx = argmin(classification_errors) # returns the index of the minimum in the array # consider `findmin`
-        best_error = classification_errors[min_error_idx]
+        best_error, min_error_idx = findmin(classification_errors)
         best_feature_idx = feature_indices[min_error_idx]
 
         # set feature weight
