@@ -112,7 +112,7 @@ Thank you to:
  - [**Mahdi Rezaei**](https://environment.leeds.ac.uk/staff/9408/dr-mahdi-rezaei) for helping me understand the full process of Viola-Jones' object detection;
  - [**Ying Bi**](https://ecs.wgtn.ac.nz/Main/GradYingBi) for always being happy to answer questions (which mainly turned out to be a lack of programming knowledge rather than conceptual; also with help from [**Bing Xue**](https://homepages.ecs.vuw.ac.nz/~xuebing/index.html));
  - **Mr. H. Lockwood** and **Mr. D. Peck** are Comp. Sci. students who have answered a few questions of mine;
- - Finally, the people in the Julia slack channel, for dealing with many (probably stupid) questions.  To name a few: Micket, David Sanders, Eric Forgy, Jakob Nissen, and Roel.
+ - Finally, the people in the Julia slack channel, for dealing with many (probably stupid) questions.  Just a few who come to mind: Micket, David Sanders, Eric Forgy, Jakob Nissen, and Roel.
 
 ### A Note on running on BSD:
 
