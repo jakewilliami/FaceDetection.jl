@@ -36,9 +36,9 @@ neg_training_path = "..." # negative images are, for example, non-faces.  Howeve
 
 max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = (1, 2, 3, 4) # or use the function to select reasonable sized feature parameters given your maximum image size (see below)
 
-determine_feature_size(pos_training_path, neg_training_path, scale=true, scale_up=(200, 200))
+determine_feature_size(pos_training_path, neg_training_path)
 
-classifiers = learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width, scale=true, scale_up=(200, 200)) # get classifiers/features from your training data
+classifiers = learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width) # get classifiers/features from your training data
 
 data_file = "..." # this is where you want to save your data
 
@@ -48,8 +48,8 @@ classifiers = deserialize(data_file); # read from saved data
 
 # obtain results
 num_faces, num_non_faces = length(filtered_ls(pos_testing_path)), length(filtered_ls(neg_testing_path));
-correct_faces = sum(ensemble_vote_all(pos_testing_path, classifiers, scale=true, scale_up=(200, 200)));
-correct_non_faces = num_non_faces - sum(ensemble_vote_all(neg_testing_path, classifiers, scale=true, scale_up=(200, 200)));
+correct_faces = sum(ensemble_vote_all(pos_testing_path, classifiers));
+correct_non_faces = num_non_faces - sum(ensemble_vote_all(neg_testing_path, classifiers));
 correct_faces_percent = (correct_faces / num_faces) * 100;
 correct_non_faces_percent = (correct_non_faces / num_non_faces) * 100;
 
@@ -62,9 +62,13 @@ println("$(string(correct_non_faces, "/", num_non_faces)) ($(correct_non_faces_p
 
 In the current implementation of the Viola-Jones algorithm, we have not implemented scaling features.  This means that you should idealy have your training set the same size as your test set.  To make this easier while we work on scaling features, we have implemented keyword arguments to the functions `determine_feature_size` and `learn`.  E.g.,
 ```julia
+julia> load_image(image_path, scale = true, scale_up = (200, 200))
+
 julia> determine_feature_size(pos_training_path, neg_training_path; scale = true, scale_to = (200, 200))
 
 julia> classifiers = learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width; scale = true, scale_to = (200, 200))
+
+julia> ensemble_vote_all(pos_testing_path, classifiers, scale = true, scale_to = (200, 200))
 ```
 
 ## Face detection resources/datasets
