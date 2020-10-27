@@ -108,7 +108,7 @@ function learn(
     # create an empty array (of zeroes) with dimensions (num_imgs, numFeautures)
     # votes = zeros((num_imgs, num_features)) # necessarily different from `zero.((num_imgs, num_features))`; previously zerosarray
     # votes = zeros(num_imgs, num_features)
-    votes = Matrix{Int8}(undef, num_imgs, num_features)
+    votes = Matrix{Int8}(undef, num_features, num_imgs)
     num_processed = 0
     
     notify_user("Loading images ($(num_pos) positive and $(num_neg) negative images) and calculating their scores...")
@@ -119,7 +119,7 @@ function learn(
     map(Base.Iterators.partition(image_files, n)) do image_file
         ii_imgs = load_image.(image_file, scale=scale, scale_to=scale_to)
         for t in 1:n
-            map!(f -> get_vote(f, ii_imgs[t]), view(votes, num_processed + t, :), features)
+            map!(f -> get_vote(f, ii_imgs[t]), view(votes, :, num_processed + t), features)
         end
         num_processed += n
         next!(p) # increment progress bar
@@ -146,9 +146,7 @@ function learn(
         for j in 1:length(feature_indices)
             f_idx = feature_indices[j]
             # classifier error is the sum of image weights where the classifier is right
-            # ε = sum(map(img_idx -> labels[img_idx] ≠ votes[img_idx, f_idx] ? weights[img_idx] : zero(Integer), 1:num_imgs))
-            ε = sum([labels[img_idx] ≠ votes[img_idx, f_idx] ? weights[img_idx] : zero(Float64) for img_idx in 1:num_imgs])
-            
+            ε = sum(map(img_idx -> labels[img_idx] ≠ votes[f_idx, img_idx] ? weights[img_idx] : zero(Float64), 1:num_imgs))
             classification_errors[j] = ε
         end
 
@@ -166,7 +164,7 @@ function learn(
 
         # update image weights $w_{t+1,i}=w_{t,i}\beta_{t}^{1-e_i}$
         # weights = Array(map(i -> labels[i] ≠ votes[i, best_feature_idx] ? weights[i] * sqrt((1 - best_error) / best_error) : weights[i] * sqrt(best_error / (1 - best_error)), 1:num_imgs))
-        weights = [labels[i] ≠ votes[i, best_feature_idx] ? weights[i] * sqrt((1 - best_error) / best_error) : weights[i] * sqrt(best_error / (1 - best_error)) for i in 1:num_imgs]
+        weights = map(i -> labels[i] ≠ votes[best_feature_idx, i] ? weights[i] * sqrt((1 - best_error) / best_error) : weights[i] * sqrt(best_error / (1 - best_error)), 1:num_imgs)
 
         # remove feature (a feature can't be selected twice)
         feature_indices = filter!(e -> e ∉ best_feature_idx, feature_indices) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`
