@@ -129,12 +129,10 @@ function learn(
     #     next!(p)
     # end
     Base.Threads.@threads for image_file in image_files
-        println("about to load images")
         ii_img = load_image(image_file, scale=scale, scale_to=scale_to)
         num_processed += 1
-        println("putting votes into array")
-        votes[num_processed, :] .= map(f -> get_vote(f, ii_img), features)
-        # map!(f -> get_vote(f, ii_img), view(votes, num_processed, :), features)
+        # votes[num_processed, :] .= map(f -> get_vote(f, ii_img), features)
+        map!(f -> get_vote(f, ii_img), view(votes, num_processed, :), features)
     
         # increment progress bar
         next!(p)
@@ -146,7 +144,7 @@ function learn(
     classifiers = []
     p = Progress(num_classifiers, 1)
     Base.Threads.@threads for t in 1:num_classifiers # previously, zerosarray
-        classification_errors = spzeros(length(feature_indices))
+        classification_errors = zeros(length(feature_indices))
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
         weights = float(weights) / sum(weights)
 
