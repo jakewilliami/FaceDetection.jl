@@ -78,23 +78,12 @@ function learn(
     end
     
     # Initialise weights $w_{1,i} = \frac{1}{2m}, \frac{1}{2l}$, for $y_i=0,1$ for negative and positive examples respectively
-    pos_weights = float(ones(num_pos)) / (2 * num_pos)
-    neg_weights = float(ones(num_neg)) / (2 * num_neg)
-    #=
-    Consider the original code,
-        ```
-        $ python3 -c 'import numpy; a=[1,2,3]; b=[4,5,6]; print(numpy.hstack((a,b)))'
-        [1 2 3 4 5 6]
-        ```
-    This is *not* comparable to Julia's `hcat`.  Here,
-        ```
-        numpy.hstack((a,b)) ≡ vcat(a,b)
-        ```
-    =#
+    pos_weights = ones(num_pos) ./ (2 * num_pos)
+    neg_weights = ones(num_neg) ./ (2 * num_neg)
     
     # Concatenate positive and negative weights into one `weights` array
     weights = vcat(pos_weights, neg_weights)
-    labels = vcat(ones(num_pos), ones(num_neg) * -1)
+    labels = vcat(ones(Int8, num_pos), ones(Int8, num_neg) .* -one(Int8))
     
     # Create features for all sizes and locations
     features = _create_features(img_height, img_width, min_feature_width, max_feature_width, min_feature_height, max_feature_height)
@@ -106,8 +95,6 @@ function learn(
     end
     
     # create an empty array (of zeroes) with dimensions (num_imgs, numFeautures)
-    # votes = zeros((num_imgs, num_features)) # necessarily different from `zero.((num_imgs, num_features))`; previously zerosarray
-    # votes = zeros(num_imgs, num_features)
     votes = Matrix{Int8}(undef, num_features, num_imgs)
     num_processed = 0
     
@@ -124,12 +111,6 @@ function learn(
         num_processed += n
         next!(p) # increment progress bar
     end
-    # Base.Threads.@threads for image_file in image_files
-    #     ii_img = load_image(image_file, scale=scale, scale_to=scale_to)
-    #     num_processed += 1
-    #     map!(f -> get_vote(f, ii_img), view(votes, num_processed, :), features)
-    #     next!(p) # increment progress bar
-    # end # end loop through images
     print("\n") # for a new line after the progress bar
     
     notify_user("Selecting classifiers...")
