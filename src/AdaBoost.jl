@@ -122,10 +122,14 @@ function learn(
         # classification_errors = zeros(length(feature_indices))
         classification_errors = Matrix{Float64}(undef, length(feature_indices), 1)
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
-        weights = float.(weights) ./ sum(weights)
+        weights = float(weights) / sum(weights)
 
         # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
-        map!(j -> sum(img_idx -> labels[img_idx] ≠ votes[feature_indices[j], img_idx] ? weights[img_idx] : zero(Float64), 1:num_imgs), view(classification_errors, :), 1:length(feature_indices))
+        map!(view(classification_errors, :), 1:length(feature_indices)) do j
+            sum(1:num_imgs) do img_idx
+                labels[img_idx] ≠ votes[feature_indices[j], img_idx] ? weights[img_idx] : zero(Float64)
+            end
+        end
 
         # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
         min_error_idx = argmin(classification_errors) # returns the index of the minimum in the array # consider `findmin`
@@ -140,7 +144,6 @@ function learn(
         classifiers = push!(classifiers, best_feature)
 
         # update image weights $w_{t+1,i}=w_{t,i}\beta_{t}^{1-e_i}$
-        # weights = Array(map(i -> labels[i] ≠ votes[i, best_feature_idx] ? weights[i] * sqrt((1 - best_error) / best_error) : weights[i] * sqrt(best_error / (1 - best_error)), 1:num_imgs))
         weights = map(i -> labels[i] ≠ votes[best_feature_idx, i] ? weights[i] * sqrt((1 - best_error) / best_error) : weights[i] * sqrt(best_error / (1 - best_error)), 1:num_imgs)
 
         # remove feature (a feature can't be selected twice)
