@@ -12,7 +12,7 @@
 include("Utils.jl")
 include("IntegralImage.jl")
 
-using ProgressMeter: @showprogress, Progress, next!, update!
+using ProgressMeter: @showprogress, Progress, next!
 
 #=
     learn(
@@ -108,9 +108,9 @@ function learn(
         Base.Threads.@threads for t in 1:batch_size
             # votes[:, num_processed+t] .= get_vote.(features, Ref(ii_imgs[t]))
             map!(f -> get_vote(f, ii_imgs[t]), view(votes, :, num_processed + t), features)
+            next!(p) # increment progress bar
         end
         num_processed += batch_size
-        next!(p) # increment progress bar
     end
     print("\n") # for a new line after the progress bar
     
