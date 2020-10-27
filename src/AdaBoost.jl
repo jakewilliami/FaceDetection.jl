@@ -108,7 +108,7 @@ function learn(
     
     # create an empty array (of zeroes) with dimensions (num_imgs, numFeautures)
     # votes = zeros((num_imgs, num_features)) # necessarily different from `zero.((num_imgs, num_features))`; previously zerosarray
-    votes = spzeros(num_imgs, num_features)
+    votes = zeros(num_imgs, num_features)
     num_processed = 0
     
     notify_user("Loading images ($(num_pos) positive and $(num_neg) negative images) and calculating their scores...")
@@ -117,31 +117,24 @@ function learn(
     # instead of @showprogress, need to manually create the progress bar
     p = Progress(length(image_files), 1)
     # get votes for images
-    
-    # allfiles = getimagepaths()
-    # results = map(Iterators.partition(allfiles, n)) do part
-    #     images = loadimages(part)
-    #     return process(images)
-    # end
-    # result = combineresults(results)
-    #
     # n = 10
     # map(Base.Iterators.partition(image_files, n)) do image_file
     #     ii_imgs = load_image.(image_file, scale=scale, scale_to=scale_to)
-    #     Base.Threads.@threads for t in 1:n
-    #         votes[num_processed + t, :] = [get_vote(f, ii_imgs[t]) for f in features]
+    #     for t in 1:n
+    #         map!(f -> get_vote(f, ii_imgs[t]), view(votes, num_processed + t, :), features)
     #         num_processed += 1
     #     end
     #
     #     # increment progress bar
     #     next!(p)
     # end
-    
-    for image_file in image_files
+    Base.Threads.@threads for image_file in image_files
+        println("about to load images")
         ii_img = load_image(image_file, scale=scale, scale_to=scale_to)
         num_processed += 1
-        # votes[num_processed, :] = Array(map(f -> get_vote(f, ii_img), features))
-        votes[num_processed, :] = [get_vote(f, ii_img) for f in features]
+        println("putting votes into array")
+        votes[num_processed, :] .= map(f -> get_vote(f, ii_img), features)
+        # map!(f -> get_vote(f, ii_img), view(votes, num_processed, :), features)
     
         # increment progress bar
         next!(p)
