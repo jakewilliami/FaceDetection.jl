@@ -82,7 +82,7 @@ function learn(
     labels = vcat(ones(Int8, num_pos), ones(Int8, num_neg) * -one(Int8))
     
     # Create features for all sizes and locations
-    features = _create_features(img_height, img_width, min_feature_width, max_feature_width, min_feature_height, max_feature_height)
+    features = create_features(img_height, img_width, min_feature_width, max_feature_width, min_feature_height, max_feature_height)
     num_features = length(features)
     feature_indices = Array(1:num_features)
     num_classifiers = isequal(num_classifiers, -1) ? num_features : num_classifiers
@@ -149,7 +149,7 @@ function learn(
 end
 
 #=
-    _create_features(
+    create_features(
         img_height::Integer,
         img_width::Integer,
         min_feature_width::Integer,
@@ -173,7 +173,7 @@ Iteratively creates the Haar-like feautures
 
 - `features::AbstractArray`: an array of Haar-like features found for an image
 =#
-function _create_features(
+function create_features(
     img_height::Integer,
     img_width::Integer,
     min_feature_width::Integer,

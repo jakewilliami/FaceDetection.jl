@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
     #=
-    exec julia --project="$(realpath $(dirname $(dirname $0)))/" "${BASH_SOURCE[0]}" "$@" -e "include(popfirst!(ARGS))" \
+    exec julia --project="$(realpath $(dirname $(realpath $(dirname $0))))/examples/" "${BASH_SOURCE[0]}" "$@" -e "include(popfirst!(ARGS))" \
     "${BASH_SOURCE[0]}" "$@"
     =#
 
 include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl")) # ../src/FaceDetection.jl
 
 using .FaceDetection
-using Test
+using Test: @testset, @test
+using Suppressor: @suppress
+
+const main_data_path = joinpath(@__DIR__, "images")
 
 @time @testset "FaceDetection.jl" begin
     # IntegralImage.jl
@@ -17,8 +20,8 @@ using Test
     @test FaceDetection.sum_region(FaceDetection.to_integral_image([1 7 4 2 9.9; 7 2 3 8 2; 1 8 7 9 1; 3 2 3 1 5; 2 9 5 6 6]), (4,4), (5,5)) isa AbstractFloat
 
     # HaarLikeFeature.jl
-    a = (rand(Int), rand(Int))
-    b = (rand(Int), rand(Int))
+    a = tuple(rand(Int), rand(Int))
+    b = tuple(rand(Int), rand(Int))
     c = rand(Int)
     d = rand(Int)
     e = rand((0, 1))
@@ -37,8 +40,30 @@ using Test
     @test FaceDetection.get_vote(FaceDetection.HaarLikeObject(a, b, c, d, e, f), arr) ∈ [-1, 1]
 
     # AdaBoost.jl
-    @test FaceDetection.learn()
-
+	pos_training_path, neg_training_path, pos_testing_path, neg_testing_path = string(), string(), string(), string()
+	classifiers = []
+	features = []
+	@suppress begin
+		pos_training_path = joinpath(main_data_path, "pos")
+	    neg_training_path = joinpath(main_data_path, "neg")
+	    classifiers = learn(pos_training_path, neg_training_path, 10, 8, 10, 8, 10)
+		features = FaceDetection.create_features(19, 19, 8, 10, 8, 10)
+	end
+	@test length(features) == 4520
+	
     # Utils.jl
-    # @test
+	p, n = 0, 0
+	@suppress begin
+		pos_testing_path = joinpath(main_data_path, "pos_testing")
+	    neg_testing_path = joinpath(main_data_path, "neg_testing")
+		num_faces = length(filtered_ls(pos_testing_path))
+		num_non_faces = length(filtered_ls(neg_testing_path))
+		p = sum(ensemble_vote_all(pos_testing_path, classifiers)) / num_faces
+		n = (num_non_faces - sum(ensemble_vote_all(neg_testing_path, classifiers))) / num_non_faces
+	end
+	@test p == 0.63
+	@test n == 0.372
+	random_img = rand(vcat(filtered_ls.([pos_training_path, neg_training_path, pos_testing_path, neg_testing_path])...))
+	@test get_faceness(classifiers[rand(1:length(classifiers))], load_image(random_img)) isa Integer
+	@test determine_feature_size(pos_training_path, neg_training_path) == (10, 10, 8, 8, (19, 19))
 end # end tests
