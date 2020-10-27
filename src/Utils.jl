@@ -165,7 +165,7 @@ function ensemble_vote(int_img::AbstractArray, classifiers::AbstractArray)
     # weightedSum = sum([c[2] for c in classifiers])
     # return evidence >= (weightedSum / 2) ? 1 : -1
     
-    return sum([get_vote(c, int_img) for c in classifiers]) >= 0 ? one(Integer) : zero(Integer)
+    return sum([get_vote(c, int_img) for c in classifiers]) >= 0 ? one(Int8) : zero(Int8)
 end
 
 #=

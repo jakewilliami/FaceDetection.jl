@@ -118,5 +118,5 @@ Get vote of this feature for given integral image.
 function get_vote(feature::HaarLikeObject, int_img::AbstractArray)
     score = get_score(feature, int_img)[1] # we only care about score here
 
-    return (feature.weight * score) < (feature.polarity * feature.threshold) ? one(Integer) : -one(Integer)
+    return (feature.weight * score) < (feature.polarity * feature.threshold) ? one(Int8) : -one(Int8)
 end
