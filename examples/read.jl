@@ -20,22 +20,20 @@ using Printf: @printf
 using Images: imresize
 using Serialization: deserialize
 
-println("...done")
+println("...done\n")
 
 function main(;
     smart_choose_feats::Bool=false,
-	alt::Bool=false,
 	scale::Bool=false,
 	scale_to::Tuple=(200, 200)
 )
 
 	include("constants.jl")
-
-	if ! alt
-		include("main_data.jl")
-	else
-		include("alt_data.jl")
-	end
+	include("main_data.jl")
+	
+	max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = determine_feature_size(pos_testing_path, neg_testing_path; scale = scale, scale_to = scale_to)
+	img_size = scale ? scale_to : min_size_img
+	data_file = joinpath(dirname(@__FILE__), "data", "haar-like_features_c$(num_classifiers)_$(img_size)")
 	
 	if ! isfile(data_file)
 		error(throw("You do not have a data file.  Ensure you run \"write.jl\" to obtain your Haar-like features before running this script/"))
@@ -65,4 +63,4 @@ function main(;
     @printf("%10.9s %10.15s %15s\n\n", "Non-faces:", non_faces_frac, non_faces_percent)
 end
 
-@time main(smart_choose_feats=true, alt=false, scale=true, scale_to=(20, 20))
+@time main(smart_choose_feats=true, scale=true, scale_to=(20, 20))

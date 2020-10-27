@@ -19,21 +19,15 @@ const FD = FaceDetection
 using Printf: @printf
 using Serialization: serialize
 
-println("...done")
+println("...done\n")
 
 function main(;
     smart_choose_feats::Bool=false,
-	alt::Bool=false,
 	scale::Bool=false,
 	scale_to::Tuple=(200, 200)
 )
 	include("constants.jl")
-
-	if ! alt
-		include("main_data.jl")
-	else
-		include("alt_data.jl")
-	end
+	include("main_data.jl")
 
 	min_size_img = (19, 19) # default for our test dataset
 	if smart_choose_feats
@@ -54,8 +48,9 @@ function main(;
 	classifiers = FD.learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width; scale = scale, scale_to = scale_to)
 
 	# write classifiers to file
-	data_file = joinpath(dirname(@__FILE__), "data", "haar-like_features_c$(num_classifiers)")
+	img_size = scale ? scale_to : min_size_img
+	data_file = joinpath(dirname(@__FILE__), "data", "haar-like_features_c$(num_classifiers)_$(img_size)")
 	serialize(data_file, classifiers)
 end
 
-@time main(smart_choose_feats=true, alt=false, scale=true, scale_to=(20, 20))
+@time main(smart_choose_feats=true, scale=true, scale_to=(20, 20))

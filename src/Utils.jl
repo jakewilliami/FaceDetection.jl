@@ -9,7 +9,7 @@ include("HaarLikeFeature.jl")
 include("IntegralImage.jl")
 
 using Images: save, load, Colors, clamp01nan, Gray, imresize
-using ImageDraw: draw!, Polygon, Point
+using ImageDraw: draw, Polygon, Point
 
 #=
     displaymatrix(M::AbstractArray) -> AbstractString
@@ -318,11 +318,11 @@ Chooses a random image from a given two directories.
 - `file_name::AbstractString`: The path to the file randomly chosen
 =#
 function get_random_image(
-    face_path::AbstractString,
-    non_face_path::AbstractString="",
+    face_path::AbstractString;
+    non_face_path::AbstractString=string(),
     non_faces::Bool=false
 )
-    file_name = ""
+    file_name = string()
     
     if non_faces
         face = rand(Bool)
@@ -364,6 +364,7 @@ function scale_box(
     genisis_size::Tuple{Integer, Integer},
     img_size::Tuple{Integer, Integer}
 )
+
     image_ratio = (img_size[1]/genisis_size[1], img_size[2]/genisis_size[2])
     
     bottom_left = (top_left[1], bottom_right[2])
@@ -391,158 +392,23 @@ Generates a bounding box around the face of a random image.
 
 - `validation_image::AbstractArray`: The new image with a bounding box
 =#
-function generate_validation_image(image_path::AbstractString, classifiers::AbstractArray)
-    img = to_integral_image(get_image_matrix(image_path))
+function generate_validation_image(image_path::AbstractString, classifiers::Array{HaarLikeObject, 1})
+    
+    # === THIS FUNCTION IS A WORK IN PROGRESS ===
+    
+    img = load_image(image_path)
     img_size = size(img)
     
-    top_left = (0,0)
-    bottom_right = (0,0)
-    bottom_left = (0,0)
-    top_right = (0,0)
-    
-    features = []
-    
-    for c in classifiers
-        features = push!(features, (c.top_left, c.bottom_right))
-        # if c.feature_type == feature_types[1] # two vertical
-        #     features = push!(features, (c.top_left, c.bottom_right))
-        # elseif c.feature_type == feature_types[2] # two horizontal
-        # elseif c.feature_type == feature_types[3] # three horizontal
-        # elseif c.feature_type == feature_types[4] # three vertical
-        # elseif c.feature_type == feature_types[5] # four
-        # end
-    end
-    
-    # todo: figure out rectangles over boxes.  This includes finding the smallest image in size and converting the random input to that size if needed (requires importing another module).  bottom right needs to have smallest y but greatest x, etc.
-    # todo: IF face is not a non-face, then draw box.  Don't force a box.
-    
-    chosen_top_left = (0, 0)
-    chosen_bottom_right = (0, 0)
-    
-    for f in features # iterate through elements in features (e.g., Any[((9, 2), (17, 12)), ((11, 8), (19, 16))])
-        # for t in f # iterate through inner tuples
-            chosen_top_left = chosen_top_left < f[1] || chosen_top_left < f[1] ? chosen_top_left : f[1]
-            chosen_bottom_right = chosen_bottom_right > f[2] || chosen_bottom_right > f[2] ? chosen_bottom_right : f[2]
-        # end
-    end
-    
-    # reasonableProportion = Int(round(0.26 * minimum(img_size)))
-    #
-    # top_left = (reasonableProportion, reasonableProportion)
-    # bottom_right = (img_size[1] - reasonableProportion, img_size[2] - reasonableProportion)
-    # bottom_left = (reasonableProportion, img_size[2] - reasonableProportion)
-    # top_right = (img_size[1] - reasonableProportion, reasonableProportion)
-    
-    top_left = chosen_top_left
-    bottom_right = chosen_bottom_right
-    bottom_left = (chosen_top_left[1], chosen_bottom_right[2])
-    top_right = (chosen_bottom_right[1], chosen_top_left[2])
+    top_lefts = [c.top_left for c in classifiers]
+    bottom_rights = [c.bottom_right for c in classifiers]
+    x_coords = vcat([x[1] for x in top_lefts], [x[1] for x in bottom_rights])
+    y_coords = vcat([y[2] for y in top_lefts], [y[2] for y in bottom_rights])
+    min_x, max_x = extrema(x_coords)
+    min_y, max_y = extrema(y_coords)
+    top_left = min_x, min_y
+    bottom_right = max_x, max_y
     
     box_dimensions = scale_box(top_left, bottom_right, (19, 19), img_size)
     
-    
-    
-    
-    
-    boxes = zeros(img_size)
-    
-    for c in classifiers
-        # map polarity: -1 -> 0, 1 -> 1
-        polarity = ((1 + c.polarity)^2)/4
-        if c.feature_type == feature_types["two_vertical"]
-            for x in 1:c.width
-                sign = polarity
-                for y in 1:c.height
-                    if y >= c.height/2
-                        sign = mod((sign + 1), 2)
-                    end
-                    boxes[c.top_left[2] + y, c.top_left[1] + x] += 1 * sign * c.weight
-                end
-            end
-        elseif c.feature_type == feature_types["two_horizontal"]
-            sign = polarity
-            for x in 1:c.width
-                if x >= c.width/2
-                    sign = mod((sign + 1), 2)
-                end
-                for y in 1:c.height
-                    boxes[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
-                end
-            end
-        elseif c.feature_type == feature_types["three_horizontal"]
-            sign = polarity
-            for x in 1:c.width
-                if iszero(mod(x, c.width/3))
-                    sign = mod((sign + 1), 2)
-                end
-                for y in 1:c.height
-                    boxes[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
-                end
-            end
-        elseif c.feature_type == feature_types["three_vertical"]
-            for x in 1:c.width
-                sign = polarity
-                for y in 1:c.height
-                    if iszero(mod(x, c.height/3))
-                        sign = mod((sign + 1), 2)
-                    end
-                    boxes[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
-                end
-            end
-        elseif c.feature_type == feature_types["four"]
-            sign = polarity
-            for x in 1:c.width
-                if iszero(mod(x, c.width/2))
-                    sign = mod((sign + 1), 2)
-                end
-                for y in 1:c.height
-                    if iszero(mod(x, c.height/2))
-                        sign = mod((sign + 1), 2)
-                    end
-                    boxes[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
-                end
-            end
-        end
-    end # end for c in classifiers
-    
-    # validationImage = load(image_path) .+ boxes
-    #
-    # println(typeof(img))
-    # println(typeof(boxes))
-    # println(typeof(validationImage))
-    
-    
-    
-    # using TestImages, ImageDraw, ColorVectorSpace, ImageCore
-    # img = testimage("lighthouse");
-    
-    # img = imresize(img, (19, 19))
-    
-    # [println(c.feature_type) for c in classifiers]
-    #
-    for c in classifiers
-        
-        # box_dimensions = [c.top_left, (c.top_left[1], c.bottom_right[2]), c.bottom_right, (c.bottom_right[1], c.top_left[2])]
-        
-        box_dimensions = scale_box(c.top_left, c.bottom_right, (19, 19), img_size)
-        
-        save(joinpath(homedir(), "Desktop", "validation.png"), draw!(load(image_path), Polygon([Point(box_dimensions[1]), Point(box_dimensions[2]), Point(box_dimensions[3]), Point(box_dimensions[4])])))
-    end
-    
-    
-    # with open('classifiers_' + str(T) + '_' + hex(random.getrandbits(16)) + '.pckl', 'wb') as file:
-    #     pickle.dump(classifiers, file)
-    
-    # box = Polygon([Point(box_dimensions[1]), Point(box_dimensions[2]), Point(box_dimensions[3]), Point(box_dimensions[4])])
-    
-    # return save(joinpath(homedir(), "Desktop", "validation.png"), draw!(load(image_path), box))
-    
-#     #Arguments
-# * `center::Point` : the center of the polygon
-# * `side_count::Int` : number of sides of the polygon
-# * `side_length::Real` : length of each side
-# * `θ::Real` : orientation of the polygon w.r.t x-axis (in radians)
-
-    
-    # save("/Users/jakeireland/Desktop/test.png", Gray.(map(clamp01nan, newImg)))
+    return draw(load(image_path), Polygon([Point(box_dimensions[1]), Point(box_dimensions[2]), Point(box_dimensions[3]), Point(box_dimensions[4])]))
 end
