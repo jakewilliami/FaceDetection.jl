@@ -12,8 +12,8 @@
 include("Utils.jl")
 include("IntegralImage.jl")
 
-using Threads: @threads
-using Iterators: partition
+using Base.Threads: @threads
+using Base.Iterators: partition
 using ProgressMeter: @showprogress, Progress, next!
 
 #=

@@ -22,7 +22,10 @@ using Serialization: serialize
 println("...done")
 
 function main(;
-    smart_choose_feats::Bool=false, alt::Bool=false
+    smart_choose_feats::Bool=false,
+	alt::Bool=false,
+	scale::Bool=false,
+	scale_to::Tuple=(200, 200)
 )
 	include("constants.jl")
 
@@ -37,7 +40,7 @@ function main(;
 		# For performance reasons restricting feature size
 		notify_user("Selecting best feature width and height...")
 		
-		max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = determine_feature_size(pos_training_path, neg_training_path; scale = false, scale_to = (577, 577))
+		max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = determine_feature_size(pos_training_path, neg_training_path; scale = scale, scale_to = scale_to)
 		
 		println("...done.  Maximum feature width selected is $max_feature_width pixels; minimum feature width is $min_feature_width; maximum feature height is $max_feature_height pixels; minimum feature height is $min_feature_height.\n")
 	else
@@ -48,11 +51,11 @@ function main(;
 	end
 
 	# classifiers are haar like features
-	classifiers = FD.learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width; scale = false, scale_to = (577, 577))
+	classifiers = FD.learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width; scale = scale, scale_to = scale_to)
 
 	# write classifiers to file
 	data_file = joinpath(dirname(@__FILE__), "data", "haar-like_features_c$(num_classifiers)")
 	serialize(data_file, classifiers)
 end
 
-@time main(smart_choose_feats=true, alt=false)
+@time main(smart_choose_feats=true, alt=false, scale=true, scale_to=(20, 20))
