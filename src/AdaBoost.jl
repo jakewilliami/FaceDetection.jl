@@ -12,7 +12,7 @@
 include("Utils.jl")
 include("IntegralImage.jl")
 
-using ProgressMeter: @showprogress, Progress, next!
+using ProgressMeter: @showprogress, Progress, next!, update!
 
 #=
     learn(
@@ -58,6 +58,7 @@ function learn(
     
     positive_files = filtered_ls(positive_path)
     negative_files = filtered_ls(negative_path)
+    image_files = vcat(positive_files, negative_files)
     
     num_pos = length(positive_files)
     num_neg = length(negative_files)
@@ -94,21 +95,21 @@ function learn(
         num_classifiers = num_features
     end
     
-    # create an empty array (of zeroes) with dimensions (num_imgs, numFeautures)
+    # create an empty array with dimensions (num_imgs, numFeautures)
     votes = Matrix{Int8}(undef, num_features, num_imgs)
-    num_processed = 0
     
     notify_user("Loading images ($(num_pos) positive and $(num_neg) negative images) and calculating their scores...")
-    image_files = vcat(positive_files, negative_files)
     p = Progress(length(image_files), 1)
+    num_processed = 0
+    batch_size = 10
     # get votes for images
-    n = 10
-    map(Base.Iterators.partition(image_files, n)) do image_file
-        ii_imgs = load_image.(image_file, scale=scale, scale_to=scale_to)
-        for t in 1:n
+    map(Base.Iterators.partition(image_files, batch_size)) do batch
+        ii_imgs = load_image.(batch; scale=scale, scale_to=scale_to)
+        Base.Threads.@threads for t in 1:batch_size
+            # votes[:, num_processed+t] .= get_vote.(features, Ref(ii_imgs[t]))
             map!(f -> get_vote(f, ii_imgs[t]), view(votes, :, num_processed + t), features)
         end
-        num_processed += n
+        num_processed += batch_size
         next!(p) # increment progress bar
     end
     print("\n") # for a new line after the progress bar
@@ -127,7 +128,7 @@ function learn(
         for j in 1:length(feature_indices)
             f_idx = feature_indices[j]
             # classifier error is the sum of image weights where the classifier is right
-            ε = sum(map(img_idx -> labels[img_idx] ≠ votes[f_idx, img_idx] ? weights[img_idx] : zero(Float64), 1:num_imgs))
+            ε = sum(img_idx -> labels[img_idx] ≠ votes[f_idx, img_idx] ? weights[img_idx] : zero(Float64), 1:num_imgs)
             classification_errors[j] = ε
         end
 
