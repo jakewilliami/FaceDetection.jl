@@ -44,11 +44,9 @@ function main(;
 	FD.notify_user("Testing selected classifiers...")
 	num_faces = length(filtered_ls(pos_testing_path))
 	num_non_faces = length(filtered_ls(neg_testing_path))
-    correct_faces = 0
-    correct_non_faces = 0
 	
-	correct_faces = sum(FD.ensemble_vote_all(pos_testing_path, classifiers))
-	correct_non_faces = num_non_faces - sum(FD.ensemble_vote_all(neg_testing_path, classifiers))
+	correct_faces = sum(FD.ensemble_vote_all(pos_testing_path, classifiers, scale=scale, scale_to=scale_to))
+	correct_non_faces = num_non_faces - sum(FD.ensemble_vote_all(neg_testing_path, classifiers, scale=scale, scale_to=scale_to))
 	correct_faces_percent = (correct_faces / num_faces) * 100
 	correct_non_faces_percent = (correct_non_faces / num_non_faces) * 100
 
