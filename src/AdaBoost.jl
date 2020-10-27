@@ -13,7 +13,6 @@ include("Utils.jl")
 include("IntegralImage.jl")
 
 using ProgressMeter: @showprogress, Progress, next!
-using SparseArrays: spzeros
 
 #=
     learn(
@@ -113,37 +112,30 @@ function learn(
     
     notify_user("Loading images ($(num_pos) positive and $(num_neg) negative images) and calculating their scores...")
     image_files = vcat(positive_files, negative_files)
-    
-    # instead of @showprogress, need to manually create the progress bar
     p = Progress(length(image_files), 1)
     # get votes for images
-    # n = 10
-    # map(Base.Iterators.partition(image_files, n)) do image_file
-    #     ii_imgs = load_image.(image_file, scale=scale, scale_to=scale_to)
-    #     for t in 1:n
-    #         map!(f -> get_vote(f, ii_imgs[t]), view(votes, num_processed + t, :), features)
-    #         num_processed += 1
-    #     end
-    #
-    #     # increment progress bar
-    #     next!(p)
-    # end
-    Base.Threads.@threads for image_file in image_files
-        ii_img = load_image(image_file, scale=scale, scale_to=scale_to)
-        num_processed += 1
-        # votes[num_processed, :] .= map(f -> get_vote(f, ii_img), features)
-        map!(f -> get_vote(f, ii_img), view(votes, num_processed, :), features)
-    
-        # increment progress bar
-        next!(p)
-    end # end loop through images
+    n = 10
+    map(Base.Iterators.partition(image_files, n)) do image_file
+        ii_imgs = load_image.(image_file, scale=scale, scale_to=scale_to)
+        for t in 1:n
+            map!(f -> get_vote(f, ii_imgs[t]), view(votes, num_processed + t, :), features)
+        end
+        num_processed += n
+        next!(p) # increment progress bar
+    end
+    # Base.Threads.@threads for image_file in image_files
+    #     ii_img = load_image(image_file, scale=scale, scale_to=scale_to)
+    #     num_processed += 1
+    #     map!(f -> get_vote(f, ii_img), view(votes, num_processed, :), features)
+    #     next!(p) # increment progress bar
+    # end # end loop through images
     print("\n") # for a new line after the progress bar
     
     notify_user("Selecting classifiers...")
     # select classifiers
     classifiers = []
     p = Progress(num_classifiers, 1)
-    Base.Threads.@threads for t in 1:num_classifiers # previously, zerosarray
+    Base.Threads.@threads for t in 1:num_classifiers
         classification_errors = zeros(length(feature_indices))
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
         weights = float(weights) / sum(weights)
@@ -177,8 +169,7 @@ function learn(
         # remove feature (a feature can't be selected twice)
         feature_indices = filter!(e -> e ∉ best_feature_idx, feature_indices) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`
         
-        # increment progress bar
-        next!(p)
+        next!(p) # increment progress bar
     end
     
     print("\n") # for a new line after the progress bar
