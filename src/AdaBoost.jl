@@ -99,7 +99,7 @@ function learn(
     votes = Matrix{Int8}(undef, num_features, num_imgs)
     
     notify_user("Loading images ($(num_pos) positive and $(num_neg) negative images) and calculating their scores...")
-    p = Progress(length(image_files), 1)
+    p = Progress(length(image_files), 1) # minimum update interval: 1 second
     num_processed = 0
     batch_size = 10
     # get votes for images
@@ -117,7 +117,7 @@ function learn(
     notify_user("Selecting classifiers...")
     # select classifiers
     classifiers = []
-    p = Progress(num_classifiers, 1)
+    p = Progress(num_classifiers, 1) # minimum update interval: 1 second
     Base.Threads.@threads for t in 1:num_classifiers
         # classification_errors = zeros(length(feature_indices))
         classification_errors = Matrix{Float64}(undef, length(feature_indices), 1)
