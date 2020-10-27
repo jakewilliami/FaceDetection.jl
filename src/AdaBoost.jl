@@ -108,7 +108,7 @@ function learn(
     # create an empty array (of zeroes) with dimensions (num_imgs, numFeautures)
     # votes = zeros((num_imgs, num_features)) # necessarily different from `zero.((num_imgs, num_features))`; previously zerosarray
     # votes = zeros(num_imgs, num_features)
-    votes = Matrix{Union{Missing, Int8}}(undef, num_imgs, num_features)
+    votes = Matrix{Int8}(undef, num_imgs, num_features)
     num_processed = 0
     
     notify_user("Loading images ($(num_pos) positive and $(num_neg) negative images) and calculating their scores...")
