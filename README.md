@@ -28,21 +28,34 @@ For a better explanation, read [the paper from 2001](http://citeseerx.ist.psu.ed
 ## Running the Algorithm
 
 ```julia
-julia> using FaceDetection, Serialization # Serialization is so that you can save your results
+using FaceDetection, Serialization # Serialization is so that you can save your results
 
-julia> pos_training_path = "..." # positive images are, for example, faces
+pos_training_path = "..." # positive images are, for example, faces
 
-julia> neg_training_path = "..." # negative images are, for example, non-faces.  However, the Viola-Jones algorithm is for object detection, not just for face detection
+neg_training_path = "..." # negative images are, for example, non-faces.  However, the Viola-Jones algorithm is for object detection, not just for face detection
 
-julia> max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = (1, 2, 3, 4) # or use the function to select reasonable sized feature parameters given your maximum image size
+max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = (1, 2, 3, 4) # or use the function to select reasonable sized feature parameters given your maximum image size (see below)
 
-julia> determine_feature_size(pos_training_path, neg_training_path)
+determine_feature_size(pos_training_path, neg_training_path, scale=true, scale_up=(200, 200))
 
-julia> classifiers = learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width) # get classifiers/features from your training data
+classifiers = learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width, scale=true, scale_up=(200, 200)) # get classifiers/features from your training data
 
-julia> data_file = "..."
+data_file = "..." # this is where you want to save your data
 
-julia> serialize(data_file, classifiers) # write classifiers to file
+serialize(data_file, classifiers); # write classifiers to file
+
+classifiers = deserialize(data_file); # read from saved data
+
+# obtain results
+num_faces, num_non_faces = length(filtered_ls(pos_testing_path)), length(filtered_ls(neg_testing_path));
+correct_faces = sum(ensemble_vote_all(pos_testing_path, classifiers, scale=true, scale_up=(200, 200)));
+correct_non_faces = num_non_faces - sum(ensemble_vote_all(neg_testing_path, classifiers, scale=true, scale_up=(200, 200)));
+correct_faces_percent = (correct_faces / num_faces) * 100;
+correct_non_faces_percent = (correct_non_faces / num_non_faces) * 100;
+
+# print results
+println("$(string(correct_faces, "/", num_faces)) ($(correct_faces_percent) %) of positive images were correctly identified.")
+println("$(string(correct_non_faces, "/", num_non_faces)) ($(correct_non_faces_percent) %) of positive images were correctly identified.")
 ```
 
 ## Caveats
