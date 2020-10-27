@@ -165,7 +165,7 @@ function ensemble_vote(int_img::AbstractArray, classifiers::AbstractArray)
     # weightedSum = sum([c[2] for c in classifiers])
     # return evidence >= (weightedSum / 2) ? 1 : -1
     
-    return sum([get_vote(c, int_img) for c in classifiers]) >= 0 ? one(Int8) : zero(Int8)
+    return sum(c -> get_vote(c, int_img), classifiers) >= 0 ? one(Int8) : zero(Int8)
 end
 
 #=
@@ -187,7 +187,7 @@ function ensemble_vote_all(
     scale_to::Tuple=(200,200)
     )::Array{Int8, 1}
     
-    return votes = Array(map(i -> ensemble_vote(load_image(i, scale=scale, scale_to=scale_to), classifiers), filtered_ls(image_path)))
+    return votes = map(i -> ensemble_vote(load_image(i, scale=scale, scale_to=scale_to), classifiers), filtered_ls(image_path))
 end
 
 
