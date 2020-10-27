@@ -42,8 +42,6 @@ This function selects a set of classifiers. Iteratively takes the best classifie
 # Returns `classifiers::Array{HaarLikeObject, 1}`: List of selected features
 =#
 function learn(
-    # positive_iis::AbstractArray,
-    # negative_iis::AbstractArray,
     positive_path::AbstractString,
     negative_path::AbstractString,
     num_classifiers::Integer=-1,
@@ -65,35 +63,27 @@ function learn(
     num_imgs = num_pos + num_neg
     
     # get image height and width
-    # temp_image = convert(Array{Float64}, Gray.(load(rand(positive_files))))
     temp_image = load_image(rand(positive_files), scale=scale, scale_to=scale_to)
     img_height, img_width = size(temp_image)
     temp_image = nothing # unload temporary image
     
     # Maximum feature width and height default to image width and height
-    if isequal(max_feature_height, -1)
-        max_feature_height = img_height
-    end
-    if isequal(max_feature_width, -1)
-        max_feature_width = img_width
-    end
+    max_feature_height = isequal(max_feature_height, -1) ? img_height : max_feature_height
+    max_feature_width = isequal(max_feature_width, -1) ? img_height : max_feature_width
     
     # Initialise weights $w_{1,i} = \frac{1}{2m}, \frac{1}{2l}$, for $y_i=0,1$ for negative and positive examples respectively
-    pos_weights = ones(num_pos) ./ (2 * num_pos)
-    neg_weights = ones(num_neg) ./ (2 * num_neg)
+    pos_weights = ones(num_pos) / (2 * num_pos)
+    neg_weights = ones(num_neg) / (2 * num_neg)
     
     # Concatenate positive and negative weights into one `weights` array
     weights = vcat(pos_weights, neg_weights)
-    labels = vcat(ones(Int8, num_pos), ones(Int8, num_neg) .* -one(Int8))
+    labels = vcat(ones(Int8, num_pos), ones(Int8, num_neg) * -one(Int8))
     
     # Create features for all sizes and locations
     features = _create_features(img_height, img_width, min_feature_width, max_feature_width, min_feature_height, max_feature_height)
     num_features = length(features)
     feature_indices = Array(1:num_features)
-    used = []
-    if isequal(num_classifiers, -1)
-        num_classifiers = num_features
-    end
+    num_classifiers = isequal(num_classifiers, -1) ? num_features : num_classifiers
     
     # create an empty array with dimensions (num_imgs, numFeautures)
     votes = Matrix{Int8}(undef, num_features, num_imgs)
@@ -123,7 +113,6 @@ function learn(
         classification_errors = Matrix{Float64}(undef, length(feature_indices), 1)
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
         weights = float(weights) / sum(weights)
-
         # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
         map!(view(classification_errors, :), 1:length(feature_indices)) do j
             sum(1:num_imgs) do img_idx
@@ -147,7 +136,7 @@ function learn(
         weights = map(i -> labels[i] ≠ votes[best_feature_idx, i] ? weights[i] * sqrt((1 - best_error) / best_error) : weights[i] * sqrt(best_error / (1 - best_error)), 1:num_imgs)
 
         # remove feature (a feature can't be selected twice)
-        feature_indices = filter!(e -> e ∉ best_feature_idx, feature_indices) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`
+        filter!(e -> e ∉ best_feature_idx, feature_indices) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`
         
         next!(p) # increment progress bar
     end
@@ -206,8 +195,8 @@ function _create_features(
             for feature_height in range(feature_start_height, stop=max_feature_height, step=feature[2])
                 for x in 1:(img_width - feature_width)
                     for y in 1:(img_height - feature_height)
-                        features = push!(features, HaarLikeObject(feature, (x, y), feature_width, feature_height, 0, 1))
-                        features = push!(features, HaarLikeObject(feature, (x, y), feature_width, feature_height, 0, -1))
+                        push!(features, HaarLikeObject(feature, (x, y), feature_width, feature_height, 0, 1))
+                        push!(features, HaarLikeObject(feature, (x, y), feature_width, feature_height, 0, -1))
                     end # end for y
                 end # end for x
             end # end for feature height

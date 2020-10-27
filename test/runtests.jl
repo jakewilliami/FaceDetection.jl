@@ -37,7 +37,7 @@ using Test
     @test FaceDetection.get_vote(FaceDetection.HaarLikeObject(a, b, c, d, e, f), arr) ∈ [-1, 1]
 
     # AdaBoost.jl
-    # @test
+    @test FaceDetection.learn()
 
     # Utils.jl
     # @test
