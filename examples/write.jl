@@ -17,56 +17,40 @@ include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl"))
 using .FaceDetection
 const FD = FaceDetection
 using Printf: @printf
-using Images: imresize
 using Serialization: serialize
 
-println("...done")
+println("...done\n")
 
 function main(;
-    smart_choose_feats::Bool=false, alt::Bool=false
+    smart_choose_feats::Bool=false,
+	scale::Bool=false,
+	scale_to::Tuple=(200, 200)
 )
 	include("constants.jl")
+	include("main_data.jl")
 
-	if ! alt
-		include("main_data.jl")
+	min_size_img = (19, 19) # default for our test dataset
+	if smart_choose_feats
+		# For performance reasons restricting feature size
+		notify_user("Selecting best feature width and height...")
+		
+		max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = determine_feature_size(pos_training_path, neg_training_path; scale = scale, scale_to = scale_to)
+		
+		println("...done.  Maximum feature width selected is $max_feature_width pixels; minimum feature width is $min_feature_width; maximum feature height is $max_feature_height pixels; minimum feature height is $min_feature_height.\n")
 	else
-		include("alt_data.jl")
+		min_feature_height = 8
+		max_feature_height = 10
+		min_feature_width = 8
+		max_feature_width = 10
 	end
 
-    min_size_img = (19, 19) # default for our test dataset
-    if smart_choose_feats
-        # For performance reasons restricting feature size
-        notify_user("Selecting best feature width and height...")
-        
-        max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = determine_feature_size(pos_training_path, neg_training_path)
-        
-        println("...done.  Maximum feature width selected is $max_feature_width pixels; minimum feature width is $min_feature_width; maximum feature height is $max_feature_height pixels; minimum feature height is $min_feature_height.\n")
-    else
-        min_feature_height = 8
-        max_feature_height = 10
-        min_feature_width = 8
-        max_feature_width = 10
-    end
-
-
-    FD.notify_user("Loading faces...")
-
-    faces_training = FD.load_images(pos_training_path)[1]
-    faces_ii_training = map(FD.to_integral_image, faces_training) # list(map(...))
-    println("...done. ", length(faces_training), " faces loaded.")
-
-    FD.notify_user("Loading non-faces...")
-
-    non_faces_training = FD.load_images(neg_training_path)[1]
-    non_faces_ii_training = map(FD.to_integral_image, non_faces_training) # list(map(...))
-    println("...done. ", length(non_faces_training), " non-faces loaded.\n")
-
-    # classifiers are haar like features
-    classifiers = FD.learn(faces_ii_training, non_faces_ii_training, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width)
+	# classifiers are haar like features
+	classifiers = FD.learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width; scale = scale, scale_to = scale_to)
 
 	# write classifiers to file
-	data_file = joinpath(dirname(@__FILE__), "data", "haar-like_features_c$(num_classifiers)")
+	img_size = scale ? scale_to : min_size_img
+	data_file = joinpath(dirname(@__FILE__), "data", "haar-like_features_c$(num_classifiers)_$(img_size)")
 	serialize(data_file, classifiers)
 end
 
-@time main(smart_choose_feats=true, alt=false)
+@time main(smart_choose_feats=true, scale=true, scale_to=(20, 20))

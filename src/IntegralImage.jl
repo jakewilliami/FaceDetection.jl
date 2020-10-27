@@ -70,13 +70,13 @@ getindex(A::IntegralArray, ids::Tuple...) = getindex(A, ids[1]...)
 =#
 function sum_region(
 	integral_image_arr::AbstractArray,
-	top_left::Tuple{Int64,Int64},
-	bottom_right::Tuple{Int64,Int64}
+	top_left::Tuple{Integer,Integer},
+	bottom_right::Tuple{Integer,Integer}
 )
 	sum = integral_image_arr[bottom_right[2], bottom_right[1]]
-    sum -= top_left[1] > 1 ? integral_image_arr[bottom_right[2], top_left[1] - 1] : zero(Integer)
-    sum -= top_left[2] > 1 ? integral_image_arr[top_left[2] - 1, bottom_right[1]] : zero(Integer)
-    sum += top_left[2] > 1 && top_left[1] > 1 ? integral_image_arr[top_left[2] - 1, top_left[1] - 1] : zero(Integer)
+    sum -= top_left[1] > 1 ? integral_image_arr[bottom_right[2], top_left[1] - 1] : zero(Int64)
+    sum -= top_left[2] > 1 ? integral_image_arr[top_left[2] - 1, bottom_right[1]] : zero(Int64)
+    sum += top_left[2] > 1 && top_left[1] > 1 ? integral_image_arr[top_left[2] - 1, top_left[1] - 1] : zero(Int64)
 	
     return sum
 end

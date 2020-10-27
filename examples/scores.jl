@@ -19,16 +19,9 @@ using Serialization: deserialize
 
 println("...done")
 
-function main(;
-    smart_choose_feats::Bool=false, alt::Bool=false
-)
-    include("constants.jl")
-
-    if ! alt
-        include("main_data.jl")
-    else
-        include("alt_data.jl")
-    end
+function main(smart_choose_feats::Bool=false)
+	include("constants.jl")
+	include("main_data.jl")
     
     # read classifiers from file
 	classifiers = deserialize(data_file)
@@ -103,4 +96,4 @@ function main(;
     println("...done.  Plot created at ", joinpath(dirname(dirname(@__FILE__)), "figs", "scores.pdf"), "\n")
 end
 
-@time main(smart_choose_feats=true, alt=false)
+@time main(smart_choose_feats=true)
