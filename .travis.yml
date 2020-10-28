@@ -10,5 +10,7 @@ notifications:
   email: false
 git:
   depth: 99999999
+install:
+  - julia --project="." 'import Pkg; Pkg.instantiate()'
 script:
   - julia --project="." test/runtests.jl
