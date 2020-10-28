@@ -5,6 +5,7 @@ os:
   - linux
   - osx
   - windows
+  - bsd
 
 julia:
   - 1.5
