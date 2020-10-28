@@ -10,4 +10,5 @@ notifications:
   email: false
 git:
   depth: 99999999
-
+script:
+  - julia --project="." test/runtests.jl
