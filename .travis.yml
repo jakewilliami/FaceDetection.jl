@@ -1,14 +1,33 @@
 ## Documentation: http://docs.travis-ci.com/user/languages/julia/
 language: julia
+
 os:
   - linux
   - osx
+  - windows
+
 julia:
   - 1.5
   - nightly
+
 notifications:
   email: false
+
+sudo: false
+
 git:
   depth: 99999999
-script:
-  - julia --project="." test/runtests.jl
+
+jobs:
+  include:
+    - stage: test
+      script:
+        - julia --color=yes --project=test -e 'using Pkg; Pkg.instantiate()'
+        - julia --color=yes --project=test test/runtests.jl
+      julia: 1.5
+
+    - stage: test
+      script:
+        - julia --color=yes	--project=test -e 'using Pkg; Pkg.instantiate()'
+        - julia --color=yes	--project=test test/runtests.jl
+      julia: nightly
