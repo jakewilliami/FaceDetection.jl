@@ -124,14 +124,16 @@ function learn(
         #classification_errors = Matrix{Float64}(undef, length(feature_indices), 1)
 
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
-        inv_sumweights = 1.0/sum(weights)
+        inv_sumweights = inv(sum(weights))
         weights .*= inv_sumweights
         # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
         
-        map!(classification_errors, 1:length(feature_indices)) do j
-            sum(1:num_imgs) do img_idx
-                labels[img_idx] ≠ votes[feature_indices[j], img_idx] ? weights[img_idx] : zero(eltype(classification_errors))
+        for j in 1:length(feature_indices)
+            _sum = sum(1:num_imgs) do img_idx
+                _bool = (labels[img_idx] !== votes[feature_indices[j], img_idx])
+                _bool*weights[img_idx] 
             end
+            classification_errors[j] = _sum
         end
         
         # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
