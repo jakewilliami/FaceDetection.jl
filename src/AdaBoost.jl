@@ -133,7 +133,7 @@ function learn(
     labels = vcat(ones(Int8, num_pos), ones(Int8, num_neg) * -one(Int8))
     
     num_features = length(features)
-    
+
     feature_indices = Array(1:num_features)
     num_classifiers = isequal(num_classifiers, -1) ? num_features : num_classifiers
     
@@ -141,7 +141,7 @@ function learn(
     # select classifiers
     classifiers = []
     p = Progress(num_classifiers, 1) # minimum update interval: 1 second
-    @threads for t in 1:num_classifiers
+    for t in 1:num_classifiers
         # classification_errors = zeros(length(feature_indices))
         classification_errors = Matrix{Float64}(undef, length(feature_indices), 1)
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
