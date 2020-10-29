@@ -73,7 +73,10 @@ Get score for given integral image array.
 function get_score(feature::HaarLikeObject{I,F}, int_img::Array) where {I, F}
     score = zero(I)
     faceness = zero(I)
-
+    _2f = F(2)
+    _half = F(0.5)
+    _third = F(1.0/3.0)
+    _3f = F(3)
     if feature.feature_type == feature_types.two_vertical
         _first = sum_region(int_img, feature.top_left, (first(feature.top_left) + feature.width, I(round(last(feature.top_left) + feature.height / 2))))
         _second = sum_region(int_img, (first(feature.top_left), I(round(last(feature.top_left) + feature.height / 2))), feature.bottom_right)

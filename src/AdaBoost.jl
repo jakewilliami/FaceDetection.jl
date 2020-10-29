@@ -95,7 +95,6 @@ function learn(
     votes::Matrix{Int8},
     num_classifiers::Integer=-one(Int32)
     )
-    
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
     num_pos = length(filtered_ls(positive_path))
     num_neg = length(filtered_ls(negative_path))
@@ -118,35 +117,52 @@ function learn(
     # select classifiers
     classifiers = HaarLikeObject[]
     p = Progress(num_classifiers, 1) # minimum update interval: 1 second
+    classification_errors = Vector{Float64}(undef, length(feature_indices))
+    
     for t in 1:num_classifiers
-        classification_errors = Matrix{Float64}(undef, length(feature_indices), 1)
-        # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
-        weights = float(weights) / sum(weights)
-        # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
-        classification_errors[:] .= [sum([labels[img_idx] !== votes[feature_indices[j], img_idx] ? weights[img_idx] : zero(Float64) for img_idx in 1:num_imgs]) for j in 1:length(feature_indices)]
-        # map!(view(classification_errors, :), 1:length(feature_indices)) do j
-        #     sum(1:num_imgs) do img_idx
-        #         labels[img_idx] !== votes[feature_indices[j], img_idx] ? weights[img_idx] : zero(Float64)
-        #     end
-        # end
+        # classification_errors = zeros(length(feature_indices))
+        #classification_errors = Matrix{Float64}(undef, length(feature_indices), 1)
 
+        # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
+        inv_sumweights = inv(sum(weights))
+        weights .*= inv_sumweights
+        # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
+        
+        for j in 1:length(feature_indices)
+            _sum = sum(1:num_imgs) do img_idx
+                _bool = (labels[img_idx] !== votes[feature_indices[j], img_idx])
+                _bool*weights[img_idx] 
+            end
+            classification_errors[j] = _sum
+        end
+        
         # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
         best_error, min_error_idx = findmin(classification_errors)
         best_feature_idx = feature_indices[min_error_idx]
         best_feature = features[best_feature_idx]
 
         # set feature weight
-        feature_weight = 0.5 * log((1 - best_error) / best_error) # β
+        best_feature = features[best_feature_idx]
+        feature_weight = β(best_error) # β
         best_feature.weight = feature_weight
 
         classifiers = push!(classifiers, best_feature)
 
+        sqrt_best_error = @fastmath(sqrt(best_error / (one(best_error) - best_error)))
+        inv_sqrt_best_error = @fastmath(sqrt((one(best_error) - best_error)/best_error))
         # update image weights $w_{t+1,i}=w_{t,i}\beta_{t}^{1-e_i}$
-        weights .= [labels[i] !== votes[best_feature_idx, i] ? weights[i] * sqrt((1 - best_error) / best_error) : weights[i] * sqrt(best_error / (1 - best_error)) for i in 1:num_imgs]
+        
+        @inbounds for i in 1:num_imgs
+            if labels[i] !== votes[best_feature_idx, i] 
+                weights[i] *= inv_sqrt_best_error
+            else
+                weights[i] *= sqrt_best_error
+            end
+        end
 
         # remove feature (a feature can't be selected twice)
         filter!(e -> e ∉ best_feature_idx, feature_indices) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`
-        
+        resize!(classification_errors,length(feature_indices))
         next!(p) # increment progress bar
     end
     
@@ -156,33 +172,12 @@ function learn(
     
 end
 
-"""
-    learn(
-        positive_iis::AbstractArray,
-        negative_iis::AbstractArray,
-        num_classifiers::Int64=-1,
-        min_feature_width::Int64=1,
-        max_feature_width::Int64=-1,
-        min_feature_height::Int64=1,
-        max_feature_height::Int64=-1
-    ) ->::Array{HaarLikeObject,1}
+function β(err::T)::T where T
+    _1=one(err)
+    _half = T(0.5)
+    @fastmath(_half*log((_1 - err) / err))
+end
 
-The boosting algorithm for learning a query online.  T hypotheses are constructed, each using a single feature.
-The final hypothesis is a weighted linear combination of the T hypotheses, where the weights are inversely proportional to the training errors.
-This function selects a set of classifiers. Iteratively takes the best classifiers based on a weighted error.
-
-# Arguments
-
-- `positive_iis::AbstractArray`: List of positive integral image examples
-- `negative_iis::AbstractArray`: List of negative integral image examples
-- `num_classifiers::Integer`: Number of classifiers to select. -1 will use all classifiers
-- `min_feature_width::Integer`: the minimum width of the feature
-- `max_feature_width::Integer`: the maximum width of the feature
-- `min_feature_height::Integer`: the minimum height of the feature
-- `max_feature_width::Integer`: the maximum height of the feature
-
-# Returns `classifiers::Array{HaarLikeObject, 1}`: List of selected features
-"""
 function learn(
     positive_path::AbstractString,
     negative_path::AbstractString,
