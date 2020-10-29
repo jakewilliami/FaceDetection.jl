@@ -16,6 +16,63 @@ using Base.Threads: @threads
 using Base.Iterators: partition
 using ProgressMeter: @showprogress, Progress, next!
 
+function get_feature_votes(
+    positive_path::AbstractString,
+    negative_path::AbstractString,
+    num_classifiers::Integer=-1,
+    min_feature_width::Integer=1,
+    max_feature_width::Integer=-1,
+    min_feature_height::Integer=1,
+    max_feature_height::Integer=-1;
+    scale::Bool = false,
+    scale_to::Tuple = (200, 200)
+    )
+
+    # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
+    positive_files = filtered_ls(positive_path)
+    negative_files = filtered_ls(negative_path)
+    image_files = vcat(positive_files, negative_files)
+    
+    num_pos = length(positive_files)
+    num_neg = length(negative_files)
+    num_imgs = num_pos + num_neg
+    
+    # get image height and width
+    temp_image = load_image(rand(positive_files), scale=scale, scale_to=scale_to)
+    img_height, img_width = size(temp_image)
+    temp_image = nothing # unload temporary image
+    
+    # Maximum feature width and height default to image width and height
+    max_feature_height = isequal(max_feature_height, -1) ? img_height : max_feature_height
+    max_feature_width = isequal(max_feature_width, -1) ? img_height : max_feature_width
+    
+    # Create features for all sizes and locations
+    features = create_features(img_height, img_width, min_feature_width, max_feature_width, min_feature_height, max_feature_height)
+    num_features = length(features)
+    num_classifiers = isequal(num_classifiers, -1) ? num_features : num_classifiers
+    
+    # create an empty array with dimensions (num_imgs, numFeautures)
+    votes = Matrix{Int8}(undef, num_features, num_imgs)
+    
+    notify_user("Loading images ($(num_pos) positive and $(num_neg) negative images) and calculating their scores...")
+    p = Progress(length(image_files), 1) # minimum update interval: 1 second
+    num_processed = 0
+    batch_size = 10
+    # get votes for images
+    map(partition(image_files, batch_size)) do batch
+        ii_imgs = load_image.(batch; scale=scale, scale_to=scale_to)
+        @threads for t in 1:length(batch)
+            # votes[:, num_processed+t] .= get_vote.(features, Ref(ii_imgs[t]))
+            map!(f -> get_vote(f, ii_imgs[t]), view(votes, :, num_processed + t), features)
+            next!(p) # increment progress bar
+        end
+        num_processed += length(batch)
+    end
+    print("\n") # for a new line after the progress bar
+    
+    return votes, features
+end
+
 #=
     learn(
         positive_iis::AbstractArray,
@@ -46,65 +103,27 @@ This function selects a set of classifiers. Iteratively takes the best classifie
 function learn(
     positive_path::AbstractString,
     negative_path::AbstractString,
-    num_classifiers::Integer=-1,
-    min_feature_width::Integer=1,
-    max_feature_width::Integer=-1,
-    min_feature_height::Integer=1,
-    max_feature_height::Integer=-1;
-    scale::Bool = false,
-    scale_to::Tuple = (200, 200)
-)::Array{HaarLikeObject,1}
-
+    features::AbstractArray,
+    votes::AbstractArray,
+    num_classifiers::Integer=-1
+    )
+    
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
-    positive_files = filtered_ls(positive_path)
-    negative_files = filtered_ls(negative_path)
-    image_files = vcat(positive_files, negative_files)
-    
-    num_pos = length(positive_files)
-    num_neg = length(negative_files)
+    num_pos = length(filtered_ls(positive_path))
+    num_neg = length(filtered_ls(negative_path))
     num_imgs = num_pos + num_neg
-    
-    # get image height and width
-    temp_image = load_image(rand(positive_files), scale=scale, scale_to=scale_to)
-    img_height, img_width = size(temp_image)
-    temp_image = nothing # unload temporary image
-    
-    # Maximum feature width and height default to image width and height
-    max_feature_height = isequal(max_feature_height, -1) ? img_height : max_feature_height
-    max_feature_width = isequal(max_feature_width, -1) ? img_height : max_feature_width
-    
+
     # Initialise weights $w_{1,i} = \frac{1}{2m}, \frac{1}{2l}$, for $y_i=0,1$ for negative and positive examples respectively
     pos_weights = ones(num_pos) / (2 * num_pos)
     neg_weights = ones(num_neg) / (2 * num_neg)
-    
+
     # Concatenate positive and negative weights into one `weights` array
     weights = vcat(pos_weights, neg_weights)
     labels = vcat(ones(Int8, num_pos), ones(Int8, num_neg) * -one(Int8))
     
-    # Create features for all sizes and locations
-    features = create_features(img_height, img_width, min_feature_width, max_feature_width, min_feature_height, max_feature_height)
     num_features = length(features)
     feature_indices = Array(1:num_features)
     num_classifiers = isequal(num_classifiers, -1) ? num_features : num_classifiers
-    
-    # create an empty array with dimensions (num_imgs, numFeautures)
-    votes = Matrix{Int8}(undef, num_features, num_imgs)
-    
-    notify_user("Loading images ($(num_pos) positive and $(num_neg) negative images) and calculating their scores...")
-    p = Progress(length(image_files), 1) # minimum update interval: 1 second
-    num_processed = 0
-    batch_size = 10
-    # get votes for images
-    map(partition(image_files, batch_size)) do batch
-        ii_imgs = load_image.(batch; scale=scale, scale_to=scale_to)
-        @threads for t in 1:length(batch)
-            # votes[:, num_processed+t] .= get_vote.(features, Ref(ii_imgs[t]))
-            map!(f -> get_vote(f, ii_imgs[t]), view(votes, :, num_processed + t), features)
-            next!(p) # increment progress bar
-        end
-        num_processed += length(batch)
-    end
-    print("\n") # for a new line after the progress bar
     
     notify_user("Selecting classifiers...")
     # select classifiers
@@ -145,6 +164,33 @@ function learn(
     print("\n") # for a new line after the progress bar
     
     return classifiers
+    
+end
+function learn(
+    positive_path::AbstractString,
+    negative_path::AbstractString,
+    num_classifiers::Integer=-1,
+    min_feature_width::Integer=1,
+    max_feature_width::Integer=-1,
+    min_feature_height::Integer=1,
+    max_feature_height::Integer=-1;
+    scale::Bool = false,
+    scale_to::Tuple = (200, 200)
+)::Array{HaarLikeObject,1}
+    
+    votes, features = get_feature_votes(
+        positive_path,
+        negative_path,
+        num_classifiers,
+        min_feature_width,
+        max_feature_width,
+        min_feature_height,
+        max_feature_height,
+        scale = scale,
+        scale_to = scale_to
+    )
+    
+    return learn(positive_path, negative_path, features, votes, num_classifiers)
 end
 
 #=

@@ -12,7 +12,7 @@ Adapted from https://github.com/Simon-Hohberg/Viola-Jones/
 
 println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
 
-include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl"))
+include(joinpath(dirname(@__DIR__), "src", "FaceDetection.jl"))
 
 using .FaceDetection
 const FD = FaceDetection
@@ -33,14 +33,16 @@ function main(;
 	
 	max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = determine_feature_size(pos_testing_path, neg_testing_path; scale = scale, scale_to = scale_to)
 	img_size = scale ? scale_to : min_size_img
-	data_file = joinpath(dirname(@__FILE__), "data", "haar-like_features_c$(num_classifiers)_$(img_size)")
+	img_width, img_height = min_size_img
+	data_file = joinpath(@__DIR__, "data", "feature_votes_$(img_size)")
 	
 	if ! isfile(data_file)
-		error(throw("You do not have a data file.  Ensure you run \"write.jl\" to obtain your Haar-like features before running this script/"))
+		error(throw("You do not have a data file.  Ensure you run \"write.jl\" to obtain your feature votes before running this programme."))
 	end
 
 	# read classifiers from file
-	classifiers = deserialize(data_file)
+	votes, features = deserialize(data_file)
+	classifiers = FD.learn(pos_training_path, neg_training_path, features, votes, num_classifiers)
 
 	FD.notify_user("Testing selected classifiers...")
 	num_faces = length(filtered_ls(pos_testing_path))

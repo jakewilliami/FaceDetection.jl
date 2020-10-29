@@ -12,7 +12,7 @@ Adapted from https://github.com/Simon-Hohberg/Viola-Jones/
 
 println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
 
-include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl"))
+include(joinpath(dirname(@__DIR__), "src", "FaceDetection.jl"))
 
 using .FaceDetection
 const FD = FaceDetection
@@ -45,12 +45,13 @@ function main(;
 	end
 
 	# classifiers are haar like features
-	classifiers = FD.learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width; scale = scale, scale_to = scale_to)
+	votes = FD.get_feature_votes(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width; scale = scale, scale_to = scale_to)
+	
 
 	# write classifiers to file
 	img_size = scale ? scale_to : min_size_img
-	data_file = joinpath(dirname(@__FILE__), "data", "haar-like_features_c$(num_classifiers)_$(img_size)")
-	serialize(data_file, classifiers)
+	data_file = joinpath(@__DIR__, "data", "feature_votes_$(img_size)")
+	serialize(data_file, votes)
 end
 
 @time main(smart_choose_feats=true, scale=true, scale_to=(20, 20))
