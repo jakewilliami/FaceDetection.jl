@@ -74,41 +74,42 @@ function get_score(feature::HaarLikeObject{I,F}, int_img::Array) where {I, F}
     score = zero(I)
     faceness = zero(I)
     _2f = F(2)
-    _half = F(0.5)
-    _third = F(1.0/3.0)
     _3f = F(3)
+    _half = F(0.5)
+    _one_third = F(1.0 / 3.0)
+    
     if feature.feature_type == feature_types.two_vertical
         _first = sum_region(int_img, feature.top_left, (first(feature.top_left) + feature.width, I(round(last(feature.top_left) + feature.height / 2))))
-        _second = sum_region(int_img, (first(feature.top_left), I(round(last(feature.top_left) + feature.height / 2))), feature.bottom_right)
-        score = _first - _second
+        second = sum_region(int_img, (first(feature.top_left), I(round(last(feature.top_left) + feature.height / 2))), feature.bottom_right)
+        score = _first - second
         faceness = I(1)
     elseif feature.feature_type == feature_types.two_horizontal
         _first = sum_region(int_img, feature.top_left, (I(round(first(feature.top_left) + feature.width / 2)), last(feature.top_left) + feature.height))
-        _second = sum_region(int_img, (I(round(first(feature.top_left) + feature.width / 2)), last(feature.top_left)), feature.bottom_right)
-        score = _first - _second
+        second = sum_region(int_img, (I(round(first(feature.top_left) + feature.width / 2)), last(feature.top_left)), feature.bottom_right)
+        score = _first - second
         faceness = I(2)
     elseif feature.feature_type == feature_types.three_horizontal
         _first = sum_region(int_img, feature.top_left, (I(round(first(feature.top_left) + feature.width / 3)), last(feature.top_left) + feature.height))
-        _second = sum_region(int_img, (I(round(first(feature.top_left) + feature.width / 3)), last(feature.top_left)), (I(round(first(feature.top_left) + 2 * feature.width / 3)), last(feature.top_left) + feature.height))
+        second = sum_region(int_img, (I(round(first(feature.top_left) + feature.width / 3)), last(feature.top_left)), (I(round(first(feature.top_left) + 2 * feature.width / 3)), last(feature.top_left) + feature.height))
         third = sum_region(int_img, (I(round(first(feature.top_left) + 2 * feature.width / 3)), last(feature.top_left)), feature.bottom_right)
-        score = _first - _second + third
+        score = _first - second + third
         faceness = I(3)
     elseif feature.feature_type == feature_types.three_vertical
         _first = sum_region(int_img, feature.top_left, (first(feature.bottom_right), I(round(last(feature.top_left) + feature.height / 3))))
-        _second = sum_region(int_img, (first(feature.top_left), I(round(last(feature.top_left) + feature.height / 3))), (first(feature.bottom_right), I(round(last(feature.top_left) + 2 * feature.height / 3))))
+        second = sum_region(int_img, (first(feature.top_left), I(round(last(feature.top_left) + feature.height / 3))), (first(feature.bottom_right), I(round(last(feature.top_left) + 2 * feature.height / 3))))
         third = sum_region(int_img, (first(feature.top_left), I(round(last(feature.top_left) + 2 * feature.height / 3))), feature.bottom_right)
-        score = _first - _second + third
+        score = _first - second + third
         faceness  = I(4)
     elseif feature.feature_type == feature_types.four
         # top left area
         _first = sum_region(int_img, feature.top_left, (I(round(first(feature.top_left) + feature.width / 2)), I(round(last(feature.top_left) + feature.height / 2))))
         # top right area
-        _second = sum_region(int_img, (I(round(first(feature.top_left) + feature.width / 2)), last(feature.top_left)), (first(feature.bottom_right), I(round(last(feature.top_left) + feature.height / 2))))
+        second = sum_region(int_img, (I(round(first(feature.top_left) + feature.width / 2)), last(feature.top_left)), (first(feature.bottom_right), I(round(last(feature.top_left) + feature.height / 2))))
         # bottom left area
         third = sum_region(int_img, (first(feature.top_left), I(round(last(feature.top_left) + feature.height / 2))), (I(round(first(feature.top_left) + feature.width / 2)), last(feature.bottom_right)))
         # bottom right area
         fourth = sum_region(int_img, (I(round(first(feature.top_left) + feature.width / 2)), I(round(last(feature.top_left) + feature.height / 2))), feature.bottom_right)
-        score = _first - _second - third + fourth
+        score = _first - second - third + fourth
         faceness = I(5)
     end
     
