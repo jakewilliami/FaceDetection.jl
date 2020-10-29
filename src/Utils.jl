@@ -9,23 +9,7 @@
 using Images: save, load, Colors, clamp01nan, Gray, imresize
 using ImageDraw: draw, Polygon, Point
 
-#=
-    displaymatrix(M::AbstractArray) -> AbstractString
-
-A function to show a big matrix on one console screen (similar to default `print` of numpy arrays in Python).
-
-# Arguments
-
-- `M::AbstractArray`: Some array
-
-# Returns
-- `A::AbstractString`: A nice array to print
-=#
-function displaymatrix(M::AbstractArray)
-    return show(IOContext(stdout, :limit => true, :compact => true, :short => true), "text/plain", M); print("\n")
-end
-
-#=
+"""
     notify_user(message::AbstractString) -> AbstractString
 
 A function to pretty print a message to the user
@@ -36,12 +20,12 @@ A function to pretty print a message to the user
 
 # Returns
 - `A::AbstractString`: A message to print to the user
-=#
+"""
 function notify_user(message::AbstractString)
     return println("\033[1;34m===>\033[0;38m\033[1;38m\t$message\033[0;38m")
 end
 
-#=
+"""
     filtered_ls(path::AbstractString) -> Array{String, 1}
     
 A function to filter the output of readdir
@@ -53,12 +37,12 @@ A function to filter the output of readdir
 # Returns
 
 - `Array{String, 1}`: An array of filtered files in the path
-=#
+"""
 function filtered_ls(path::AbstractString)::Array{String, 1}
     return filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(path, join=true, sort=false))
 end
 
-#=
+"""
     load_image(image_path::AbstractString) -> AbstractArray
 Loads an image as gray_scale
 
@@ -68,7 +52,7 @@ Loads an image as gray_scale
 # Returns
 
 `AbstractArray`: An array of floating point values representing the image
-=#
+"""
 function load_image(
     image_path::AbstractString;
     scale::Bool=false,
@@ -77,15 +61,12 @@ function load_image(
     
     img = load(image_path)
     img = convert(Array{Float64}, Gray.(img))
-    
-    if scale
-        img = imresize(img, scale_to)
-    end
+    img = scale ? imresize(img, scale_to) : img
     
     return to_integral_image(img)
 end
 
-#=
+"""
     determine_feature_size(
         pos_training_path::AbstractString,
         neg_training_path::AbstractString
@@ -105,12 +86,12 @@ Takes images and finds the best feature size for the image size.
 - `min_feature_height::Integer`: the minimum height of the feature
 - `min_feature_width::Integer`: the minimum width of the feature
 - `min_size_img::Tuple{Integer, Integer}`: the minimum-sized image in the image directories
-=#
+"""
 function determine_feature_size(
     pos_training_path::AbstractString,
     neg_training_path::AbstractString;
     scale::Bool=false,
-    scale_to::Tuple=(200,200)
+    scale_to::Tuple=(200, 200)
 )
 
     min_feature_height = 0
@@ -158,15 +139,11 @@ That is, the final strong classifier is $h(x)=\begin{cases}1&\text{if }\sum_{t=1
     1       ⟺ sum of classifier votes > 0
     0       otherwise
 =#
-function ensemble_vote(int_img::AbstractArray, classifiers::AbstractArray)
-    # evidence = sum([max(get_vote(c[1], image), 0.) * c[2] for c in classifiers])
-    # weightedSum = sum([c[2] for c in classifiers])
-    # return evidence >= (weightedSum / 2) ? 1 : -1
-    
-    return sum(c -> get_vote(c, int_img), classifiers) >= 0 ? one(Int8) : zero(Int8)
+function ensemble_vote(int_img::Matrix, classifiers::Array{HaarLikeObject, 1})::Int8
+    return sum(c -> get_vote(c, int_img), classifiers) ≥ zero(Int8) ? one(Int8) : zero(Int8)
 end
 
-#=
+"""
     ensemble_vote_all(int_imgs::AbstractArray, classifiers::AbstractArray) -> AbstractArray
 Classifies given integral image (Abstract Array) using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
 
@@ -177,21 +154,16 @@ Classifies given integral image (Abstract Array) using given classifiers.  I.e.,
 # Returns
 
 `votes::AbstractArray`: A list of assigned votes (see ensemble_vote).
-=#
+"""
 function ensemble_vote_all(
     image_path::AbstractString,
-    classifiers::AbstractArray;
+    classifiers::Array{HaarLikeObject, 1};
     scale::Bool=false,
-    scale_to::Tuple=(200,200)
+    scale_to::Tuple=(200, 200)
     )::Array{Int8, 1}
     
-    return votes = map(i -> ensemble_vote(load_image(i, scale=scale, scale_to=scale_to), classifiers), filtered_ls(image_path))
+    return [ensemble_vote(load_image(i, scale=scale, scale_to=scale_to), classifiers) for i in filtered_ls(image_path)]
 end
-
-
-# function ensemble_vote_all(int_imgs::AbstractArray, classifiers::AbstractArray)
-#     return Array(map(i -> ensemble_vote(i, classifiers), int_imgs))
-# end
 
 #=
     get_faceness(feature, int_img::AbstractArray) -> Number
@@ -207,10 +179,10 @@ Get facelikeness for a given feature.
 
 - `score::Number`: Score for given feature
 =#
-function get_faceness(feature, int_img::AbstractArray)
-        score, faceness = get_score(feature, int_img)
-        
-        return (feature.weight * score) < (feature.polarity * feature.threshold) ? faceness : 0
+function get_faceness(feature::HaarLikeObject, int_img::Matrix{T}) where T
+    score, faceness = get_score(feature, int_img)
+    
+    return (feature.weight * score) < (feature.polarity * feature.threshold) ? faceness : zero(T)
 end
 
 #=

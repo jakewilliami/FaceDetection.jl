@@ -18,27 +18,31 @@ using ProgressMeter: @showprogress, Progress, next!
 function get_feature_votes(
     positive_path::AbstractString,
     negative_path::AbstractString,
-    num_classifiers::Integer=Int32(-1),
-    min_feature_width::Integer=Int32(1),
-    max_feature_width::Integer=Int32(-1),
-    min_feature_height::Integer=Int32(1),
-    max_feature_height::Integer=Int32(-1);
+    num_classifiers::Integer=-one(Int32),
+    min_feature_width::Integer=one(Int32),
+    max_feature_width::Integer=-one(Int32),
+    min_feature_height::Integer=one(Int32),
+    max_feature_height::Integer=-one(Int32);
     scale::Bool = false,
     scale_to::Tuple = (Int32(200), Int32(200))
-    )
+    )::Tuple{Matrix{Int8}, Array{HaarLikeObject, 1}} # return a matrix of votes and a list of features
 
     #this transforms everything to maintain type stability
-    s1 ,s2 = scale_to
+    s₁, s₂ = scale_to
     min_feature_width,
     max_feature_width,
     min_feature_height,
-    max_feature_height,s1,s2 = promote(min_feature_width,
-    max_feature_width,
-    min_feature_height,
-    max_feature_height,s1,s2)
-    scale_to = (s1,s2)
+    max_feature_height, s₁, s₂ = promote(
+        min_feature_width,
+        max_feature_width,
+        min_feature_height,
+        max_feature_height,
+        s₁,
+        s₂)
+    scale_to = (s₁, s₂)
 
     _Int = typeof(max_feature_width)
+    
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
     positive_files = filtered_ls(positive_path)
     negative_files = filtered_ls(negative_path)
@@ -73,8 +77,8 @@ function get_feature_votes(
     map(partition(image_files, batch_size)) do batch
         ii_imgs = load_image.(batch; scale=scale, scale_to=scale_to)
         @threads for t in 1:length(batch)
-            # votes[:, num_processed+t] .= get_vote.(features, Ref(ii_imgs[t]))
-            map!(f -> get_vote(f, ii_imgs[t]), view(votes, :, num_processed + t), features)
+            votes[:, num_processed + t] .= get_vote.(features, Ref(ii_imgs[t]))
+            # map!(f -> get_vote(f, ii_imgs[t]), view(votes, :, num_processed + t), features)
             next!(p) # increment progress bar
         end
         num_processed += length(batch)
@@ -82,6 +86,74 @@ function get_feature_votes(
     print("\n") # for a new line after the progress bar
     
     return votes, features
+end
+
+function learn(
+    positive_path::AbstractString,
+    negative_path::AbstractString,
+    features::Array{HaarLikeObject, 1},
+    votes::Matrix{Int8},
+    num_classifiers::Integer=-one(Int32)
+    )::Array{HaarLikeObject, 1}
+    
+    # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
+    num_pos = length(filtered_ls(positive_path))
+    num_neg = length(filtered_ls(negative_path))
+    num_imgs = num_pos + num_neg
+
+    # Initialise weights $w_{1,i} = \frac{1}{2m}, \frac{1}{2l}$, for $y_i=0,1$ for negative and positive examples respectively
+    pos_weights = ones(num_pos) / (2 * num_pos)
+    neg_weights = ones(num_neg) / (2 * num_neg)
+
+    # Concatenate positive and negative weights into one `weights` array
+    weights = vcat(pos_weights, neg_weights)
+    labels = vcat(ones(Int8, num_pos), ones(Int8, num_neg) * -one(Int8))
+    
+    num_features = length(features)
+
+    feature_indices = Array(1:num_features)
+    num_classifiers = isequal(num_classifiers, -1) ? num_features : num_classifiers
+    
+    notify_user("Selecting classifiers...")
+    # select classifiers
+    classifiers = HaarLikeObject[]
+    p = Progress(num_classifiers, 1) # minimum update interval: 1 second
+    for t in 1:num_classifiers
+        classification_errors = Matrix{Float64}(undef, length(feature_indices), 1)
+        # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
+        weights = float(weights) / sum(weights)
+        # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
+        classification_errors[:] .= [sum([labels[img_idx] !== votes[feature_indices[j], img_idx] ? weights[img_idx] : zero(Float64) for img_idx in 1:num_imgs]) for j in 1:length(feature_indices)]
+        # map!(view(classification_errors, :), 1:length(feature_indices)) do j
+        #     sum(1:num_imgs) do img_idx
+        #         labels[img_idx] !== votes[feature_indices[j], img_idx] ? weights[img_idx] : zero(Float64)
+        #     end
+        # end
+
+        # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
+        best_error, min_error_idx = findmin(classification_errors)
+        best_feature_idx = feature_indices[min_error_idx]
+        best_feature = features[best_feature_idx]
+
+        # set feature weight
+        feature_weight = 0.5 * log((1 - best_error) / best_error) # β
+        best_feature.weight = feature_weight
+
+        classifiers = push!(classifiers, best_feature)
+
+        # update image weights $w_{t+1,i}=w_{t,i}\beta_{t}^{1-e_i}$
+        weights .= [labels[i] !== votes[best_feature_idx, i] ? weights[i] * sqrt((1 - best_error) / best_error) : weights[i] * sqrt(best_error / (1 - best_error)) for i in 1:num_imgs]
+
+        # remove feature (a feature can't be selected twice)
+        filter!(e -> e ∉ best_feature_idx, feature_indices) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`
+        
+        next!(p) # increment progress bar
+    end
+    
+    print("\n") # for a new line after the progress bar
+    
+    return classifiers
+    
 end
 
 """
@@ -114,82 +186,14 @@ This function selects a set of classifiers. Iteratively takes the best classifie
 function learn(
     positive_path::AbstractString,
     negative_path::AbstractString,
-    features::AbstractArray,
-    votes::AbstractArray,
-    num_classifiers::Integer=-1
-    )
-    
-    # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
-    num_pos = length(filtered_ls(positive_path))
-    num_neg = length(filtered_ls(negative_path))
-    num_imgs = num_pos + num_neg
-
-    # Initialise weights $w_{1,i} = \frac{1}{2m}, \frac{1}{2l}$, for $y_i=0,1$ for negative and positive examples respectively
-    pos_weights = ones(num_pos) / (2 * num_pos)
-    neg_weights = ones(num_neg) / (2 * num_neg)
-
-    # Concatenate positive and negative weights into one `weights` array
-    weights = vcat(pos_weights, neg_weights)
-    labels = vcat(ones(Int8, num_pos), ones(Int8, num_neg) * -one(Int8))
-    
-    num_features = length(features)
-
-    feature_indices = Array(1:num_features)
-    num_classifiers = isequal(num_classifiers, -1) ? num_features : num_classifiers
-    
-    notify_user("Selecting classifiers...")
-    # select classifiers
-    classifiers = []
-    p = Progress(num_classifiers, 1) # minimum update interval: 1 second
-    for t in 1:num_classifiers
-        # classification_errors = zeros(length(feature_indices))
-        classification_errors = Matrix{Float64}(undef, length(feature_indices), 1)
-        # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
-        weights = float(weights) / sum(weights)
-        # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
-        map!(view(classification_errors, :), 1:length(feature_indices)) do j
-            sum(1:num_imgs) do img_idx
-                labels[img_idx] ≠ votes[feature_indices[j], img_idx] ? weights[img_idx] : zero(Float64)
-            end
-        end
-
-        # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
-        best_error, min_error_idx = findmin(classification_errors)
-        best_feature_idx = feature_indices[min_error_idx]
-
-        # set feature weight
-        best_feature = features[best_feature_idx]
-        feature_weight = 0.5 * log((1 - best_error) / best_error) # β
-        best_feature.weight = feature_weight
-
-        classifiers = push!(classifiers, best_feature)
-
-        # update image weights $w_{t+1,i}=w_{t,i}\beta_{t}^{1-e_i}$
-        weights = map(i -> labels[i] ≠ votes[best_feature_idx, i] ? weights[i] * sqrt((1 - best_error) / best_error) : weights[i] * sqrt(best_error / (1 - best_error)), 1:num_imgs)
-
-        # remove feature (a feature can't be selected twice)
-        filter!(e -> e ∉ best_feature_idx, feature_indices) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`
-        
-        next!(p) # increment progress bar
-    end
-    
-    print("\n") # for a new line after the progress bar
-    
-    return classifiers
-    
-end
-
-function learn(
-    positive_path::AbstractString,
-    negative_path::AbstractString,
-    num_classifiers::Integer=-1,
-    min_feature_width::Integer=1,
-    max_feature_width::Integer=-1,
-    min_feature_height::Integer=1,
-    max_feature_height::Integer=-1;
+    num_classifiers::Int64=-1,
+    min_feature_width::Int64=1,
+    max_feature_width::Int64=-1,
+    min_feature_height::Int64=1,
+    max_feature_height::Int64=-1;
     scale::Bool = false,
     scale_to::Tuple = (200, 200)
-)::Array{HaarLikeObject,1}
+)::Array{HaarLikeObject, 1}
     
     votes, features = get_feature_votes(
         positive_path,
@@ -232,15 +236,15 @@ Iteratively creates the Haar-like feautures
 - `features::AbstractArray`: an array of Haar-like features found for an image
 """
 function create_features(
-    img_height::Integer,
-    img_width::Integer,
-    min_feature_width::Integer,
-    max_feature_width::Integer,
-    min_feature_height::Integer,
-    max_feature_height::Integer
-)
+    img_height::Int64,
+    img_width::Int64,
+    min_feature_width::Int64,
+    max_feature_width::Int64,
+    min_feature_height::Int64,
+    max_feature_height::Int64
+)::Array{HaarLikeObject, 1}
     notify_user("Creating Haar-like features...")
-    features = []
+    features = HaarLikeObject[]
     
     if img_width < max_feature_width || img_height < max_feature_height
         error("""
@@ -249,10 +253,10 @@ function create_features(
     end
     
     for feature in values(feature_types) # (feature_types are just tuples)
-        feature_start_width = max(min_feature_width, feature[1])
-        for feature_width in range(feature_start_width, stop=max_feature_width, step=feature[1])
-            feature_start_height = max(min_feature_height, feature[2])
-            for feature_height in range(feature_start_height, stop=max_feature_height, step=feature[2])
+        feature_start_width = max(min_feature_width, first(feature))
+        for feature_width in range(feature_start_width, stop=max_feature_width, step=first(feature))
+            feature_start_height = max(min_feature_height, last(feature))
+            for feature_height in range(feature_start_height, stop=max_feature_height, step=last(feature))
                 for x in 1:(img_width - feature_width)
                     for y in 1:(img_height - feature_height)
                         push!(features, HaarLikeObject(feature, (x, y), feature_width, feature_height, 0, 1))
