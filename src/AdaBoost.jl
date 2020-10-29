@@ -18,27 +18,31 @@ using ProgressMeter: @showprogress, Progress, next!
 function get_feature_votes(
     positive_path::AbstractString,
     negative_path::AbstractString,
-    num_classifiers::Integer=Int32(-1),
-    min_feature_width::Integer=Int32(1),
-    max_feature_width::Integer=Int32(-1),
-    min_feature_height::Integer=Int32(1),
-    max_feature_height::Integer=Int32(-1);
+    num_classifiers::Integer=-one(Int32),
+    min_feature_width::Integer=one(Int32),
+    max_feature_width::Integer=-one(Int32),
+    min_feature_height::Integer=one(Int32),
+    max_feature_height::Integer=-one(Int32);
     scale::Bool = false,
     scale_to::Tuple = (Int32(200), Int32(200))
     )
 
     #this transforms everything to maintain type stability
-    s1 ,s2 = scale_to
+    s₁, s₂ = scale_to
     min_feature_width,
     max_feature_width,
     min_feature_height,
-    max_feature_height,s1,s2 = promote(min_feature_width,
-    max_feature_width,
-    min_feature_height,
-    max_feature_height,s1,s2)
-    scale_to = (s1,s2)
+    max_feature_height, s₁, s₂ = promote(
+        min_feature_width,
+        max_feature_width,
+        min_feature_height,
+        max_feature_height,
+        s₁,
+        s₂)
+    scale_to = (s₁, s₂)
 
     _Int = typeof(max_feature_width)
+    
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
     positive_files = filtered_ls(positive_path)
     negative_files = filtered_ls(negative_path)
@@ -73,8 +77,8 @@ function get_feature_votes(
     map(partition(image_files, batch_size)) do batch
         ii_imgs = load_image.(batch; scale=scale, scale_to=scale_to)
         @threads for t in 1:length(batch)
-            # votes[:, num_processed+t] .= get_vote.(features, Ref(ii_imgs[t]))
-            map!(f -> get_vote(f, ii_imgs[t]), view(votes, :, num_processed + t), features)
+            votes[:, num_processed + t] .= get_vote.(features, Ref(ii_imgs[t]))
+            # map!(f -> get_vote(f, ii_imgs[t]), view(votes, :, num_processed + t), features)
             next!(p) # increment progress bar
         end
         num_processed += length(batch)
@@ -84,40 +88,12 @@ function get_feature_votes(
     return votes, features
 end
 
-"""
-    learn(
-        positive_iis::AbstractArray,
-        negative_iis::AbstractArray,
-        num_classifiers::Int64=-1,
-        min_feature_width::Int64=1,
-        max_feature_width::Int64=-1,
-        min_feature_height::Int64=1,
-        max_feature_height::Int64=-1
-    ) ->::Array{HaarLikeObject,1}
-
-The boosting algorithm for learning a query online.  T hypotheses are constructed, each using a single feature.
-The final hypothesis is a weighted linear combination of the T hypotheses, where the weights are inversely proportional to the training errors.
-This function selects a set of classifiers. Iteratively takes the best classifiers based on a weighted error.
-
-# Arguments
-
-- `positive_iis::AbstractArray`: List of positive integral image examples
-- `negative_iis::AbstractArray`: List of negative integral image examples
-- `num_classifiers::Integer`: Number of classifiers to select. -1 will use all classifiers
-- `min_feature_width::Integer`: the minimum width of the feature
-- `max_feature_width::Integer`: the maximum width of the feature
-- `min_feature_height::Integer`: the minimum height of the feature
-- `max_feature_width::Integer`: the maximum height of the feature
-
-# Returns `classifiers::Array{HaarLikeObject, 1}`: List of selected features
-"""
 function learn(
     positive_path::AbstractString,
     negative_path::AbstractString,
-    features::AbstractArray,
-    votes::AbstractArray,
-    num_classifiers::Integer=-1
-
+    features::Array{HaarLikeObject, 1},
+    votes::Matrix{Int8},
+    num_classifiers::Integer=-one(Int32)
     )
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
     num_pos = length(filtered_ls(positive_path))
@@ -139,7 +115,7 @@ function learn(
     
     notify_user("Selecting classifiers...")
     # select classifiers
-    classifiers = []
+    classifiers = HaarLikeObject[]
     p = Progress(num_classifiers, 1) # minimum update interval: 1 second
     classification_errors = Vector{Float64}(undef, length(feature_indices))
     
@@ -161,6 +137,7 @@ function learn(
         # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
         best_error, min_error_idx = findmin(classification_errors)
         best_feature_idx = feature_indices[min_error_idx]
+        best_feature = features[best_feature_idx]
 
         # set feature weight
         best_feature = features[best_feature_idx]
@@ -202,14 +179,14 @@ end
 function learn(
     positive_path::AbstractString,
     negative_path::AbstractString,
-    num_classifiers::Integer=-1,
-    min_feature_width::Integer=1,
-    max_feature_width::Integer=-1,
-    min_feature_height::Integer=1,
-    max_feature_height::Integer=-1;
+    num_classifiers::Int64=-1,
+    min_feature_width::Int64=1,
+    max_feature_width::Int64=-1,
+    min_feature_height::Int64=1,
+    max_feature_height::Int64=-1;
     scale::Bool = false,
     scale_to::Tuple = (200, 200)
-)::Array{HaarLikeObject,1}
+)
     
     votes, features = get_feature_votes(
         positive_path,
@@ -252,15 +229,15 @@ Iteratively creates the Haar-like feautures
 - `features::AbstractArray`: an array of Haar-like features found for an image
 """
 function create_features(
-    img_height::Integer,
-    img_width::Integer,
-    min_feature_width::Integer,
-    max_feature_width::Integer,
-    min_feature_height::Integer,
-    max_feature_height::Integer
+    img_height::Int64,
+    img_width::Int64,
+    min_feature_width::Int64,
+    max_feature_width::Int64,
+    min_feature_height::Int64,
+    max_feature_height::Int64
 )
     notify_user("Creating Haar-like features...")
-    features = []
+    features = HaarLikeObject[]
     
     if img_width < max_feature_width || img_height < max_feature_height
         error("""
@@ -269,10 +246,10 @@ function create_features(
     end
     
     for feature in values(feature_types) # (feature_types are just tuples)
-        feature_start_width = max(min_feature_width, feature[1])
-        for feature_width in range(feature_start_width, stop=max_feature_width, step=feature[1])
-            feature_start_height = max(min_feature_height, feature[2])
-            for feature_height in range(feature_start_height, stop=max_feature_height, step=feature[2])
+        feature_start_width = max(min_feature_width, first(feature))
+        for feature_width in range(feature_start_width, stop=max_feature_width, step=first(feature))
+            feature_start_height = max(min_feature_height, last(feature))
+            for feature_height in range(feature_start_height, stop=max_feature_height, step=last(feature))
                 for x in 1:(img_width - feature_width)
                     for y in 1:(img_height - feature_height)
                         push!(features, HaarLikeObject(feature, (x, y), feature_width, feature_height, 0, 1))

@@ -9,6 +9,7 @@ include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl")) # ../s
 using .FaceDetection
 using Test: @testset, @test
 using Suppressor: @suppress
+# using BenchmarkTools: @btime
 
 const main_data_path = joinpath(@__DIR__, "images")
 
@@ -28,12 +29,12 @@ const main_data_path = joinpath(@__DIR__, "images")
     f = rand((0, 1))
     arr = rand(Int, 100, 100)
     @test FaceDetection.HaarLikeObject(a, b, c, d, e, f) isa HaarLikeObject
-    @test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).feature_type isa Tuple{Int, Int}
-    @test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).position isa Tuple{Int, Int}
-    @test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).top_left isa Tuple{Int, Int}
-    @test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).bottom_right isa Tuple{Int, Int}
-    @test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).width isa Int
-    @test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).height isa Int
+    @test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).feature_type isa Tuple{Integer, Integer}
+    @test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).position isa Tuple{Integer, Integer}
+    @test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).top_left isa Tuple{Integer, Integer}
+    @test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).bottom_right isa Tuple{Integer, Integer}
+    @test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).width isa Integer
+    @test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).height isa Integer
     @test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).threshold ∈ [0, 1]
     @test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).polarity ∈ [0, 1]
     @test FaceDetection.HaarLikeObject((1,3), (1,3), 10, 8, 0, 1).weight ∈ [0, 1]
@@ -63,7 +64,7 @@ const main_data_path = joinpath(@__DIR__, "images")
 	end
 	@test isapprox(p, 0.63, atol=1e-1)
 	@test isapprox(n, 0.372, atol=1e-1)
-	random_img = rand(vcat(filtered_ls.([pos_training_path, neg_training_path, pos_testing_path, neg_testing_path])...))
-	@test get_faceness(classifiers[rand(1:length(classifiers))], load_image(random_img)) isa Integer
+	random_img = load_image(rand(vcat(filtered_ls.([pos_training_path, neg_training_path, pos_testing_path, neg_testing_path])...)))
+	@test get_faceness(classifiers[rand(1:length(classifiers))], random_img) isa Real
 	@test determine_feature_size(pos_training_path, neg_training_path) == (10, 10, 8, 8, (19, 19))
 end # end tests
