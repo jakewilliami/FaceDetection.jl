@@ -159,13 +159,15 @@ function learn(
 
         # set feature weight
         best_feature = features[best_feature_idx]
-        feature_weight = 0.5 * log((1 - best_error) / best_error) # β
+        feature_weight = β(best_error) # β
         best_feature.weight = feature_weight
 
         classifiers = push!(classifiers, best_feature)
 
+        sqrt_best_error = @fastmath(sqrt(best_error / (one(best_error) - best_error)))
+
         # update image weights $w_{t+1,i}=w_{t,i}\beta_{t}^{1-e_i}$
-        weights = map(i -> labels[i] ≠ votes[best_feature_idx, i] ? weights[i] * sqrt((1 - best_error) / best_error) : weights[i] * sqrt(best_error / (1 - best_error)), 1:num_imgs)
+        weights = map(i -> labels[i] ≠ votes[best_feature_idx, i] ? weights[i] * sqrt_best_error : weights[i] * sqrt_best_error, 1:num_imgs)
 
         # remove feature (a feature can't be selected twice)
         filter!(e -> e ∉ best_feature_idx, feature_indices) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`
@@ -177,6 +179,12 @@ function learn(
     
     return classifiers
     
+end
+
+function β(err::T)::T where T
+    _1=one(err)
+    _half = T(0.5)
+    @fastmath(_half*log((_1 - err) / err))
 end
 
 function learn(
