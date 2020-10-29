@@ -5,8 +5,6 @@
     =#
 
 
-include("HaarLikeFeature.jl")
-include("IntegralImage.jl")
 
 using Images: save, load, Colors, clamp01nan, Gray, imresize
 using ImageDraw: draw, Polygon, Point
@@ -75,7 +73,7 @@ function load_image(
     image_path::AbstractString;
     scale::Bool=false,
     scale_to::Tuple=(200,200)
-    )::Array{Float64, 2}
+    )::Matrix{Float64}
     
     img = load(image_path)
     img = convert(Array{Float64}, Gray.(img))

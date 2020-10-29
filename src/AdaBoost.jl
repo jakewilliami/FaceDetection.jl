@@ -9,8 +9,7 @@
 # TODO: attentional cascading
 
 # include("HaarLikeFeature.jl")
-include("Utils.jl")
-include("IntegralImage.jl")
+
 
 using Base.Threads: @threads
 using Base.Iterators: partition
