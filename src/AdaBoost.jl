@@ -37,6 +37,7 @@ function get_feature_votes(
     min_feature_height,
     max_feature_height,s1,s2)
     scale_to = (s1,s2)
+
     _Int = typeof(max_feature_width)
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
     positive_files = filtered_ls(positive_path)
@@ -132,6 +133,7 @@ function learn(
     labels = vcat(ones(Int8, num_pos), ones(Int8, num_neg) * -one(Int8))
     
     num_features = length(features)
+    
     feature_indices = Array(1:num_features)
     num_classifiers = isequal(num_classifiers, -1) ? num_features : num_classifiers
     
