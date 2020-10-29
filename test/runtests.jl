@@ -61,8 +61,8 @@ const main_data_path = joinpath(@__DIR__, "images")
 		p = sum(ensemble_vote_all(pos_testing_path, classifiers)) / num_faces
 		n = (num_non_faces - sum(ensemble_vote_all(neg_testing_path, classifiers))) / num_non_faces
 	end
-	@test isapprox(p, 0.63, atol=1e-1)
-	@test isapprox(n, 0.372, atol=1e-1)
+	@test isapprox(p, 0.63, atol=2e-1)
+	@test isapprox(n, 0.372, atol=2e-1)
 	random_img = rand(vcat(filtered_ls.([pos_training_path, neg_training_path, pos_testing_path, neg_testing_path])...))
 	@test get_faceness(classifiers[rand(1:length(classifiers))], load_image(random_img)) isa Integer
 	@test determine_feature_size(pos_training_path, neg_training_path) == (10, 10, 8, 8, (19, 19))
