@@ -20,7 +20,7 @@ struct IntegralArray{T, N, A} <: AbstractArray{T, N}
 	data::A
 end
 
-#=
+"""
 	to_integral_image(img_arr::AbstractArray) -> AbstractArray
 
 Calculates the integral image based on this instance's original image data.
@@ -32,7 +32,7 @@ Calculates the integral image based on this instance's original image data.
 # Returns
 
  - `integral_image_arr::AbstractArray`: Integral image for given image
-=#
+ """
 function to_integral_image(img_arr::AbstractArray{T,N}) where {T,N}
 	array_size = size(img_arr)
     integral_image_arr = Array{Images.accum(eltype(img_arr))}(undef, array_size)
@@ -46,9 +46,9 @@ function to_integral_image(img_arr::AbstractArray{T,N}) where {T,N}
 end
 
 LinearIndices(A::IntegralArray) = Base.LinearFast()
-size(A::IntegralArray) = size(A.data)
-getindex(A::IntegralArray, i::Int...) = A.data[i...]
-getindex(A::IntegralArray, ids::Tuple...) = getindex(A, ids[1]...)
+@inline size(A::IntegralArray) = size(A.data)
+@inline getindex(A::IntegralArray, i::Int...) = A.data[i...]
+@inline getindex(A::IntegralArray, ids::Tuple...) = getindex(A, ids[1]...)
 
 """
 	sum_region(

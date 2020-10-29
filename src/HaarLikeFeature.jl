@@ -58,7 +58,7 @@ end # end structure
         weight = float(one(p1)) #to make a float of the same size
         
 
-        new(feature_type, position, top_left, bottom_right, width, height, threshold, polarity, weight)
+        HaarLikeObject(feature_type, position, top_left, bottom_right, width, height, threshold, polarity, weight)
     end # end constructor
 """
     get_score(feature::HaarLikeObject, int_img::Array) -> Tuple{Number, Number}
@@ -133,7 +133,6 @@ Get vote of this feature for given integral image.
     -1      otherwise
 =#
 function get_vote(feature::HaarLikeObject, int_img::AbstractArray)
-    score = get_score(feature, int_img)[1] # we only care about score here
-
+    score = first(get_score(feature, int_img)) # we only care about score here
     return (feature.weight * score) < (feature.polarity * feature.threshold) ? one(Int8) : -one(Int8)
 end

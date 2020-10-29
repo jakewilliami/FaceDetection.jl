@@ -332,7 +332,7 @@ function get_random_image(
     return file_name
 end
 
-#=
+"""
     scale_box(
         top_left::Tuple{Integer, Integer},
         bottom_right::Tuple{Integer, Integer},
@@ -355,28 +355,28 @@ Scales the bounding box around classifiers if the image we are pasting it on is 
 - `bottom_left::Tuple{Integer, Integer},`: new bottom left of box after scaling
 - `bottom_right::Tuple{Integer, Integer},`: new bottom right of box after scaling
 - `top_right::Tuple{Integer, Integer},`: new top right of box after scaling
-=#
+"""
 function scale_box(
     top_left::Tuple{Integer, Integer},
     bottom_right::Tuple{Integer, Integer},
     genisis_size::Tuple{Integer, Integer},
     img_size::Tuple{Integer, Integer}
 )
-
+    T = typeof(first(top_left))
     image_ratio = (img_size[1]/genisis_size[1], img_size[2]/genisis_size[2])
     
     bottom_left = (top_left[1], bottom_right[2])
     top_right = (bottom_right[1], top_left[2])
     
-    top_left = convert.(Int, round.(top_left .* image_ratio))
-    bottom_right = convert.(Int, round.(bottom_right .* image_ratio))
-    bottom_left = convert.(Int, round.(bottom_left .* image_ratio))
-    top_right = convert.(Int, round.(top_right .* image_ratio))
+    top_left = convert.(T, round.(top_left .* image_ratio))
+    bottom_right = convert.(T, round.(bottom_right .* image_ratio))
+    bottom_left = convert.(T, round.(bottom_left .* image_ratio))
+    top_right = convert.(T, round.(top_right .* image_ratio))
     
     return top_left, bottom_left, bottom_right, top_right
 end
 
-#=
+"""
     generate_validation_image(image_path::AbstractString, classifiers::AbstractArray) -> AbstractArray
     
 Generates a bounding box around the face of a random image.
@@ -389,7 +389,7 @@ Generates a bounding box around the face of a random image.
 # Returns
 
 - `validation_image::AbstractArray`: The new image with a bounding box
-=#
+"""
 function generate_validation_image(image_path::AbstractString, classifiers::Array{HaarLikeObject, 1})
     
     # === THIS FUNCTION IS A WORK IN PROGRESS ===
