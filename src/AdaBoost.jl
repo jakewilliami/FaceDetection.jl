@@ -117,8 +117,8 @@ function learn(
     features::AbstractArray,
     votes::AbstractArray,
     num_classifiers::Integer=-1
+
     )
-    
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
     num_pos = length(filtered_ls(positive_path))
     num_neg = length(filtered_ls(negative_path))
@@ -141,18 +141,23 @@ function learn(
     # select classifiers
     classifiers = []
     p = Progress(num_classifiers, 1) # minimum update interval: 1 second
+    classification_errors = Vector{Float64}(undef, length(feature_indices))
+    
     for t in 1:num_classifiers
         # classification_errors = zeros(length(feature_indices))
-        classification_errors = Matrix{Float64}(undef, length(feature_indices), 1)
+        #classification_errors = Matrix{Float64}(undef, length(feature_indices), 1)
+
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
-        weights = float(weights) / sum(weights)
+        inv_sumweights = 1.0/sum(weights)
+        weights .*= inv_sumweights
         # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
-        map!(view(classification_errors, :), 1:length(feature_indices)) do j
+        
+        map!(classification_errors, 1:length(feature_indices)) do j
             sum(1:num_imgs) do img_idx
-                labels[img_idx] ≠ votes[feature_indices[j], img_idx] ? weights[img_idx] : zero(Float64)
+                labels[img_idx] ≠ votes[feature_indices[j], img_idx] ? weights[img_idx] : zero(eltype(classification_errors))
             end
         end
-
+        
         # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
         best_error, min_error_idx = findmin(classification_errors)
         best_feature_idx = feature_indices[min_error_idx]
@@ -165,13 +170,20 @@ function learn(
         classifiers = push!(classifiers, best_feature)
 
         sqrt_best_error = @fastmath(sqrt(best_error / (one(best_error) - best_error)))
-
+        inv_sqrt_best_error = @fastmath(sqrt((one(best_error) - best_error)/best_error))
         # update image weights $w_{t+1,i}=w_{t,i}\beta_{t}^{1-e_i}$
-        weights = map(i -> labels[i] ≠ votes[best_feature_idx, i] ? weights[i] * sqrt_best_error : weights[i] * sqrt_best_error, 1:num_imgs)
+        
+        @inbounds for i in 1:num_imgs
+            if labels[i] !== votes[best_feature_idx, i] 
+                weights[i] *= inv_sqrt_best_error
+            else
+                weights[i] *= sqrt_best_error
+            end
+        end
 
         # remove feature (a feature can't be selected twice)
         filter!(e -> e ∉ best_feature_idx, feature_indices) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`
-        
+        resize!(classification_errors,length(feature_indices))
         next!(p) # increment progress bar
     end
     
