@@ -25,7 +25,7 @@ function get_feature_votes(
     max_feature_height::Integer=-one(Int32);
     scale::Bool = false,
     scale_to::Tuple = (Int32(200), Int32(200))
-    )::Tuple{Matrix{Int8}, Array{HaarLikeObject, 1}} # return a matrix of votes and a list of features
+    )
 
     #this transforms everything to maintain type stability
     s₁, s₂ = scale_to
@@ -94,7 +94,7 @@ function learn(
     features::Array{HaarLikeObject, 1},
     votes::Matrix{Int8},
     num_classifiers::Integer=-one(Int32)
-    )::Array{HaarLikeObject, 1}
+    )
     
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
     num_pos = length(filtered_ls(positive_path))
@@ -193,7 +193,7 @@ function learn(
     max_feature_height::Int64=-1;
     scale::Bool = false,
     scale_to::Tuple = (200, 200)
-)::Array{HaarLikeObject, 1}
+)
     
     votes, features = get_feature_votes(
         positive_path,
@@ -242,7 +242,7 @@ function create_features(
     max_feature_width::Int64,
     min_feature_height::Int64,
     max_feature_height::Int64
-)::Array{HaarLikeObject, 1}
+)
     notify_user("Creating Haar-like features...")
     features = HaarLikeObject[]
     

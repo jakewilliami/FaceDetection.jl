@@ -38,7 +38,7 @@ A function to filter the output of readdir
 
 - `Array{String, 1}`: An array of filtered files in the path
 """
-function filtered_ls(path::AbstractString)::Array{String, 1}
+function filtered_ls(path::AbstractString)
     return filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(path, join=true, sort=false))
 end
 
@@ -57,7 +57,7 @@ function load_image(
     image_path::AbstractString;
     scale::Bool=false,
     scale_to::Tuple=(200,200)
-    )::Matrix{Float64}
+    )
     
     img = load(image_path)
     img = convert(Array{Float64}, Gray.(img))
@@ -139,7 +139,7 @@ That is, the final strong classifier is $h(x)=\begin{cases}1&\text{if }\sum_{t=1
     1       ⟺ sum of classifier votes > 0
     0       otherwise
 =#
-function ensemble_vote(int_img::Matrix, classifiers::Array{HaarLikeObject, 1})::Int8
+function ensemble_vote(int_img::Matrix, classifiers::Array{HaarLikeObject, 1})
     return sum(c -> get_vote(c, int_img), classifiers) ≥ zero(Int8) ? one(Int8) : zero(Int8)
 end
 
@@ -160,7 +160,7 @@ function ensemble_vote_all(
     classifiers::Array{HaarLikeObject, 1};
     scale::Bool=false,
     scale_to::Tuple=(200, 200)
-    )::Array{Int8, 1}
+    )
     
     return [ensemble_vote(load_image(i, scale=scale, scale_to=scale_to), classifiers) for i in filtered_ls(image_path)]
 end

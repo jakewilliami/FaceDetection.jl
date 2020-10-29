@@ -9,11 +9,11 @@ include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl")) # ../s
 using .FaceDetection
 using Test: @testset, @test
 using Suppressor: @suppress
-# using BenchmarkTools: @btime
+using BenchmarkTools: @btime
 
 const main_data_path = joinpath(@__DIR__, "images")
 
-@time @testset "FaceDetection.jl" begin
+@btime @testset "FaceDetection.jl" begin
     # IntegralImage.jl
     @test isequal(FaceDetection.to_integral_image([17 24 1 8 15; 23 5 7 14 16; 4 6 13 20 22; 10 12 19 21 3; 11 18 25 2 9]), [17 41 42 50 65; 40 69 77 99 130; 44 79 100 142 195; 54 101 141 204 260; 65 130 195 260 325])
     @test isequal(FaceDetection.sum_region(FaceDetection.to_integral_image([1 7 4 2 9; 7 2 3 8 2; 1 8 7 9 1; 3 2 3 1 5; 2 9 5 6 6]), (4,4), (5,5)), 18)
