@@ -9,8 +9,7 @@
 # TODO: attentional cascading
 
 # include("HaarLikeFeature.jl")
-include("Utils.jl")
-include("IntegralImage.jl")
+
 
 using Base.Threads: @threads
 using Base.Iterators: partition
@@ -19,15 +18,27 @@ using ProgressMeter: @showprogress, Progress, next!
 function get_feature_votes(
     positive_path::AbstractString,
     negative_path::AbstractString,
-    num_classifiers::Integer=-1,
-    min_feature_width::Integer=1,
-    max_feature_width::Integer=-1,
-    min_feature_height::Integer=1,
-    max_feature_height::Integer=-1;
+    num_classifiers::Integer=Int32(-1),
+    min_feature_width::Integer=Int32(1),
+    max_feature_width::Integer=Int32(-1),
+    min_feature_height::Integer=Int32(1),
+    max_feature_height::Integer=Int32(-1);
     scale::Bool = false,
-    scale_to::Tuple = (200, 200)
+    scale_to::Tuple = (Int32(200), Int32(200))
     )
 
+    #this transforms everything to maintain type stability
+    s1 ,s2 = scale_to
+    min_feature_width,
+    max_feature_width,
+    min_feature_height,
+    max_feature_height,s1,s2 = promote(min_feature_width,
+    max_feature_width,
+    min_feature_height,
+    max_feature_height,s1,s2)
+    scale_to = (s1,s2)
+
+    _Int = typeof(max_feature_width)
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
     positive_files = filtered_ls(positive_path)
     negative_files = filtered_ls(negative_path)
@@ -43,13 +54,13 @@ function get_feature_votes(
     temp_image = nothing # unload temporary image
     
     # Maximum feature width and height default to image width and height
-    max_feature_height = isequal(max_feature_height, -1) ? img_height : max_feature_height
-    max_feature_width = isequal(max_feature_width, -1) ? img_height : max_feature_width
+    max_feature_height = isequal(max_feature_height, _Int(-1)) ? img_height : max_feature_height
+    max_feature_width = isequal(max_feature_width, _Int(-1)) ? img_height : max_feature_width
     
     # Create features for all sizes and locations
     features = create_features(img_height, img_width, min_feature_width, max_feature_width, min_feature_height, max_feature_height)
     num_features = length(features)
-    num_classifiers = isequal(num_classifiers, -1) ? num_features : num_classifiers
+    num_classifiers = isequal(num_classifiers, _Int(-1)) ? num_features : num_classifiers
     
     # create an empty array with dimensions (num_imgs, numFeautures)
     votes = Matrix{Int8}(undef, num_features, num_imgs)
@@ -73,7 +84,7 @@ function get_feature_votes(
     return votes, features
 end
 
-#=
+"""
     learn(
         positive_iis::AbstractArray,
         negative_iis::AbstractArray,
@@ -84,8 +95,8 @@ end
         max_feature_height::Int64=-1
     ) ->::Array{HaarLikeObject,1}
 
-The boosting algorithm for learning a query online.  $T$ hypotheses are constructed, each using a single feature.
-The final hypothesis is a weighted linear combination of the $T$ hypotheses, where the weights are inversely proportional to the training errors.
+The boosting algorithm for learning a query online.  T hypotheses are constructed, each using a single feature.
+The final hypothesis is a weighted linear combination of the T hypotheses, where the weights are inversely proportional to the training errors.
 This function selects a set of classifiers. Iteratively takes the best classifiers based on a weighted error.
 
 # Arguments
@@ -99,7 +110,7 @@ This function selects a set of classifiers. Iteratively takes the best classifie
 - `max_feature_width::Integer`: the maximum height of the feature
 
 # Returns `classifiers::Array{HaarLikeObject, 1}`: List of selected features
-=#
+"""
 function learn(
     positive_path::AbstractString,
     negative_path::AbstractString,
@@ -122,6 +133,7 @@ function learn(
     labels = vcat(ones(Int8, num_pos), ones(Int8, num_neg) * -one(Int8))
     
     num_features = length(features)
+
     feature_indices = Array(1:num_features)
     num_classifiers = isequal(num_classifiers, -1) ? num_features : num_classifiers
     
@@ -129,7 +141,7 @@ function learn(
     # select classifiers
     classifiers = []
     p = Progress(num_classifiers, 1) # minimum update interval: 1 second
-    @threads for t in 1:num_classifiers
+    for t in 1:num_classifiers
         # classification_errors = zeros(length(feature_indices))
         classification_errors = Matrix{Float64}(undef, length(feature_indices), 1)
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
@@ -166,6 +178,7 @@ function learn(
     return classifiers
     
 end
+
 function learn(
     positive_path::AbstractString,
     negative_path::AbstractString,
@@ -193,7 +206,7 @@ function learn(
     return learn(positive_path, negative_path, features, votes, num_classifiers)
 end
 
-#=
+"""
     create_features(
         img_height::Integer,
         img_width::Integer,
@@ -217,7 +230,7 @@ Iteratively creates the Haar-like feautures
 # Returns
 
 - `features::AbstractArray`: an array of Haar-like features found for an image
-=#
+"""
 function create_features(
     img_height::Integer,
     img_width::Integer,

@@ -14,14 +14,13 @@ Original    Integral
 | . . . .   | . . . . .
 =#
 
-import Base: size, getindex, LinearIndices
-using Images: Images, coords_spatial
+
 
 struct IntegralArray{T, N, A} <: AbstractArray{T, N}
 	data::A
 end
 
-#=
+"""
 	to_integral_image(img_arr::AbstractArray) -> AbstractArray
 
 Calculates the integral image based on this instance's original image data.
@@ -33,8 +32,8 @@ Calculates the integral image based on this instance's original image data.
 # Returns
 
  - `integral_image_arr::AbstractArray`: Integral image for given image
-=#
-function to_integral_image(img_arr::AbstractArray)
+ """
+function to_integral_image(img_arr::AbstractArray{T,N}) where {T,N}
 	array_size = size(img_arr)
     integral_image_arr = Array{Images.accum(eltype(img_arr))}(undef, array_size)
     sd = coords_spatial(img_arr)
@@ -43,15 +42,15 @@ function to_integral_image(img_arr::AbstractArray)
         cumsum!(integral_image_arr, integral_image_arr; dims=sd[i])
     end
 	
-    return Array{eltype(img_arr), ndims(img_arr)}(integral_image_arr)
+    return Array{T, N}(integral_image_arr)
 end
 
 LinearIndices(A::IntegralArray) = Base.LinearFast()
-size(A::IntegralArray) = size(A.data)
-getindex(A::IntegralArray, i::Int...) = A.data[i...]
-getindex(A::IntegralArray, ids::Tuple...) = getindex(A, ids[1]...)
+@inline size(A::IntegralArray) = size(A.data)
+@inline getindex(A::IntegralArray, i::Int...) = A.data[i...]
+@inline getindex(A::IntegralArray, ids::Tuple...) = getindex(A, ids[1]...)
 
-#=
+"""
 	sum_region(
 		integral_image_arr::AbstractArray,
 		top_left::Tuple{Int64,Int64},
@@ -67,16 +66,17 @@ getindex(A::IntegralArray, ids::Tuple...) = getindex(A, ids[1]...)
 # Returns
 
 - `sum::Number` The sum of all pixels in the given rectangle defined by the parameters top_left and bottom_right
-=#
+"""
 function sum_region(
 	integral_image_arr::AbstractArray,
-	top_left::Tuple{Integer,Integer},
-	bottom_right::Tuple{Integer,Integer}
-)
+	top_left::Tuple{T,T},
+	bottom_right::Tuple{T,T}
+) where T <: Integer
+    _1 = one(T)
 	sum = integral_image_arr[bottom_right[2], bottom_right[1]]
-    sum -= top_left[1] > 1 ? integral_image_arr[bottom_right[2], top_left[1] - 1] : zero(Int64)
-    sum -= top_left[2] > 1 ? integral_image_arr[top_left[2] - 1, bottom_right[1]] : zero(Int64)
-    sum += top_left[2] > 1 && top_left[1] > 1 ? integral_image_arr[top_left[2] - 1, top_left[1] - 1] : zero(Int64)
-	
+    sum -= top_left[1] > _1 ? integral_image_arr[bottom_right[2], top_left[1] - 1] : zero(T)
+    sum -= top_left[2] > _1 ? integral_image_arr[top_left[2] - _1, bottom_right[1]] : zero(T)
+    sum += top_left[2] > _1 && top_left[1] > _1 ? integral_image_arr[top_left[2] - 1, top_left[1] - 1] : zero(T)
     return sum
 end
+
