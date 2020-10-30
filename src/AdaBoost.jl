@@ -8,9 +8,6 @@
 # TODO: select optimal threshold for each feature
 # TODO: attentional cascading
 
-# include("HaarLikeFeature.jl")
-
-
 using Base.Threads: @threads
 using Base.Iterators: partition
 using ProgressMeter: @showprogress, Progress, next!
@@ -111,6 +108,9 @@ function learn(
     weights = vcat(pos_weights, neg_weights)
     labels = vcat(ones(Int8, num_pos), ones(Int8, num_neg) * -one(Int8))
     
+    # println(length(weights))
+    # println(length(labels))
+    
     # get number of features
     num_features = length(features)
     feature_indices = Array(1:num_features)
@@ -122,9 +122,14 @@ function learn(
     p = Progress(num_classifiers, 1) # minimum update interval: 1 second
     classification_errors = Vector{Float64}(undef, length(feature_indices))
     
+    # displaymatrix(labels); println()
+    # displaymatrix(weights); println()
     for t in 1:num_classifiers
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
         weights .*= inv(sum(weights))
+        # displaymatrix(weights); println()
+        
+        # println(weights)
         
         # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
         @threads for j in 1:length(feature_indices)
@@ -132,7 +137,8 @@ function learn(
                 labels[img_idx] !== votes[feature_indices[j], img_idx] ? weights[img_idx] : zero(Float64)
             end
         end
-                
+        # displaymatrix(classification_errors); println()
+        
         # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
         best_error, min_error_idx = findmin(classification_errors)
         best_feature_idx = feature_indices[min_error_idx]
@@ -141,6 +147,7 @@ function learn(
         # set feature weight
         best_feature = features[best_feature_idx]
         feature_weight = β(best_error)
+        # println(feature_weight)
         best_feature.weight = feature_weight
         # println(best_error)
 
@@ -241,11 +248,11 @@ function create_features(
     
     for feature in values(feature_types) # (feature_types are just tuples)
         feature_start_width = max(min_feature_width, first(feature))
-        for feature_width in feature_start_width:first(feature):(max_feature_width - 1)
+        for feature_width in feature_start_width:first(feature):(max_feature_width)
             feature_start_height = max(min_feature_height, last(feature))
-            for feature_height in feature_start_height:last(feature):(max_feature_height - 1)
-                for x in 0:(img_width - feature_width)
-                    for y in 0:(img_height - feature_height)
+            for feature_height in feature_start_height:last(feature):(max_feature_height)
+                for x in 1:(img_width - feature_width)
+                    for y in 1:(img_height - feature_height)
                         push!(features, HaarLikeObject(feature, (x, y), feature_width, feature_height, 0, 1))
                         push!(features, HaarLikeObject(feature, (x, y), feature_width, feature_height, 0, -1))
                     end # end for y
