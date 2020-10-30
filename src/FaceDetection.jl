@@ -10,7 +10,7 @@ import Base: size, getindex, LinearIndices
 using Images: Images, coords_spatial
 
 export to_integral_image, sum_region
-export learn
+export learn, get_feature_votes
 export feature_types, HaarLikeObject, get_score, get_vote
 export displaymatrix, notify_user, filtered_ls, load_image,
     ensemble_vote_all, reconstruct, get_random_image,
