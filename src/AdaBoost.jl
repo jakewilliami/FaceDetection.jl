@@ -123,9 +123,6 @@ function learn(
     classification_errors = Vector{Float64}(undef, length(feature_indices))
     
     for t in 1:num_classifiers
-        # classification_errors = zeros(length(feature_indices))
-        #classification_errors = Matrix{Float64}(undef, length(feature_indices), 1)
-
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
         weights .*= inv(sum(weights))
         
@@ -135,8 +132,7 @@ function learn(
                 labels[img_idx] !== votes[feature_indices[j], img_idx] ? weights[img_idx] : zero(Float64)
             end
         end
-        # classification_errors[:] .= [sum([labels[img_idx] !== votes[feature_indices[j], img_idx] ? weights[img_idx] : zero(Float64) for img_idx in 1:num_imgs]) for j in 1:length(feature_indices)]
-        
+                
         # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
         best_error, min_error_idx = findmin(classification_errors)
         best_feature_idx = feature_indices[min_error_idx]
@@ -146,6 +142,7 @@ function learn(
         best_feature = features[best_feature_idx]
         feature_weight = β(best_error)
         best_feature.weight = feature_weight
+        # println(best_error)
 
         # append selected features
         classifiers = push!(classifiers, best_feature)
@@ -244,11 +241,11 @@ function create_features(
     
     for feature in values(feature_types) # (feature_types are just tuples)
         feature_start_width = max(min_feature_width, first(feature))
-        for feature_width in range(feature_start_width, stop=max_feature_width, step=first(feature))
+        for feature_width in feature_start_width:first(feature):(max_feature_width - 1)
             feature_start_height = max(min_feature_height, last(feature))
-            for feature_height in range(feature_start_height, stop=max_feature_height, step=last(feature))
-                for x in 1:(img_width - feature_width)
-                    for y in 1:(img_height - feature_height)
+            for feature_height in feature_start_height:last(feature):(max_feature_height - 1)
+                for x in 0:(img_width - feature_width)
+                    for y in 0:(img_height - feature_height)
                         push!(features, HaarLikeObject(feature, (x, y), feature_width, feature_height, 0, 1))
                         push!(features, HaarLikeObject(feature, (x, y), feature_width, feature_height, 0, -1))
                     end # end for y
