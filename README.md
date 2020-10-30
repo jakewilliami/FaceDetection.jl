@@ -139,6 +139,7 @@ https://github.com/polarisZhao/awesome-face#-datasets
  - [6b35f6d5](https://github.com/jakewilliami/FaceDetection.jl/commit/6b35f6d5) &mdash; Finally, the algorithm works as it should.  Just enhancements from here on out.
  - [854bba32](https://github.com/jakewilliami/FaceDetection.jl/commit/854bba32) and [655e0e14](https://github.com/jakewilliami/FaceDetection.jl/commit/655e0e14) &mdash; Implemented facelike scoring and wrote score data to CSV (see [#7](https://github.com/jakewilliami/FaceDetection.jl/issues/7)).
  - [e7295f8d](https://github.com/jakewilliami/FaceDetection.jl/commit/e7295f8d) &mdash; Implemented writing training data to file and reading from that data to save computation time.
+ - [e9116987](https://github.com/jakewilliami/FaceDetection.jl/commit/e9116987) &mdash; Changed to sequential processing.
  - [750aa22d](https://github.com/jakewilliami/FaceDetection.jl/commit/750aa22d)&ndash;[b3aec6b8](https://github.com/jakewilliami/FaceDetection.jl/commit/b3aec6b8) &mdash; Optimised performance.
 
 ### Acknowledgements
