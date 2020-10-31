@@ -19,46 +19,39 @@ using Serialization: deserialize
 
 println("...done")
 
-function main(smart_choose_feats::Bool=false)
+function main(;
+	smart_choose_feats::Bool=false,
+	scale::Bool=false,
+	scale_to::Tuple=(200, 200))
+	
 	include("constants.jl")
 	include("main_data.jl")
+    pos_testing_path = "/Users/jakeireland/projects/FaceDetection.jl/data/lizzie-testset/faces/"
+	neg_testing_path = "/Users/jakeireland/projects/FaceDetection.jl/data/lizzie-testset/nonfaces/"
     
     # read classifiers from file
-	classifiers = deserialize(data_file)
-
-    FD.notify_user("Loading test faces...")
-
-    faces_testing, face_names = FD.load_images(pos_testing_path)
-    # faces_ii_testing = map(FD.to_integral_image, faces_testing)
-    faces_ii_testing = map(FD.to_integral_image, faces_testing)
-    println("...done. ", length(faces_testing), " faces loaded.")
-
-    FD.notify_user("Loading test non-faces..")
-
-    non_faces_testing, non_face_names = FD.load_images(neg_testing_path)
-    non_faces_ii_testing = map(FD.to_integral_image, non_faces_testing)
-    println("...done. ", length(non_faces_testing), " non-faces loaded.\n")
+	classifiers = deserialize("/Users/jakeireland/Desktop/classifiers_577_577_fixed")
     
     notify_user("Calculating test face scores and constructing dataset...")
     
-    # get scores
-    # faces_scores = Matrix{Float64}(undef, length(faces_ii_testing), 1)
-    # non_faces_scores = Matrix{Float64}(undef, length(non_faces_ii_testing), 1)
-    faces_scores = zeros(length(faces_ii_testing))
-    non_faces_scores = zeros(length(non_faces_ii_testing))
+    faces_scores = Vector{Real}(undef, length(filtered_ls(pos_testing_path)))
+    non_faces_scores = Vector{Real}(undef, length(filtered_ls(neg_testing_path)))
     
-    faces_scores[:] .= [sum([FD.get_faceness(c,face) for c in classifiers]) for face in faces_ii_testing]
-    non_faces_scores[:] .= [sum([FD.get_faceness(c,nonFace) for c in classifiers]) for nonFace in non_faces_ii_testing]
+    faces_scores[:] .= [sum([FD.get_faceness(c, load_image(face, scale=scale, scale_to=scale_to)) for c in classifiers]) for face in filtered_ls(pos_testing_path)]
+	non_faces_scores[:] .= [sum([FD.get_faceness(c, load_image(non_face, scale=scale, scale_to=scale_to)) for c in classifiers]) for non_face in filtered_ls(neg_testing_path)]
+	
+	face_names = filtered_ls(pos_testing_path)
+	non_face_names = filtered_ls(neg_testing_path)
     
     # filling in the dataset with missing to easily write to csv
     df_faces = faces_scores
     df_non_faces = non_faces_scores
     if length(faces_scores) < length(non_faces_scores)
-        to_add = length(non_faces_ii_testing) - length(faces_ii_testing)
+        to_add = length(filtered_ls(neg_testing_path)) - length(filtered_ls(pos_testing_path))
         df_faces = vcat(df_faces, Matrix{Union{Float64, Missing}}(undef, to_add, 1))
         face_names = vcat(face_names, Matrix{Union{Float64, Missing}}(undef, to_add, 1))
     elseif length(faces_scores) > length(non_faces_scores)
-        length(faces_ii_testing) - length(non_faces_ii_testing)
+        to_add = length(filtered_ls(pos_testing_path)) - length(filtered_ls(neg_testing_path))
         df_non_faces = vcat(df_non_faces, Matrix{Union{Float64, Missing}}(undef, to_add, 1))
         non_face_names = vcat(non_face_names, Matrix{Union{Float64, Missing}}(undef, to_add, 1))
     end
@@ -96,4 +89,4 @@ function main(smart_choose_feats::Bool=false)
     println("...done.  Plot created at ", joinpath(dirname(dirname(@__FILE__)), "figs", "scores.pdf"), "\n")
 end
 
-@time main(smart_choose_feats=true)
+@time main(smart_choose_feats=true, scale=true, scale_to=(577, 577))
