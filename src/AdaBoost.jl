@@ -44,7 +44,7 @@ function get_feature_votes(
     scale_to = (s₁, s₂)
     _Int = typeof(max_feature_width)
     
-    # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
+    # get number of positive and negative image
     positive_files = filtered_ls(positive_path)
     negative_files = filtered_ls(negative_path)
     image_files = vcat(positive_files, negative_files)
@@ -108,9 +108,6 @@ function learn(
     weights = vcat(pos_weights, neg_weights)
     labels = vcat(ones(Int8, num_pos), ones(Int8, num_neg) * -one(Int8))
     
-    # println(length(weights))
-    # println(length(labels))
-    
     # get number of features
     num_features = length(features)
     feature_indices = Array(1:num_features)
@@ -122,14 +119,9 @@ function learn(
     p = Progress(num_classifiers, 1) # minimum update interval: 1 second
     classification_errors = Vector{Float64}(undef, length(feature_indices))
     
-    # displaymatrix(labels); println()
-    # displaymatrix(weights); println()
     for t in 1:num_classifiers
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
         weights .*= inv(sum(weights))
-        # displaymatrix(weights); println()
-        
-        # println(weights)
         
         # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
         @threads for j in 1:length(feature_indices)
@@ -137,7 +129,6 @@ function learn(
                 labels[img_idx] !== votes[feature_indices[j], img_idx] ? weights[img_idx] : zero(Float64)
             end
         end
-        # displaymatrix(classification_errors); println()
         
         # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
         best_error, min_error_idx = findmin(classification_errors)
@@ -147,9 +138,7 @@ function learn(
         # set feature weight
         best_feature = features[best_feature_idx]
         feature_weight = β(best_error)
-        # println(feature_weight)
         best_feature.weight = feature_weight
-        # println(best_error)
 
         # append selected features
         classifiers = push!(classifiers, best_feature)

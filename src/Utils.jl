@@ -51,14 +51,14 @@ Loads an image as gray_scale
 
 # Returns
 
-`AbstractArray`: An array of floating point values representing the image
+ - `AbstractArray`: An array of floating point values representing the image
 """
 function load_image(
     image_path::AbstractString;
     scale::Bool=false,
     scale_to::Tuple=(200,200)
     )
-    
+
     img = load(image_path)
     img = convert(Array{Float64}, Gray.(img))
     img = scale ? imresize(img, scale_to) : img
