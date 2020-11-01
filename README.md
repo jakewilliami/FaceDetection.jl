@@ -95,18 +95,30 @@ println("$(string(correct_faces, "/", num_faces)) ($(correct_faces_percent) %) o
 println("$(string(correct_non_faces, "/", num_non_faces)) ($(correct_non_faces_percent) %) of positive images were correctly identified.")
 ```
 
-## Caveats
+## Benchmarking Results
 
-In the current implementation of the Viola-Jones algorithm, we have not implemented scaling features.  This means that you should idealy have your training set the same size as your test set.  To make this easier while we work on scaling features, we have implemented keyword arguments to the functions `determine_feature_size` and `learn`.  E.g.,
-```julia
-julia> load_image(image_path, scale = true, scale_up = (200, 200))
+The following are benchmarking results from running equivalent programmes in both repositories.  These programmes uses ~10 thousand training images at 19 x 19 pixels each.
 
-julia> determine_feature_size(pos_training_path, neg_training_path; scale = true, scale_to = (200, 200))
+Language of Implementation | Commit | Run Time in Seconds | Number of Allocations | Memory Usage
+--- | --- | --- | ---
+[Python](https://github.com/Simon-Hohberg/Viola-Jones/) | [8772a28](https://github.com/Simon-Hohberg/Viola-Jones/commit/8772a28) | 480.0354 | &mdash; <sup>*a*</sup> | &mdash; <sup>*a*</sup>
+[Julia](https://github.com/jakewilliami/FaceDetection.jl/) | [6fd8ca9e](https://github.com/Simon-Hohberg/Viola-Jones/commit/6fd8ca9e) |19.9057 | 255600105 | 5.11 GiB
 
-julia> classifiers = learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width; scale = true, scale_to = (200, 200))
+<sup>*a*</sup> I have not yet figured out benchmarking memory usage in Python.
+ 
+ ## Caveats
+ 
+  -  **Needs peer review for algorithmic correctness.**
+  - In the current implementation of the Viola-Jones algorithm, we have not implemented scaling features.  This means that you should ideally have your training set the same size as your test set.  To make this easier while we work on scaling features, we have implemented keyword arguments to the functions `determine_feature_size` and `learn`.  E.g.,
+ ```julia
+ julia> load_image(image_path, scale = true, scale_up = (200, 200))
 
-julia> ensemble_vote_all(pos_testing_path, classifiers, scale = true, scale_to = (200, 200))
-```
+ julia> determine_feature_size(pos_training_path, neg_training_path; scale = true, scale_to = (200, 200))
+
+ julia> classifiers = learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width; scale = true, scale_to = (200, 200))
+
+ julia> ensemble_vote_all(pos_testing_path, classifiers, scale = true, scale_to = (200, 200))
+ ```
 
 ## Face detection resources/datasets
 ```
@@ -141,6 +153,7 @@ https://github.com/polarisZhao/awesome-face#-datasets
  - [e7295f8d](https://github.com/jakewilliami/FaceDetection.jl/commit/e7295f8d) &mdash; Implemented writing training data to file and reading from that data to save computation time.
  - [e9116987](https://github.com/jakewilliami/FaceDetection.jl/commit/e9116987) &mdash; Changed to sequential processing.
  - [750aa22d](https://github.com/jakewilliami/FaceDetection.jl/commit/750aa22d)&ndash;[b3aec6b8](https://github.com/jakewilliami/FaceDetection.jl/commit/b3aec6b8) &mdash; Optimised performance.
+ []() &mdash;
 
 ### Acknowledgements
 
