@@ -100,7 +100,7 @@ println("$(string(correct_non_faces, "/", num_non_faces)) ($(correct_non_faces_p
 The following are benchmarking results from running equivalent programmes in both repositories.  These programmes uses ~10 thousand training images at 19 x 19 pixels each.
 
 Language of Implementation | Commit | Run Time in Seconds | Number of Allocations | Memory Usage
---- | --- | --- | ---
+--- | --- | --- | --- | ---
 [Python](https://github.com/Simon-Hohberg/Viola-Jones/) | [8772a28](https://github.com/Simon-Hohberg/Viola-Jones/commit/8772a28) | 480.0354 | &mdash; <sup>*a*</sup> | &mdash; <sup>*a*</sup>
 [Julia](https://github.com/jakewilliami/FaceDetection.jl/) | [6fd8ca9e](https://github.com/Simon-Hohberg/Viola-Jones/commit/6fd8ca9e) |19.9057 | 255600105 | 5.11 GiB
 
