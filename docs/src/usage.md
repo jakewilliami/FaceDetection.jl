@@ -1,0 +1,5 @@
+## Usage
+
+```@autodocs
+Modules = [FaceDetection]
+```

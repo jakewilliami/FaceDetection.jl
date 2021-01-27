@@ -9,7 +9,7 @@
 using Images: save, load, Colors, clamp01nan, Gray, imresize
 using ImageDraw: draw, Polygon, Point
 
-"""
+#=
     notify_user(message::AbstractString) -> AbstractString
 
 A function to pretty print a message to the user
@@ -20,12 +20,12 @@ A function to pretty print a message to the user
 
 # Returns
 - `A::AbstractString`: A message to print to the user
-"""
+=#
 function notify_user(message::AbstractString)
     return println("\033[1;34m===>\033[0;38m\033[1;38m\t$message\033[0;38m")
 end
 
-"""
+#=
     filtered_ls(path::AbstractString) -> Array{String, 1}
     
 A function to filter the output of readdir
@@ -37,7 +37,7 @@ A function to filter the output of readdir
 # Returns
 
 - `Array{String, 1}`: An array of filtered files in the path
-"""
+=#
 function filtered_ls(path::AbstractString)
     return filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(path, join=true, sort=false))
 end
@@ -121,12 +121,20 @@ function determine_feature_size(
     
 end
 
-#=
+@doc raw"""
     ensemble_vote(int_img::AbstractArray, classifiers::AbstractArray) -> Integer
 
 Classifies given integral image (Abstract Array) using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
 
-That is, the final strong classifier is $h(x)=\begin{cases}1&\text{if }\sum_{t=1}^{T}\alpha_th_t(x)\geq \frac{1}{2}\sum_{t=1}^{T}\alpha_t\\0&\text{otherwise}\end{cases}$, where $\alpha_t=\log{\left(\frac{1}{\beta_t}\right)}$
+That is, the final strong classifier is
+
+```math
+h(x) = \begin{cases}
+1&\text{if }\sum_{t=1}^{T}\alpha_{th_{t(x)}}\geq\frac{1}{2}\sum_{t=1}^{T}\alpha_t\\
+0&\text{otherwise}
+\end{cases}
+\text{ where }\alpha_t = \log{\left(\frac{1}{\beta_t}\right)}
+```
 
 # Arguments
 
@@ -138,7 +146,7 @@ That is, the final strong classifier is $h(x)=\begin{cases}1&\text{if }\sum_{t=1
 - `vote::Integer`
     1       ⟺ sum of classifier votes > 0
     0       otherwise
-=#
+"""
 function ensemble_vote(int_img::Matrix, classifiers::Array{HaarLikeObject, 1})
     return sum(c -> get_vote(c, int_img), classifiers) ≥ zero(Int8) ? one(Int8) : zero(Int8)
 end
@@ -165,7 +173,7 @@ function ensemble_vote_all(
     return [ensemble_vote(load_image(i, scale=scale, scale_to=scale_to), classifiers) for i in filtered_ls(image_path)]
 end
 
-#=
+"""
     get_faceness(feature, int_img::AbstractArray) -> Number
 
 Get facelikeness for a given feature.
@@ -178,7 +186,7 @@ Get facelikeness for a given feature.
 # Returns
 
 - `score::Number`: Score for given feature
-=#
+"""
 function get_faceness(feature::HaarLikeObject, int_img::Matrix{T}) where T
     score, faceness = get_score(feature, int_img)
     
@@ -304,7 +312,7 @@ function get_random_image(
     return file_name
 end
 
-"""
+#=
     scale_box(
         top_left::Tuple{Integer, Integer},
         bottom_right::Tuple{Integer, Integer},
@@ -327,7 +335,7 @@ Scales the bounding box around classifiers if the image we are pasting it on is 
 - `bottom_left::Tuple{Integer, Integer},`: new bottom left of box after scaling
 - `bottom_right::Tuple{Integer, Integer},`: new bottom right of box after scaling
 - `top_right::Tuple{Integer, Integer},`: new top right of box after scaling
-"""
+=#
 function scale_box(
     top_left::Tuple{Integer, Integer},
     bottom_right::Tuple{Integer, Integer},
@@ -348,7 +356,7 @@ function scale_box(
     return top_left, bottom_left, bottom_right, top_right
 end
 
-"""
+#=
     generate_validation_image(image_path::AbstractString, classifiers::AbstractArray) -> AbstractArray
     
 Generates a bounding box around the face of a random image.
@@ -361,7 +369,7 @@ Generates a bounding box around the face of a random image.
 # Returns
 
 - `validation_image::AbstractArray`: The new image with a bounding box
-"""
+=#
 function generate_validation_image(image_path::AbstractString, classifiers::Array{HaarLikeObject, 1})
     
     # === THIS FUNCTION IS A WORK IN PROGRESS ===
