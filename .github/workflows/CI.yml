@@ -23,6 +23,7 @@ jobs:
           - windows-latest
         arch:
           - x64
+		  - x86_64
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
