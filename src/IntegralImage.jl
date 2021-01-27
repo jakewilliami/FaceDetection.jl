@@ -52,8 +52,8 @@ LinearIndices(A::IntegralArray) = Base.LinearFast()
 """
 	sum_region(
 		integral_image_arr::AbstractArray,
-		top_left::Tuple{Int64,Int64},
-		bottom_right::Tuple{Int64,Int64}
+		top_left::Tuple{Int,Int},
+		bottom_right::Tuple{Int,Int}
 	) -> Number
 
 # Arguments

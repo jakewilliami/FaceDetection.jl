@@ -169,11 +169,11 @@ end
 function learn(
     positive_path::AbstractString,
     negative_path::AbstractString,
-    num_classifiers::Int64=-1,
-    min_feature_width::Int64=1,
-    max_feature_width::Int64=-1,
-    min_feature_height::Int64=1,
-    max_feature_height::Int64=-1;
+    num_classifiers::Int=-1,
+    min_feature_width::Int=1,
+    max_feature_width::Int=-1,
+    min_feature_height::Int=1,
+    max_feature_height::Int=-1;
     scale::Bool = false,
     scale_to::Tuple = (200, 200)
 )
@@ -219,12 +219,12 @@ Iteratively creates the Haar-like feautures
 - `features::AbstractArray`: an array of Haar-like features found for an image
 """
 function create_features(
-    img_height::Int64,
-    img_width::Int64,
-    min_feature_width::Int64,
-    max_feature_width::Int64,
-    min_feature_height::Int64,
-    max_feature_height::Int64
+    img_height::Int,
+    img_width::Int,
+    min_feature_width::Int,
+    max_feature_width::Int,
+    min_feature_height::Int,
+    max_feature_height::Int
 )
     notify_user("Creating Haar-like features...")
     features = HaarLikeObject[]
