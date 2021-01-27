@@ -21,5 +21,5 @@ Documenter.makedocs(
 )
 
 deploydocs(;
-    repo  =  "github.com/username/FaceDetection.jl.git",
+    repo  =  "github.com/jakewilliami/FaceDetection.jl.git",
 )
