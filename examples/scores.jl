@@ -30,18 +30,19 @@ function main(;
 	neg_testing_path = "/Users/jakeireland/projects/FaceDetection.jl/data/lizzie-testset/nonfaces/"
     
     # read classifiers from file
-	classifiers = deserialize("/Users/jakeireland/Desktop/classifiers_577_577_fixed")
-    
+	classifiers = deserialize("/Users/jakeireland/Desktop/classifiers_100_577_577_fixed_1idx")
+    num_classifiers = length(classifiers)
+	
     notify_user("Calculating test face scores and constructing dataset...")
     
     faces_scores = Vector{Real}(undef, length(filtered_ls(pos_testing_path)))
     non_faces_scores = Vector{Real}(undef, length(filtered_ls(neg_testing_path)))
     
-    faces_scores[:] .= [sum([FD.get_faceness(c, load_image(face, scale=scale, scale_to=scale_to)) for c in classifiers]) for face in filtered_ls(pos_testing_path)]
-	non_faces_scores[:] .= [sum([FD.get_faceness(c, load_image(non_face, scale=scale, scale_to=scale_to)) for c in classifiers]) for non_face in filtered_ls(neg_testing_path)]
+    faces_scores[:] .= [sum([FD.get_faceness(c, load_image(face, scale=scale, scale_to=scale_to)) for c in classifiers]) / num_classifiers for face in filtered_ls(pos_testing_path)]
+	non_faces_scores[:] .= [sum([FD.get_faceness(c, load_image(non_face, scale=scale, scale_to=scale_to)) for c in classifiers]) / num_classifiers for non_face in filtered_ls(neg_testing_path)]
 	
-	face_names = filtered_ls(pos_testing_path)
-	non_face_names = filtered_ls(neg_testing_path)
+	face_names = basename.(filtered_ls(pos_testing_path))
+	non_face_names = basename.(filtered_ls(neg_testing_path))
     
     # filling in the dataset with missing to easily write to csv
     df_faces = faces_scores
@@ -57,9 +58,10 @@ function main(;
     end
     
     # write score data
-    write(joinpath(dirname(dirname(@__FILE__)), "data", "faceness-scores.csv"), DataFrame(hcat(face_names, df_faces, non_face_names, df_non_faces)), writeheader=false)
+	data_file = joinpath(dirname(dirname(@__FILE__)), "data", "faceness-scores.csv")
+    write(data_file, DataFrame(hcat(face_names, df_faces, non_face_names, df_non_faces)), writeheader=false)
     
-    println("...done.\n")
+    println("...done.  Dataset written to $(data_file).\n")
     
     notify_user("Computing differences in scores between faces and non-faces...")
     
