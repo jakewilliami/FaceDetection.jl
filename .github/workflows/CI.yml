@@ -25,10 +25,8 @@ jobs:
           - x64
           - x86 # 32-bit; i686
         exclude:
-          # Test 32-bit only on Linux
+          # 32-bit Julia binaries are not available on macOS
           - os: macOS-latest
-            arch: x86
-          - os: windows-latest
             arch: x86
     steps:
       - uses: actions/checkout@v2
