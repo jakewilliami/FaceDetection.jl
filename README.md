@@ -8,6 +8,18 @@
 [![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle)
 ![Project Status](https://img.shields.io/badge/status-maturing-green)
 
+---
+
+### Caveats;&mdash; help wanted
+
+Currently, there are two main areas I would love some help with:
+  1. [Reading](https://github.com/jakewilliami/FaceDetection.jl/issues/20) from [pre-trained](https://github.com/opencv/opencv/blob/master/data/haarcascades/haarcascade_frontalface_default.xml) data files would greatly help those who are not training the object detection framework themselves; and
+  2. Creating ([*scalable*](https://github.com/jakewilliami/FaceDetection.jl/issues/21)) [bounding boxes around detected objects](https://github.com/jakewilliami/FaceDetection.jl/issues/6).  Everyone loves a visual; you can show your grandmother a face with a box around it, but she'll switch off if you show her any code.  People want pictures!
+
+Since this project helped me with the `get_faceness` function (this idea of scoring the "faceness" of an image), now that I have data from this I have put this project [on the back burner](https://dictionary.cambridge.org/dictionary/english/on-the-back-burner).  However, in the interest of others, if anyone were to help with these two items (and any other [issues](https://github.com/jakewilliami/FaceDetection.jl/issues/)), they would forever have my gratitude.
+
+---
+
 ## Introduction
 
 This is a Julia implementation of [Viola-Jones' Object Detection algorithm](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.10.6807).  Although there is an [OpenCV port in Julia](https://github.com/JuliaOpenCV/OpenCV.jl), it seems to be ill-maintained.  As this algorithm was created for commercial use, there seem to be few widely-used or well-documented implementations of it on GitHub.  The implementation this repository is based off is [Simon Hohberg's Pythonic repository](https://github.com/Simon-Hohberg/Viola-Jones), as it seems to be well written (and the most starred Python implementation on GitHub, though this is not necessarily a good measure). Julia and Python alike are easy to read and write in &mdash; my thinking was that this would be easy enough to replicate in Julia, except for Pythonic classes, where I would have to use `struct`s (or at least easier to replicate from than, for example, [C++](https://github.com/alexdemartos/ViolaAndJones) or [JS](https://github.com/foo123/HAAR.js) &mdash; two other highly-starred repositories.).
@@ -43,7 +55,7 @@ For a better explanation, read [the paper from 2001](http://citeseerx.ist.psu.ed
  - [e7295f8d](https://github.com/jakewilliami/FaceDetection.jl/commit/e7295f8d) &mdash; Implemented writing training data to file and reading from that data to save computation time.
  - [e9116987](https://github.com/jakewilliami/FaceDetection.jl/commit/e9116987) &mdash; Changed to sequential processing.
  - [750aa22d](https://github.com/jakewilliami/FaceDetection.jl/commit/750aa22d)&ndash;[b3aec6b8](https://github.com/jakewilliami/FaceDetection.jl/commit/b3aec6b8) &mdash; Optimised performance.
- []() &mdash;
+ <!---[]() &mdash;--->
 
 ### Acknowledgements
 
