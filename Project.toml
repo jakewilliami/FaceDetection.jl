@@ -17,7 +17,7 @@ QuartzImageIO = "dca85d43-d64c-5e67-8c65-017450d5d020"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
-ColorTypes = "0.10.9"
+ColorTypes = "0.10.9, 0.11"
 FileIO = "1.4.3"
 ImageDraw = "0.2.3"
 ImageIO = "0.3.0, 0.4, 0.5"
