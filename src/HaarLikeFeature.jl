@@ -12,7 +12,7 @@ const FEATURE_TYPES = (
     four = (2, 2)
     )
 
-abstract type HaarFeatureAbstractType end
+abstract type AbstractHaarFeature end
 
 """
     mutable struct HaarLikeObject{I <: Integer, F <: AbstractFloat}
@@ -29,7 +29,7 @@ abstract type HaarFeatureAbstractType end
     polarity::I
     weight::F
 """
-mutable struct HaarLikeObject{I <: Integer, F <: AbstractFloat} <: HaarFeatureAbstractType
+mutable struct HaarLikeObject{I <: Integer, F <: AbstractFloat} <: AbstractHaarFeature
     #parametric struct to store the ints and floats efficiently
     feature_type::Tuple{I, I}
     position::Tuple{I, I}
