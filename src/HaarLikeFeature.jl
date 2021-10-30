@@ -153,7 +153,7 @@ Get vote of this feature for given integral image.
     -1      otherwise
 """
 function get_vote(feature::HaarLikeObject{I, F}, int_img::AbstractArray{T, N}) where {I, F, T, N}
-    score = first(get_score(feature, int_img)) # we only care about score here, not faceness
+    score, _ = get_score(feature, int_img) # we only care about score here, not faceness
     # return (feature.weight * score) < (feature.polarity * feature.threshold) ? one(Int8) : -one(Int8)
     # return feature.weight * (score < feature.polarity * feature.threshold ? one(Int8) : -one(Int8))
     return score < feature.polarity * feature.threshold ? feature.weight : -feature.weight
