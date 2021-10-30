@@ -10,23 +10,24 @@ using Images: save, load, Colors, clamp01nan, Gray, imresize
 using ImageDraw: draw, Polygon, Point
 
 #=
-    notify_user(message::AbstractString) -> AbstractString
+    notify_user(message::String) -> String
 
 A function to pretty print a message to the user
 
 # Arguments
 
-- `message::AbstractString`: Some message to print
+- `message::String`: Some message to print
 
 # Returns
-- `A::AbstractString`: A message to print to the user
+- `A::String`: A message to print to the user
 =#
-function notify_user(message::AbstractString)
-    return println("\033[1;34m===>\033[0;38m\033[1;38m\t$message\033[0;38m")
+function notify_user(io::IO, message::String)
+    return println(io, "\033[1;34m===>\033[0;38m\033[1;38m\t", message, "\033[0;38m")
 end
+notify_user(msg::String) = notify_user(stdout, msg)
 
 #=
-    filtered_ls(path::AbstractString) -> Array{String, 1}
+    filtered_ls(path::String) -> Vector{String}
     
 A function to filter the output of readdir
 
@@ -36,25 +37,25 @@ A function to filter the output of readdir
 
 # Returns
 
-- `Array{String, 1}`: An array of filtered files in the path
+- `Vector{String}`: An array of filtered files in the path
 =#
-function filtered_ls(path::AbstractString)
-    return filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(path, join=true, sort=false))
+function filtered_ls(path::String)
+    return filter!(f -> !occursin(r".*\.DS_Store", f), readdir(path, join=true, sort=false))
 end
 
 """
-    load_image(image_path::AbstractString) -> AbstractArray
+    load_image(image_path::String) -> Array{Float64, N}
 Loads an image as gray_scale
 
 # Arguments
-- `image_path::AbstractString`: Path to an image
+- `image_path::String`: Path to an image
 
 # Returns
 
- - `AbstractArray`: An array of floating point values representing the image
+ - `Array{Float64, N}`: An array of floating point values representing the image
 """
 function load_image(
-    image_path::AbstractString;
+    image_path::String;
     scale::Bool=false,
     scale_to::Tuple=(200,200)
     )
@@ -68,16 +69,16 @@ end
 
 """
     determine_feature_size(
-        pos_training_path::AbstractString,
-        neg_training_path::AbstractString
+        pos_training_path::String,
+        neg_training_path::String
     ) -> Tuple{Integer, Integer, Integer, Integer, Tuple{Integer, Integer}}
 
 Takes images and finds the best feature size for the image size.
 
 # Arguments
 
-- `pos_training_path::AbstractString`: the path to the positive training images
-- `neg_training_path::AbstractString`: the path to the negative training images
+- `pos_training_path::String`: the path to the positive training images
+- `neg_training_path::String`: the path to the negative training images
 
 # Returns
 
@@ -88,8 +89,8 @@ Takes images and finds the best feature size for the image size.
 - `min_size_img::Tuple{Integer, Integer}`: the minimum-sized image in the image directories
 """
 function determine_feature_size(
-    pos_training_path::AbstractString,
-    neg_training_path::AbstractString;
+    pos_training_path::String,
+    neg_training_path::String;
     scale::Bool=false,
     scale_to::Tuple=(200, 200)
 )
@@ -100,7 +101,7 @@ function determine_feature_size(
     max_feature_width = 0
 
     min_size_img = (0, 0)
-    sizes = []
+    sizes = Tuple{Int, Int}[]
 
     for picture_dir in[pos_training_path, neg_training_path]
         for picture in filtered_ls(picture_dir)
@@ -138,43 +139,44 @@ h(x) = \begin{cases}
 
 # Arguments
 
-- `int_img::AbstractArray`: Integral image to be classified
-- `classifiers::Array{HaarLikeObject, 1}`: List of classifiers
+- `int_img::Array{T, N}`: Integral image to be classified
+- `classifiers::Vector{HaarLikeObject}`: List of classifiers
 
 # Returns
 
-- `vote::Integer`
+- `vote::Int8`
     1       ⟺ sum of classifier votes > 0
     0       otherwise
 """
-function ensemble_vote(int_img::Matrix, classifiers::Array{HaarLikeObject, 1})
-    return sum(c -> get_vote(c, int_img), classifiers) ≥ zero(Int8) ? one(Int8) : zero(Int8)
+function ensemble_vote(int_img::Array{T, N}, classifiers::Vector{HaarLikeObject}) where {T, N}
+    return sum(get_vote(c, int_img) for c in classifiers) ≥ zero(Int8) ? one(Int8) : zero(Int8)
+    # return sum(c -> get_vote(c, int_img), classifiers) ≥ zero(Int8) ? one(Int8) : zero(Int8)
 end
 
 """
-    ensemble_vote_all(int_imgs::AbstractArray, classifiers::AbstractArray) -> AbstractArray
+    ensemble_vote_all(int_imgs::AbstractArray, classifiers::AbstractArray) -> Vector{Int8}
 Classifies given integral image (Abstract Array) using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
 
 # Arguments
 - `int_img::AbstractArray`: Integral image to be classified
-- `classifiers::Array{HaarLikeObject, 1}`: List of classifiers
+- `classifiers::Vector{HaarLikeObject}`: List of classifiers
 
 # Returns
 
 `votes::AbstractArray`: A list of assigned votes (see ensemble_vote).
 """
 function ensemble_vote_all(
-    image_path::AbstractString,
-    classifiers::Array{HaarLikeObject, 1};
+    image_path::String,
+    classifiers::Vector{HaarLikeObject};
     scale::Bool=false,
     scale_to::Tuple=(200, 200)
     )
     
-    return [ensemble_vote(load_image(i, scale=scale, scale_to=scale_to), classifiers) for i in filtered_ls(image_path)]
+    return Int8[ensemble_vote(load_image(i, scale=scale, scale_to=scale_to), classifiers) for i in filtered_ls(image_path)]
 end
 
 """
-    get_faceness(feature, int_img::AbstractArray) -> Number
+    get_faceness(feature::HaarLikeObject{I, F}, int_img::Array{T, N}) -> Number
 
 Get facelikeness for a given feature.
 
@@ -187,27 +189,27 @@ Get facelikeness for a given feature.
 
 - `score::Number`: Score for given feature
 """
-function get_faceness(feature::HaarLikeObject, int_img::Matrix{T}) where T
+function get_faceness(feature::HaarLikeObject{I, F}, int_img::Array{T, N}) where {I, F, T, N}
     score, faceness = get_score(feature, int_img)
     
     return (feature.weight * score) < (feature.polarity * feature.threshold) ? faceness : zero(T)
 end
 
 #=
-    reconstruct(classifiers::AbstractArray, img_size::Tuple) -> AbstractArray
+    reconstruct(classifiers::Vector, img_size::Tuple) -> AbstractArray
 
 Creates an image by putting all given classifiers on top of each other producing an archetype of the learned class of object.
 
 # Arguments
 
-- `classifiers::Array{HaarLikeObject, 1}`: List of classifiers
+- `classifiers::Vector{HaarLikeObject}`: List of classifiers
 - `img_size::Tuple{Integer, Integer}`: Tuple of width and height
 
 # Returns
 
 - `result::AbstractArray`: Reconstructed image
 =#
-function reconstruct(classifiers::AbstractArray, img_size::Tuple)
+function reconstruct(classifiers::Vector{HaarLikeObject{I, F}}, img_size::Tuple{Int, Int}) where {I, F}
     image = zeros(img_size)
     
     for c in classifiers
@@ -279,8 +281,8 @@ end
 
 #=
     get_random_image(
-        face_path::AbstractString,
-        non_face_path::AbstractString="",
+        face_path::String,
+        non_face_path::String="",
         non_faces::Bool=false
     ) -> AbstractString
 
@@ -288,16 +290,18 @@ Chooses a random image from a given two directories.
 
 # Arguments
 
-- `face_path::AbstractString`: The path to the faces directory
-- `non_face_path::AbstractString`: The path to the non-faces directory
+- `face_path::String`: The path to the faces directory
+- `non_face_path::String`: The path to the non-faces directory
 
 # Returns
 
 - `file_name::AbstractString`: The path to the file randomly chosen
+
+TODO: change this to check if `isempty(non_face_path)` instead of having another parameter
 =#
 function get_random_image(
-    face_path::AbstractString;
-    non_face_path::AbstractString=string(),
+    face_path::String;
+    non_face_path::String="",
     non_faces::Bool=false
 )
     file_name = string()
@@ -357,7 +361,7 @@ function scale_box(
 end
 
 #=
-    generate_validation_image(image_path::AbstractString, classifiers::AbstractArray) -> AbstractArray
+    generate_validation_image(image_path::String, classifiers::String) -> AbstractArray
     
 Generates a bounding box around the face of a random image.
 
@@ -370,9 +374,9 @@ Generates a bounding box around the face of a random image.
 
 - `validation_image::AbstractArray`: The new image with a bounding box
 =#
-function generate_validation_image(image_path::AbstractString, classifiers::Array{HaarLikeObject, 1})
+function generate_validation_image(image_path::String, classifiers::Vector{HaarLikeObject})
     
-    # === THIS FUNCTION IS A WORK IN PROGRESS ===
+    # === TODO: THIS FUNCTION IS A WORK IN PROGRESS ===
     
     img = load_image(image_path)
     img_size = size(img)
