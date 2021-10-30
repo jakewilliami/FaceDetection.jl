@@ -77,7 +77,7 @@ function HaarLikeObject(
 end
 
 """
-    get_score(feature::HaarLikeObject, int_img::Array) -> Tuple{Number, Number}
+    get_score(feature::HaarLikeObject, int_img::AbstractArray) -> Tuple{Number, Number}
     
 Get score for given integral image array.  This is the feature cascade.
 
@@ -90,7 +90,7 @@ Get score for given integral image array.  This is the feature cascade.
 
 - `score::Number`: Score for given feature
 """
-function get_score(feature::HaarLikeObject{I, F}, int_img::Array) where {I, F}
+function get_score(feature::HaarLikeObject{I, F}, int_img::AbstractArray{T. N}) where {I, F, T, N}
     score = zero(I)
     faceness = zero(I)
     _2f = F(2)
@@ -152,7 +152,7 @@ Get vote of this feature for given integral image.
     1       ⟺ this feature votes positively
     -1      otherwise
 """
-function get_vote(feature::HaarLikeObject, int_img::AbstractArray)
+function get_vote(feature::HaarLikeObject{I, F}, int_img::AbstractArray{T, N}) where {I, F, T, N}
     score = first(get_score(feature, int_img)) # we only care about score here, not faceness
     # return (feature.weight * score) < (feature.polarity * feature.threshold) ? one(Int8) : -one(Int8)
     # return feature.weight * (score < feature.polarity * feature.threshold ? one(Int8) : -one(Int8))
