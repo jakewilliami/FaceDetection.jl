@@ -21,9 +21,9 @@ A function to pretty print a message to the user
 # Returns
 - `A::AbstractString`: A message to print to the user
 =#
-function notify_user(message::AbstractString)
-    return println("\033[1;34m===>\033[0;38m\033[1;38m\t$message\033[0;38m")
-end
+# function notify_user(message::AbstractString)
+#     return println("\033[1;34m===>\033[0;38m\033[1;38m\t$message\033[0;38m")
+# end
 
 #=
     filtered_ls(path::AbstractString) -> Array{String, 1}

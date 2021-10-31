@@ -4,7 +4,8 @@
     "${BASH_SOURCE[0]}" "$@"
     =#
 
-println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
+# println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
+@info "Loading required libraries (it will take a moment to precompile if it is your first time doing this)..."
 
 include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl"))
 
@@ -17,7 +18,7 @@ using DataFrames: DataFrame
 using HypothesisTests: UnequalVarianceTTest
 using Serialization: deserialize
 
-println("...done")
+@info("...done")
 
 function main(;
 	smart_choose_feats::Bool=false,
@@ -33,7 +34,7 @@ function main(;
 	classifiers = deserialize("/Users/jakeireland/Desktop/classifiers_100_577_577_fixed_1idx")
     num_classifiers = length(classifiers)
 	
-    notify_user("Calculating test face scores and constructing dataset...")
+    @info("Calculating test face scores and constructing dataset...")
     
     faces_scores = Vector{Real}(undef, length(filtered_ls(pos_testing_path)))
     non_faces_scores = Vector{Real}(undef, length(filtered_ls(neg_testing_path)))
@@ -61,15 +62,13 @@ function main(;
 	data_file = joinpath(dirname(dirname(@__FILE__)), "data", "faceness-scores.csv")
     write(data_file, DataFrame(hcat(face_names, df_faces, non_face_names, df_non_faces)), writeheader=false)
     
-    println("...done.  Dataset written to $(data_file).\n")
-    
-    notify_user("Computing differences in scores between faces and non-faces...")
+    @info("...done.  Dataset written to $(data_file).\n")
+    @info("Computing differences in scores between faces and non-faces...")
     
     welch_t = UnequalVarianceTTest(faces_scores, non_faces_scores)
     
-    println("...done.  $welch_t\n")
-    
-    notify_user("Constructing box plot with said dataset...")
+    @info("...done.  $welch_t\n")
+    @info("Constructing box plot with said dataset...")
     
     gr() # set plot backend
     theme(:solarized)
@@ -87,8 +86,7 @@ function main(;
     
     # save plot
     StatsPlots.savefig(plot, joinpath(dirname(dirname(@__FILE__)), "figs", "scores.pdf"))
-    
-    println("...done.  Plot created at ", joinpath(dirname(dirname(@__FILE__)), "figs", "scores.pdf"), "\n")
+    @ingo("...done.  Plot created at ", joinpath(dirname(dirname(@__FILE__)), "figs", "scores.pdf"), "\n")
 end
 
 @time main(smart_choose_feats=true, scale=true, scale_to=(577, 577))

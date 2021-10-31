@@ -4,7 +4,8 @@
     "${BASH_SOURCE[0]}" "$@"
     =#
 
-println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
+# println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
+@info "Loading required libraries (it will take a moment to precompile if it is your first time doing this)..."
 
 include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl"))
 
@@ -13,7 +14,7 @@ const FD = FaceDetection
 using Images: imresize
 using LightXML
 
-println("...done")
+@info("...done")
 
 function main()
     xml_data = parse_file(joinpath(dirname(dirname(@__FILE__)), "data", "haarcascades", "haarcascade_frontalface_default.xml")) # ../data/haarcascades/haarcascade_frontalface_default.xml

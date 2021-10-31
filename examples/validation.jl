@@ -9,7 +9,8 @@
 Adapted from https://github.com/Simon-Hohberg/Viola-Jones/
 =#
 
-println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
+# println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
+@info "Loading required libraries (it will take a moment to precompile if it is your first time doing this)..."
 
 include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl"))
 
@@ -19,7 +20,7 @@ using Printf: @printf
 using Images: Gray, clamp01nan, save, imresize, load
 using Serialization: deserialize
 
-println("...done")
+@info("...done")
 
 function main(;
     smart_choose_feats::Bool=false,
@@ -55,21 +56,21 @@ function main(;
 
     if image_reconstruction
         # Just for fun: putting all Haar-like features over each other generates a face-like image
-        FD.notify_user("Constructing an image of all Haar-like Features found...")
+        @info("Constructing an image of all Haar-like Features found...")
         
         reconstructed_image = FD.reconstruct(classifiers, img_size)
         save(joinpath(dirname(dirname(@__FILE__)), "figs", "reconstruction.png"), Gray.(map(clamp01nan, reconstructed_image)))
         
-        println("...done.  See ", joinpath(dirname(dirname(@__FILE__)), "figs", "reconstruction.png"), ".\n")
+        @info("...done.  See ", joinpath(dirname(dirname(@__FILE__)), "figs", "reconstruction.png"), ".\n")
     end
 
     if feat_validation
-        FD.notify_user("Constructing a validation image on a random image...")
+        @info("Constructing a validation image on a random image...")
 		
 		validation_image = FD.generate_validation_image(random_image, classifiers)
         save(joinpath(dirname(dirname(@__FILE__)), "figs", "validation.png"), validation_image)
         
-        println("...done.  See ", joinpath(dirname(dirname(@__FILE__)), "figs", "validation.png"), ".\n")
+        @infp("...done.  See ", joinpath(dirname(dirname(@__FILE__)), "figs", "validation.png"), ".\n")
     end
 end
 

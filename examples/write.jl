@@ -10,7 +10,8 @@ Adapted from https://github.com/Simon-Hohberg/Viola-Jones/
 =#
 
 
-println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
+# println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
+@info Loading required libraries (it will take a moment to precompile if it is your first time doing this)...
 
 include(joinpath(dirname(@__DIR__), "src", "FaceDetection.jl"))
 
@@ -19,7 +20,7 @@ const FD = FaceDetection
 using Printf: @printf
 using Serialization: serialize
 
-println("...done\n")
+@info("...done\n")
 
 function main(;
     smart_choose_feats::Bool=false,
@@ -32,11 +33,11 @@ function main(;
 	min_size_img = (19, 19) # default for our test dataset
 	if smart_choose_feats
 		# For performance reasons restricting feature size
-		notify_user("Selecting best feature width and height...")
+		@info("Selecting best feature width and height...")
 		
 		max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = determine_feature_size(pos_training_path, neg_training_path; scale = scale, scale_to = scale_to)
 		
-		println("...done.  Maximum feature width selected is $max_feature_width pixels; minimum feature width is $min_feature_width; maximum feature height is $max_feature_height pixels; minimum feature height is $min_feature_height.\n")
+		@info("...done.  Maximum feature width selected is $max_feature_width pixels; minimum feature width is $min_feature_width; maximum feature height is $max_feature_height pixels; minimum feature height is $min_feature_height.\n")
 	else
 		min_feature_height = 8
 		max_feature_height = 10

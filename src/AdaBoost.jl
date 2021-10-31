@@ -25,7 +25,8 @@ function get_feature_votes(
     min_feature_height::Integer=one(Int32),
     max_feature_height::Integer=-one(Int32);
     scale::Bool = false,
-    scale_to::Tuple = (Int32(200), Int32(200))
+    scale_to::Tuple = (Int32(200), Int32(200)),
+    show_progress::Bool = true
     )
 
     #this transforms everything to maintain type stability
@@ -70,8 +71,8 @@ function get_feature_votes(
     # create an empty array with dimensions (num_imgs, numFeautures)
     votes = Matrix{Int8}(undef, num_features, num_imgs)
     
-    notify_user("Loading images ($(num_pos) positive and $(num_neg) negative images) and calculating their scores...")
-    p = Progress(length(image_files), 1) # minimum update interval: 1 second
+    @info("Loading images ($(num_pos) positive and $(num_neg) negative images) and calculating their scores...")
+    p = Progress(length(image_files), 1; enabled = show_progress) # minimum update interval: 1 second
     num_processed = 0
     batch_size = 10
     # get votes for images
@@ -98,7 +99,8 @@ function learn(
     negative_path::AbstractString,
     features::Array{HaarLikeObject, 1},
     votes::Matrix{Int8},
-    num_classifiers::Integer=-one(Int32)
+    num_classifiers::Integer=-one(Int32);
+    show_progress::Bool = true
     )
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
     num_pos = length(filtered_ls(positive_path))
@@ -129,10 +131,10 @@ function learn(
     num_classifiers = isequal(num_classifiers, -1) ? num_features : num_classifiers
 
     # select classifiers
-    notify_user("Selecting classifiers...")
+    @info("Selecting classifiers...")
     # classifiers = HaarLikeObject[]
     classifiers = Vector{HaarLikeObject}(undef, num_classifiers)
-    p = Progress(num_classifiers, 1) # minimum update interval: 1 second
+    p = Progress(num_classifiers, 1; enabled = show_progress) # minimum update interval: 1 second
     classification_errors = Vector{Float64}(undef, length(feature_indices))
     
     for t in 1:num_classifiers
@@ -179,7 +181,7 @@ function learn(
         next!(p) # increment progress bar
     end
     
-    print("\n") # for a new line after the progress bar
+    println("\n") # for a new line after the progress bar
     
     return classifiers
 end
@@ -193,7 +195,8 @@ function learn(
     min_feature_height::Int=1,
     max_feature_height::Int=-1;
     scale::Bool = false,
-    scale_to::Tuple = (200, 200)
+    scale_to::Tuple = (200, 200),
+    show_progress::Bool = true
 )
     
     votes, features = get_feature_votes(
@@ -208,7 +211,7 @@ function learn(
         scale_to = scale_to
     )
     
-    return learn(positive_path, negative_path, features, votes, num_classifiers)
+    return learn(positive_path, negative_path, features, votes, num_classifiers; show_progress = show_progress)
 end
 
 """
@@ -244,7 +247,7 @@ function create_features(
     min_feature_height::Int,
     max_feature_height::Int
 )
-    notify_user("Creating Haar-like features...")
+    @info("Creating Haar-like features...")
     features = HaarLikeObject[]
     
     if img_width < max_feature_width || img_height < max_feature_height
@@ -268,7 +271,7 @@ function create_features(
         end # end for feature width
     end # end for feature in feature types
     
-    println("...finished processing; ", length(features), " features created.\n")
+    @info("...finished processing; $(length(features)) features created.")
     
     return features
 end
