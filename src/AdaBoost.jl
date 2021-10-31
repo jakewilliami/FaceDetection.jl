@@ -109,7 +109,7 @@ function learn(
     # pos_weights = ones(num_pos) / (2 * num_pos)
     # neg_weights = ones(num_neg) / (2 * num_neg)
     pos_weights = fill(float(one(Int)) / (2 * num_pos), num_pos)
-    neg_weights = ones(float(one(Int)) / (2 * num_neg), num_neg)
+    neg_weights = fill(float(one(Int)) / (2 * num_neg), num_neg)
 
     # Concatenate positive and negative weights into one `weights` array
     weights = vcat(pos_weights, neg_weights)
@@ -142,7 +142,7 @@ function learn(
         # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
         @threads for j in 1:length(feature_indices)
             feature_idx = feature_indices[j]
-            classification_errors[j] = sum(weights[img_idx] for img_idx in 1:num_imgs if labels[img_idx] !== votes[feature_indices[j])
+            classification_errors[j] = sum(weights[img_idx] for img_idx in 1:num_imgs if labels[img_idx] !== votes[feature_indices[j]])
             # classification_errors[j] = sum(1:num_imgs) do img_idx
             #     labels[img_idx] !== votes[feature_indices[j], img_idx] ? weights[img_idx] : zero(Float64)
             # end
@@ -253,15 +253,15 @@ function create_features(
         """)
     end
     
-    for (feature_first, feature_last) in values(feature_types) # (feature_types are just tuples)
+    for (feature_first, feature_last) in values(FEATURE_TYPES) # (feature_types are just tuples)
         feature_start_width = max(min_feature_width, feature_first)
         for feature_width in feature_start_width:feature_first:(max_feature_width)
             feature_start_height = max(min_feature_height, feature_last)
             for feature_height in feature_start_height:feature_last:(max_feature_height)
                 for x in 1:(img_width - feature_width)
                     for y in 1:(img_height - feature_height)
-                        push!(features, HaarLikeObject(feature, (x, y), feature_width, feature_height, 0, 1))
-                        push!(features, HaarLikeObject(feature, (x, y), feature_width, feature_height, 0, -1))
+                        push!(features, HaarLikeObject((feature_first, feature_last), (x, y), feature_width, feature_height, 0, 1))
+                        push!(features, HaarLikeObject((feature_first, feature_last), (x, y), feature_width, feature_height, 0, -1))
                     end # end for y
                 end # end for x
             end # end for feature height

@@ -4,7 +4,7 @@
     "${BASH_SOURCE[0]}" "$@"
     =#
 
-const feature_types = (
+const FEATURE_TYPES = (
     two_vertical = (1, 2),
     two_horizontal = (2, 1),
     three_horizontal = (3, 1),
@@ -98,29 +98,29 @@ function get_score(feature::HaarLikeObject{I, F}, int_img::Array) where {I, F}
     _half = F(0.5)
     _one_third = F(1.0 / 3.0)
     
-    if feature.feature_type == feature_types.two_vertical
+    if feature.feature_type == FEATURE_TYPES.two_vertical
         _first = sum_region(int_img, feature.top_left, (first(feature.top_left) + feature.width, round(I, last(feature.top_left) + feature.height / 2)))
         second = sum_region(int_img, (first(feature.top_left), round(I, last(feature.top_left) + feature.height / 2)), feature.bottom_right)
         score = _first - second
         faceness = I(1)
-    elseif feature.feature_type == feature_types.two_horizontal
+    elseif feature.feature_type == FEATURE_TYPES.two_horizontal
         _first = sum_region(int_img, feature.top_left, (round(I, first(feature.top_left) + feature.width / 2), last(feature.top_left) + feature.height))
         second = sum_region(int_img, (round(I, first(feature.top_left) + feature.width / 2), last(feature.top_left)), feature.bottom_right)
         score = _first - second
         faceness = I(2)
-    elseif feature.feature_type == feature_types.three_horizontal
+    elseif feature.feature_type == FEATURE_TYPES.three_horizontal
         _first = sum_region(int_img, feature.top_left, (round(I, first(feature.top_left) + feature.width / 3), last(feature.top_left) + feature.height))
         second = sum_region(int_img, (round(I, first(feature.top_left) + feature.width / 3), last(feature.top_left)), (round(I, first(feature.top_left) + 2 * feature.width / 3), last(feature.top_left) + feature.height))
         third = sum_region(int_img, (round(I, first(feature.top_left) + 2 * feature.width / 3), last(feature.top_left)), feature.bottom_right)
         score = _first - second + third
         faceness = I(3)
-    elseif feature.feature_type == feature_types.three_vertical
+    elseif feature.feature_type == FEATURE_TYPES.three_vertical
         _first = sum_region(int_img, feature.top_left, (first(feature.bottom_right), round(I, last(feature.top_left) + feature.height / 3)))
         second = sum_region(int_img, (first(feature.top_left), round(I, last(feature.top_left) + feature.height / 3)), (first(feature.bottom_right), round(I, last(feature.top_left) + 2 * feature.height / 3)))
         third = sum_region(int_img, (first(feature.top_left), round(I, last(feature.top_left) + 2 * feature.height / 3)), feature.bottom_right)
         score = _first - second + third
         faceness  = I(4)
-    elseif feature.feature_type == feature_types.four
+    elseif feature.feature_type == FEATURE_TYPES.four
         # top left area
         _first = sum_region(int_img, feature.top_left, (round(I, first(feature.top_left) + feature.width / 2), round(I, last(feature.top_left) + feature.height / 2)))
         # top right area
