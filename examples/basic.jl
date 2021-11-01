@@ -27,8 +27,8 @@ function main(;
 	scale::Bool=false,
 	scale_to::Tuple=(200, 200)
 )
-	include("constants.jl")
-	include("main_data.jl")
+	include(joinpath(@__DIR__, "constants.jl"))
+	include(joinpath(@__DIR__, "main_data.jl"))
 
     min_size_img = (19, 19) # default for our test dataset
     if smart_choose_feats
