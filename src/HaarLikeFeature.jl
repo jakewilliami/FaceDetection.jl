@@ -6,7 +6,7 @@ const FEATURE_TYPES = (
     four = (2, 2)
     )
 
-abstract type HaarFeatureAbstractType end
+abstract type AbstractHaarFeature end
 
 """
     mutable struct HaarLikeObject{I <: Integer, F <: AbstractFloat}
@@ -23,7 +23,7 @@ abstract type HaarFeatureAbstractType end
     polarity::I
     weight::F
 """
-mutable struct HaarLikeObject{I <: Integer, F <: AbstractFloat} <: HaarFeatureAbstractType
+mutable struct HaarLikeObject{I <: Integer, F <: AbstractFloat} <: AbstractHaarFeature
     #parametric struct to store the ints and floats efficiently
     feature_type::Tuple{I, I}
     position::Tuple{I, I}
@@ -71,7 +71,7 @@ function HaarLikeObject(
 end
 
 """
-    get_score(feature::HaarLikeObject, int_img::Array) -> Tuple{Number, Number}
+    get_score(feature::HaarLikeObject, int_img::AbstractArray) -> Tuple{Number, Number}
     
 Get score for given integral image array.  This is the feature cascade.
 
@@ -84,7 +84,7 @@ Get score for given integral image array.  This is the feature cascade.
 
 - `score::Number`: Score for given feature
 """
-function get_score(feature::HaarLikeObject{I, F}, int_img::Array) where {I, F}
+function get_score(feature::HaarLikeObject{I, F}, int_img::AbstractArray{T. N}) where {I, F, T, N}
     score = zero(I)
     faceness = zero(I)
     _2f = F(2)
@@ -146,8 +146,8 @@ Get vote of this feature for given integral image.
     1       ⟺ this feature votes positively
     -1      otherwise
 """
-function get_vote(feature::HaarLikeObject, int_img::AbstractArray)
-    score = first(get_score(feature, int_img)) # we only care about score here, not faceness
+function get_vote(feature::HaarLikeObject{I, F}, int_img::AbstractArray{T, N}) where {I, F, T, N}
+    score, _ = get_score(feature, int_img) # we only care about score here, not faceness
     # return (feature.weight * score) < (feature.polarity * feature.threshold) ? one(Int8) : -one(Int8)
     # return feature.weight * (score < feature.polarity * feature.threshold ? one(Int8) : -one(Int8))
     return score < feature.polarity * feature.threshold ? feature.weight : -feature.weight
