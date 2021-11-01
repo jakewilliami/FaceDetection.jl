@@ -140,12 +140,10 @@ function learn(
         # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
         best_error, min_error_idx = findmin(classification_errors)
         best_feature_idx = feature_indices[min_error_idx]
-        best_feature = features[best_feature_idx]
 
         # set feature weight
         best_feature = features[best_feature_idx]
-        feature_weight = β(best_error)
-        best_feature.weight = feature_weight
+        best_feature.weight = β(best_error)
 
         # append selected features
         classifiers[t] = best_feature
@@ -160,9 +158,12 @@ function learn(
                 weights[i] *= sqrt_best_error
             end
         end
+        
+        # weights = np.array(list(map(lambda img_idx: weights[img_idx] * np.sqrt((1-best_error)/best_error) if labels[img_idx] != votes[img_idx, best_feature_idx] else weights[img_idx] * np.sqrt(best_error/(1-best_error)), range(num_imgs))))
 
         # remove feature (a feature can't be selected twice)
-        filter!(e -> e ∉ best_feature_idx, feature_indices) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`
+        # filter!(e -> e ∉ best_feature_idx, feature_indices) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`
+        deleteat!(feature_indices, best_feature_idx)
         resize!(classification_errors, length(feature_indices))
         next!(p) # increment progress bar
     end
