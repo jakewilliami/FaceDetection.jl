@@ -84,7 +84,7 @@ Get score for given integral image array.  This is the feature cascade.
 
 - `score::Number`: Score for given feature
 """
-function get_score(feature::HaarLikeObject{I, F}, int_img::AbstractArray{T. N}) where {I, F, T, N}
+function get_score(feature::HaarLikeObject{I, F}, int_img::AbstractArray{T, N}) where {I, F, T, N}
     score = zero(I)
     faceness = zero(I)
     _2f = F(2)
