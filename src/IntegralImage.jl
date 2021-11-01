@@ -36,7 +36,7 @@ function to_integral_image(img_arr::AbstractArray{T, N}) where {T, N}
         cumsum!(integral_image_arr, integral_image_arr; dims=sd[i])
     end
 	
-    return IntegralArray{T, N, typeof(integral_image_arr)}(integral_image_arr)
+    return IntegralArray{T, N}(integral_image_arr)
 end
 
 LinearIndices(A::IntegralArray) = Base.LinearFast()

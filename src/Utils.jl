@@ -2,23 +2,6 @@ using Images: save, load, Colors, clamp01nan, Gray, imresize
 using ImageDraw: draw, Polygon, Point
 
 #=
-    notify_user(message::String) -> String
-
-A function to pretty print a message to the user
-
-# Arguments
-
-- `message::String`: Some message to print
-
-# Returns
-- `A::String`: A message to print to the user
-=#
-# function notify_user(io::IO, message::String)
-#     return println(io, "\033[1;34m===>\033[0;38m\033[1;38m\t", message, "\033[0;38m")
-# end
-# notify_user(msg::String) = notify_user(stdout, msg)
-
-#=
     filtered_ls(path::String) -> Vector{String}
     
 A function to filter the output of readdir
@@ -53,13 +36,18 @@ function load_image(
     )
 
     img = load(image_path)
+    if scale
+        img = imresize(img, scale_to)
+    end
     img = convert(Array{Float64}, Gray.(img))
-    img = scale ? imresize(img, scale_to) : img
     
     return to_integral_image(img)
 end
 
 """
+    determine_feature_size(
+        pictures::Vector{String}
+    ) -> Tuple{Integer, Integer, Integer, Integer, Tuple{Integer, Integer}}
     determine_feature_size(
         pos_training_path::String,
         neg_training_path::String
@@ -69,6 +57,8 @@ Takes images and finds the best feature size for the image size.
 
 # Arguments
 
+- `pictures::Vector{String}`: a list of paths to the images
+OR
 - `pos_training_path::String`: the path to the positive training images
 - `neg_training_path::String`: the path to the negative training images
 
@@ -81,36 +71,55 @@ Takes images and finds the best feature size for the image size.
 - `min_size_img::Tuple{Integer, Integer}`: the minimum-sized image in the image directories
 """
 function determine_feature_size(
-    pos_training_path::String,
-    neg_training_path::String;
+    pictures::Vector{String};
     scale::Bool=false,
-    scale_to::Tuple=(200, 200)
+    scale_to::Tuple=(200, 200),
+    show_progress::Bool = true
 )
-
+    
+    if scale
+        # if we are scaling to something, then we already know the
+        # minimum image size (the only image size)
+        @goto determine_feature_parameters
+    end
+    
     min_feature_height = 0
     min_feature_width = 0
     max_feature_height = 0
     max_feature_width = 0
-
+    
     min_size_img = (0, 0)
-    sizes = Tuple{Int, Int}[]
-
-    for picture_dir in[pos_training_path, neg_training_path]
-        for picture in filtered_ls(picture_dir)
-            img = load_image(picture, scale=scale, scale_to=scale_to)
-            new_size = size(img)
-            sizes = push!(sizes, new_size)
+    
+    p = Progress(length(pictures), enabled = show_progress)
+    p.dt = 1 # minimum update interval: 1 second
+    @threads for picture in pictures
+        img = load(picture)
+        new_size = size(img)
+        if all(iszero, min_size_img) || new_size < min_size_img
+            min_size_img = new_size
         end
+        next!(p)
     end
     
-    min_size_img = minimum(sizes)
+    @label determine_feature_parameters
     
-    max_feature_height = Int(round(min_size_img[2]*(10/19)))
-    max_feature_width = Int(round(min_size_img[1]*(10/19)))
-    min_feature_height = Int(round(max_feature_height - max_feature_height*(2/max_feature_height)))
-    min_feature_width = Int(round(max_feature_width - max_feature_width*(2/max_feature_width)))
+    max_feature_height = round(Int, min_size_img[2]*(10/19))
+    max_feature_width = round(Int, min_size_img[1]*(10/19))
+    min_feature_height = round(Int, max_feature_height - max_feature_height*(2/max_feature_height))
+    min_feature_width = round(Int, max_feature_width - max_feature_width*(2/max_feature_width))
     
     return max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img
+    
+end
+function determine_feature_size(
+    pos_training_path::String,
+    neg_training_path::String;
+    scale::Bool=false,
+    scale_to::Tuple=(200, 200),
+    show_progress::Bool = true
+)
+    pictures = vcat(filtered_ls(pos_training_path), filtered_ls(neg_training_path))
+    return determine_feature_size(pictures; scale = scale, scale_to = scale_to, show_progress = show_progress)
     
 end
 
@@ -140,23 +149,32 @@ h(x) = \begin{cases}
     1       ⟺ sum of classifier votes > 0
     0       otherwise
 """
-function ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLikeObject}) where {T, N}
-    return sum(get_vote(c, int_img) for c in classifiers) ≥ zero(Int8) ? one(Int8) : zero(Int8)
-    # return sum(c -> get_vote(c, int_img), classifiers) ≥ zero(Int8) ? one(Int8) : zero(Int8)
-end
+ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLikeObject}) where {T, N} =
+    sum(get_vote(c, int_img) for c in classifiers) ≥ zero(Int8) ? one(Int8) : zero(Int8)
 
 """
-    ensemble_vote_all(image_path::String, classifiers::Vector{HaarLikeObject}) -> Vector{Int8}
+    ensemble_vote_all(images::Vector{String}, classifiers::Vector{HaarLikeObject}) -> Vector{Int8}
+    ensemble_vote_all(image_path::String, classifiers::Vector{HaarLikeObject})     -> Vector{Int8}
+
 Given a path to images, loads images then classifies votes using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
 
 # Arguments
-- `image_path::String`: Path to images
+- `images::Vector{String}`: list of paths to images; OR `image_path::String`: Path to images dir
 - `classifiers::Vector{HaarLikeObject}`: List of classifiers
 
 # Returns
 
-`votes::AbstractArray`: A list of assigned votes (see ensemble_vote).
+`votes::Vector{Int8}`: A list of assigned votes (see ensemble_vote).
 """
+function ensemble_vote_all(
+    images::Vector{String},
+    classifiers::Vector{HaarLikeObject};
+    scale::Bool=false,
+    scale_to::Tuple=(200, 200)
+    )
+    
+    return Int8[ensemble_vote(load_image(i, scale=scale, scale_to=scale_to), classifiers) for i in images]
+end
 function ensemble_vote_all(
     image_path::String,
     classifiers::Vector{HaarLikeObject};
@@ -164,7 +182,7 @@ function ensemble_vote_all(
     scale_to::Tuple=(200, 200)
     )
     
-    return Int8[ensemble_vote(load_image(i, scale=scale, scale_to=scale_to), classifiers) for i in filtered_ls(image_path)]
+    return ensemble_vote_all(filtered_ls(image_path), classifiers; scale = scale, scale_to = scale_to)
 end
 
 """
@@ -183,7 +201,6 @@ Get facelikeness for a given feature.
 """
 function get_faceness(feature::HaarLikeObject{I, F}, int_img::IntegralArray{T, N}) where {I, F, T, N}
     score, faceness = get_score(feature, int_img)
-    
     return (feature.weight * score) < (feature.polarity * feature.threshold) ? faceness : zero(T)
 end
 

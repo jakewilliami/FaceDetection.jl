@@ -2,6 +2,9 @@ module FaceDetection
 
 import Base: size, getindex, LinearIndices
 using Images: Images, coords_spatial
+using ProgressMeter: Progress, next!
+using Base.Threads: @threads
+using Base.Iterators: partition
 
 export to_integral_image, sum_region
 export learn, get_feature_votes
