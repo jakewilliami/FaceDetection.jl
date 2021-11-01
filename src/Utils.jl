@@ -146,11 +146,11 @@ function ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLik
 end
 
 """
-    ensemble_vote_all(int_img::AbstractArray{IntegralArray}, classifiers::AbstractArray) -> Vector{Int8}
-Classifies given integral image (Abstract Array) using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
+    ensemble_vote_all(image_path::String, classifiers::Vector{HaarLikeObject}) -> Vector{Int8}
+Given a path to images, loads images then classifies votes using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
 
 # Arguments
-- `int_img::AbstractArray`: Integral image to be classified
+- `image_path::String`: Path to images
 - `classifiers::Vector{HaarLikeObject}`: List of classifiers
 
 # Returns
