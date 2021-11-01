@@ -70,14 +70,9 @@ function get_feature_votes(
     batch_size = 10
     # get votes for images
     map(partition(image_files, batch_size)) do batch
-        ii_imgs = load_image.(batch; scale=scale, scale_to=scale_to)
         @threads for t in 1:length(batch)
-            # votes[:, num_processed + t] .= get_vote.(features, Ref(ii_imgs[t]))
-            # map!(f -> get_vote(f, ii_imgs[t]), view(votes, :, num_processed + t), features)
-            votes_view = view(votes, :, num_processed + t)
-            for (i, f) in zip(eachindex(votes_view), features)
-                votes_view[i] = get_vote(f, ii_imgs[t])
-            end
+            img_arr = load_image(batch[t]; scale = scale, scale_to = scale_to)
+            votes[:, num_processed + t] .= (get_vote(f, img_arr) for f in features)
             next!(p) # increment progress bar
         end
         num_processed += length(batch)
@@ -102,27 +97,27 @@ function learn(
     num_imgs = num_pos + num_neg
 
     # Initialise weights $w_{1,i} = \frac{1}{2m}, \frac{1}{2l}$, for $y_i=0,1$ for negative and positive examples respectively
-    # pos_weights = ones(num_pos) / (2 * num_pos)
-    # neg_weights = ones(num_neg) / (2 * num_neg)
     pos_weights = fill(float(one(Int)) / (2 * num_pos), num_pos)
     neg_weights = fill(float(one(Int)) / (2 * num_neg), num_neg)
 
     # Concatenate positive and negative weights into one `weights` array
     weights = vcat(pos_weights, neg_weights)
+    # Efficient construction of ones and negative ones in a single vector of length num_imgs
+    # equivalent to `vcat(ones(Int8, num_pos), ones(Int8, num_neg) * -one(Int8))`
     _1 = one(Int8)
     _neg1 = -_1
-    labels = Vector{Int8}(undef, num_pos + num_neg)
+    labels = Vector{Int8}(undef, num_imgs)
     for i in 1:num_pos
         labels[i] = _1
     end
-    for j in (num_pos + 1):(num_pos + num_neg)
+    for j in (num_pos + 1):num_imgs
         labels[j] = _neg1
     end
     
     # get number of features
     num_features = length(features)
     feature_indices = Array(1:num_features)
-    num_classifiers = isequal(num_classifiers, -1) ? num_features : num_classifiers
+    num_classifiers = num_classifiers == -1 ? num_features : num_classifiers
 
     # select classifiers
     @info("Selecting classifiers...")
