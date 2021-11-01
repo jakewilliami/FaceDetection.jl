@@ -14,18 +14,8 @@ Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
 Netpbm = "f09324ee-3d7c-5217-9330-fc30815ba969"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 QuartzImageIO = "dca85d43-d64c-5e67-8c65-017450d5d020"
-SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
-ColorTypes = "0.10.9, 0.11"
-FileIO = "1.4.3"
-ImageDraw = "0.2.3"
-ImageIO = "0.3.0, 0.4, 0.5"
-ImageMagick = "1.1.6"
-ImageView = "0.10.9"
-Images = "0.22.4, 0.23, 0.24"
-Netpbm = "0.4.1, 1.0"
-QuartzImageIO = "0.7.3"
 julia = "1"
 
 [extras]
