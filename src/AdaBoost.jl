@@ -158,11 +158,8 @@ function learn(
                 weights[i] *= sqrt_best_error
             end
         end
-        
-        # weights = np.array(list(map(lambda img_idx: weights[img_idx] * np.sqrt((1-best_error)/best_error) if labels[img_idx] != votes[img_idx, best_feature_idx] else weights[img_idx] * np.sqrt(best_error/(1-best_error)), range(num_imgs))))
 
         # remove feature (a feature can't be selected twice)
-        # filter!(e -> e ∉ best_feature_idx, feature_indices) # note: without unicode operators, `e ∉ [a, b]` is `!(e in [a, b])`
         deleteat!(feature_indices, best_feature_idx)
         resize!(classification_errors, length(feature_indices))
         next!(p) # increment progress bar
@@ -233,20 +230,20 @@ function create_features(
     min_feature_height::Int,
     max_feature_height::Int
 )
-    @info("Creating Haar-like features...")
-    features = HaarLikeObject[]
-    
     if img_width < max_feature_width || img_height < max_feature_height
         error("""
         Cannot possibly find classifiers whose size is greater than the image itself [(width,height) = ($img_width,$img_height)].
         """)
     end
     
+    @info("Creating Haar-like features...")
+    features = HaarLikeObject[]
+    
     for (feature_first, feature_last) in values(FEATURE_TYPES) # (feature_types are just tuples)
         feature_start_width = max(min_feature_width, feature_first)
-        for feature_width in feature_start_width:feature_first:(max_feature_width)
+        for feature_width in feature_start_width:feature_first:max_feature_width
             feature_start_height = max(min_feature_height, feature_last)
-            for feature_height in feature_start_height:feature_last:(max_feature_height)
+            for feature_height in feature_start_height:feature_last:max_feature_height
                 for x in 1:(img_width - feature_width)
                     for y in 1:(img_height - feature_height)
                         push!(features, HaarLikeObject((feature_first, feature_last), (x, y), feature_width, feature_height, 0, 1))

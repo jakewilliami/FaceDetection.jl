@@ -115,9 +115,9 @@ function determine_feature_size(
 end
 
 @doc raw"""
-    ensemble_vote(int_img::AbstractArray, classifiers::AbstractArray) -> Integer
+    ensemble_vote(int_img::IntegralArray, classifiers::AbstractArray) -> Integer
 
-Classifies given integral image (Abstract Array) using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
+Classifies given integral image (`IntegralArray`) using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
 
 That is, the final strong classifier is
 
@@ -131,7 +131,7 @@ h(x) = \begin{cases}
 
 # Arguments
 
-- `int_img::Array{T, N}`: Integral image to be classified
+- `int_img::IntegralArray{T, N}`: Integral image to be classified
 - `classifiers::Vector{HaarLikeObject}`: List of classifiers
 
 # Returns
@@ -140,13 +140,13 @@ h(x) = \begin{cases}
     1       ⟺ sum of classifier votes > 0
     0       otherwise
 """
-function ensemble_vote(int_img::Array{T, N}, classifiers::Vector{HaarLikeObject}) where {T, N}
+function ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLikeObject}) where {T, N}
     return sum(get_vote(c, int_img) for c in classifiers) ≥ zero(Int8) ? one(Int8) : zero(Int8)
     # return sum(c -> get_vote(c, int_img), classifiers) ≥ zero(Int8) ? one(Int8) : zero(Int8)
 end
 
 """
-    ensemble_vote_all(int_imgs::AbstractArray, classifiers::AbstractArray) -> Vector{Int8}
+    ensemble_vote_all(int_img::AbstractArray{IntegralArray}, classifiers::AbstractArray) -> Vector{Int8}
 Classifies given integral image (Abstract Array) using given classifiers.  I.e., if the sum of all classifier votes is greater 0, the image is classified positively (1); else it is classified negatively (0). The threshold is 0, because votes can be +1 or -1.
 
 # Arguments
@@ -168,20 +168,20 @@ function ensemble_vote_all(
 end
 
 """
-    get_faceness(feature::HaarLikeObject{I, F}, int_img::Array{T, N}) -> Number
+    get_faceness(feature::HaarLikeObject{I, F}, int_img::IntegralArray{T, N}) -> Number
 
 Get facelikeness for a given feature.
 
 # Arguments
 
 - `feature::HaarLikeObject`: given Haar-like feature (parameterised replacement of Python's `self`)
-- `int_img::AbstractArray`: Integral image array
+- `int_img::IntegralArray`: Integral image array
 
 # Returns
 
 - `score::Number`: Score for given feature
 """
-function get_faceness(feature::HaarLikeObject{I, F}, int_img::Array{T, N}) where {I, F, T, N}
+function get_faceness(feature::HaarLikeObject{I, F}, int_img::IntegralArray{T, N}) where {I, F, T, N}
     score, faceness = get_score(feature, int_img)
     
     return (feature.weight * score) < (feature.polarity * feature.threshold) ? faceness : zero(T)

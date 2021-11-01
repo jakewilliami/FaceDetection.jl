@@ -10,10 +10,9 @@ export displaymatrix, filtered_ls, load_image, ensemble_vote_all,
     reconstruct, get_random_image, generate_validation_image,
     get_faceness, determine_feature_size
 
-
+include("IntegralImage.jl")
 include("HaarLikeFeature.jl")
 include("Utils.jl") # Utils.jl exports HaarLikeFeature.jl functions
-include("IntegralImage.jl")
 include("AdaBoost.jl")
 
 end # end module
