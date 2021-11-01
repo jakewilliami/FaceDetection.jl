@@ -1,9 +1,3 @@
-#!/usr/bin/env bash
-    #=
-    exec julia --project="$(realpath $(dirname $(realpath $(dirname $0))))/examples/" "${BASH_SOURCE[0]}" "$@" -e "include(popfirst!(ARGS))" \
-    "${BASH_SOURCE[0]}" "$@"
-    =#
-
 # include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl")) # ../src/FaceDetection.jl
 
 using FaceDetection

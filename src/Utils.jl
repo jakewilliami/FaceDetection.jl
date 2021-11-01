@@ -1,11 +1,3 @@
-#!/usr/bin/env bash
-    #=
-    exec julia --project="$(realpath $(dirname $0))/../" "${BASH_SOURCE[0]}" "$@" -e 'include(popfirst!(ARGS))' \
-    "${BASH_SOURCE[0]}" "$@"
-    =#
-
-
-
 using Images: save, load, Colors, clamp01nan, Gray, imresize
 using ImageDraw: draw, Polygon, Point
 

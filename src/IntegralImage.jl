@@ -1,20 +1,14 @@
-#!/usr/bin/env bash
-    #=
-    exec julia --project="$(realpath $(dirname $0))/../" "${BASH_SOURCE[0]}" "$@" -e 'include(popfirst!(ARGS))' \
-    "${BASH_SOURCE[0]}" "$@"
-    =#
-    
-#=
+"""
 	IntegralArray{T, N, A} <: AbstractArray{T, N}
 	
 Rectangle features can be computed very rapidly using an intermediate representation for the image, which we call the integral image.
-The integral image at location $x,y$ contains the sum of the pixels above and to the left of $x,y$ inclusive.
+The integral image at location (x, y) contains the sum of the pixels above and to the left of (x, y) inclusive.
 Original    Integral
 +--------   +------------
 | 1 2 3 .   | 1  3  6 .
 | 4 5 6 .   | 5 12 21 .
 | . . . .   | . . . . .
-=#
+"""
 struct IntegralArray{T, N, A} <: AbstractArray{T, N}
 	data::A
 end
@@ -73,9 +67,19 @@ function sum_region(
 ) where T <: Integer
     _1 = one(T)
 	_0 = zero(0)
-	sum = integral_image_arr[last(bottom_right), first(bottom_right)]
-    sum -= first(top_left) > _1 ? integral_image_arr[last(bottom_right), first(top_left) - _1] : _0
-    sum -= last(top_left) > _1 ? integral_image_arr[last(top_left) - _1, first(bottom_right)] : _0
-    sum += last(top_left) > _1 && first(top_left) > _1 ? integral_image_arr[last(top_left) - _1, first(top_left) - _1] : _0
-    return sum
+	_sum = integral_image_arr[last(bottom_right), first(bottom_right)]
+    # _sum -= first(top_left) > _1 ? integral_image_arr[last(bottom_right), first(top_left) - _1] : _0
+	if first(top_left) > _1
+		_sum -= integral_image_arr[last(bottom_right), first(top_left) - _1]
+	end
+    # _sum -= last(top_left) > _1 ? integral_image_arr[last(top_left) - _1, first(bottom_right)] : _0
+	# _sum += last(top_left) > _1 && first(top_left) > _1 ? integral_image_arr[last(top_left) - _1, first(top_left) - _1] : _0
+	if last(top_left) > _1
+		_sum -= integral_image_arr[last(top_left) - _1, first(bottom_right)]
+		if first(top_left) > _1
+			_sum += integral_image_arr[last(top_left) - _1, first(top_left) - _1]
+		end
+	end
+	
+    return _sum
 end

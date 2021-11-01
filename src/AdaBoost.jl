@@ -1,10 +1,3 @@
-#!/usr/bin/env bash
-    #=
-    exec julia --project="$(realpath $(dirname $0))/../" "${BASH_SOURCE[0]}" "$@" -e 'include(popfirst!(ARGS))' \
-    "${BASH_SOURCE[0]}" "$@"
-    =#
-
-
 # TODO: select optimal threshold for each feature
 # TODO: attentional cascading
 
@@ -27,8 +20,7 @@ function get_feature_votes(
     scale::Bool = false,
     scale_to::Tuple = (Int32(200), Int32(200)),
     show_progress::Bool = true
-    )
-
+)
     #this transforms everything to maintain type stability
     s₁, s₂ = scale_to
     min_feature_width,
@@ -72,7 +64,8 @@ function get_feature_votes(
     votes = Matrix{Int8}(undef, num_features, num_imgs)
     
     @info("Loading images ($(num_pos) positive and $(num_neg) negative images) and calculating their scores...")
-    p = Progress(length(image_files), 1; enabled = show_progress) # minimum update interval: 1 second
+    p = Progress(length(image_files), enabled = show_progress) # minimum update interval: 1 second
+    p.dt = 1
     num_processed = 0
     batch_size = 10
     # get votes for images
@@ -89,7 +82,7 @@ function get_feature_votes(
         end
         num_processed += length(batch)
     end
-    print("\n") # for a new line after the progress bar
+    show_progress && print("\n") # for a new line after the progress bar
     
     return votes, features
 end
@@ -102,6 +95,7 @@ function learn(
     num_classifiers::Integer=-one(Int32);
     show_progress::Bool = true
     )
+
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
     num_pos = length(filtered_ls(positive_path))
     num_neg = length(filtered_ls(negative_path))
@@ -134,7 +128,8 @@ function learn(
     @info("Selecting classifiers...")
     # classifiers = HaarLikeObject[]
     classifiers = Vector{HaarLikeObject}(undef, num_classifiers)
-    p = Progress(num_classifiers, 1; enabled = show_progress) # minimum update interval: 1 second
+    p = Progress(num_classifiers, 1) # minimum update interval: 1 second
+    p.enabled = show_progress
     classification_errors = Vector{Float64}(undef, length(feature_indices))
     
     for t in 1:num_classifiers
@@ -181,7 +176,7 @@ function learn(
         next!(p) # increment progress bar
     end
     
-    println("\n") # for a new line after the progress bar
+    show_progress && println("\n") # for a new line after the progress bar
     
     return classifiers
 end
@@ -208,7 +203,8 @@ function learn(
         min_feature_height,
         max_feature_height,
         scale = scale,
-        scale_to = scale_to
+        scale_to = scale_to,
+        show_progress = show_progress
     )
     
     return learn(positive_path, negative_path, features, votes, num_classifiers; show_progress = show_progress)
