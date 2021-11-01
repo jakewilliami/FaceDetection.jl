@@ -41,10 +41,10 @@ function get_feature_votes(
     # get number of positive and negative image
     positive_files = filtered_ls(positive_path)
     negative_files = filtered_ls(negative_path)
-    image_files = vcat(positive_files, negative_files)
     num_pos = length(positive_files)
     num_neg = length(negative_files)
     num_imgs = num_pos + num_neg
+    image_files = vcat(positive_files, negative_files)
     
     # get image height and width
     temp_image = load_image(rand(positive_files), scale=scale, scale_to=scale_to)
@@ -52,19 +52,19 @@ function get_feature_votes(
     temp_image = nothing # unload temporary image
     
     # Maximum feature width and height default to image width and height
-    max_feature_height = isequal(max_feature_height, -_1) ? img_height : max_feature_height
-    max_feature_width = isequal(max_feature_width, -_1) ? img_height : max_feature_width
+    max_feature_height = max_feature_height == -_1 ? img_height : max_feature_height
+    max_feature_width = max_feature_width == -_1 ? img_height : max_feature_width
     
     # Create features for all sizes and locations
     features = create_features(img_height, img_width, min_feature_width, max_feature_width, min_feature_height, max_feature_height)
     num_features = length(features)
-    num_classifiers = isequal(num_classifiers, -_1) ? num_features : num_classifiers
+    num_classifiers = num_classifiers == -_1 ? num_features : num_classifiers
     
-    # create an empty array with dimensions (num_imgs, numFeautures)
-    votes = Matrix{Int8}(undef, num_features, num_imgs)
+    # create an empty array with dimensions (num_imgs, num_feautures) (I benchmarked transposing this in case column-major Julia is faster the other way, but this way is significantly faster)
+    votes = Matrix{Int8}(undef, num_imgs, num_features)
     
     @info("Loading images ($(num_pos) positive and $(num_neg) negative images) and calculating their scores...")
-    p = Progress(length(image_files), enabled = show_progress) # minimum update interval: 1 second
+    p = Progress(num_imgs, enabled = show_progress) # minimum update interval: 1 second
     p.dt = 1
     num_processed = 0
     batch_size = 10
@@ -72,12 +72,11 @@ function get_feature_votes(
     map(partition(image_files, batch_size)) do batch
         @threads for t in 1:length(batch)
             img_arr = load_image(batch[t]; scale = scale, scale_to = scale_to)
-            votes[:, num_processed + t] .= (get_vote(f, img_arr) for f in features)
+            votes[num_processed + t, :] .= (get_vote(f, img_arr) for f in features)
             next!(p) # increment progress bar
         end
         num_processed += length(batch)
     end
-    show_progress && print("\n") # for a new line after the progress bar
     
     return votes, features
 end
@@ -116,16 +115,17 @@ function learn(
     
     # get number of features
     num_features = length(features)
-    feature_indices = Array(1:num_features)
+    feature_indices = Int[1:num_features;]
     num_classifiers = num_classifiers == -1 ? num_features : num_classifiers
 
     # select classifiers
     @info("Selecting classifiers...")
     # classifiers = HaarLikeObject[]
     classifiers = Vector{HaarLikeObject}(undef, num_classifiers)
-    p = Progress(num_classifiers, 1) # minimum update interval: 1 second
-    p.enabled = show_progress
-    classification_errors = Vector{Float64}(undef, length(feature_indices))
+    classification_errors = Vector{Float64}(undef, num_features)
+    
+    p = Progress(num_classifiers, enabled = show_progress)
+    p.dt = 1 # minimum update interval: 1 second
     
     for t in 1:num_classifiers
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
@@ -134,10 +134,7 @@ function learn(
         # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
         @threads for j in 1:length(feature_indices)
             feature_idx = feature_indices[j]
-            classification_errors[j] = sum(weights[img_idx] for img_idx in 1:num_imgs if labels[img_idx] !== votes[feature_indices[j]])
-            # classification_errors[j] = sum(1:num_imgs) do img_idx
-            #     labels[img_idx] !== votes[feature_indices[j], img_idx] ? weights[img_idx] : zero(Float64)
-            # end
+            classification_errors[j] = sum(weights[img_idx] for img_idx in 1:num_imgs if labels[img_idx] !== votes[img_idx, feature_idx])
         end
         
         # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
@@ -151,14 +148,13 @@ function learn(
         best_feature.weight = feature_weight
 
         # append selected features
-        # classifiers = push!(classifiers, best_feature)
         classifiers[t] = best_feature
 
         # update image weights $w_{t+1,i}=w_{t,i}\beta_{t}^{1-e_i}$
         sqrt_best_error = @fastmath(sqrt(best_error / (one(best_error) - best_error)))
         inv_sqrt_best_error = @fastmath(sqrt((one(best_error) - best_error)/best_error))
         @inbounds for i in 1:num_imgs
-            if labels[i] !== votes[best_feature_idx, i]
+            if labels[i] !== votes[i, best_feature_idx]
                 weights[i] *= inv_sqrt_best_error
             else
                 weights[i] *= sqrt_best_error
@@ -170,9 +166,7 @@ function learn(
         resize!(classification_errors, length(feature_indices))
         next!(p) # increment progress bar
     end
-    
-    show_progress && println("\n") # for a new line after the progress bar
-    
+        
     return classifiers
 end
 
