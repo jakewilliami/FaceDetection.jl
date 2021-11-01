@@ -10,7 +10,8 @@ Adapted from https://github.com/Simon-Hohberg/Viola-Jones/
 =#
 
 
-println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
+# println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
+@info "Loading required libraries (it will take a moment to precompile if it is your first time doing this)..."
 
 include(joinpath(dirname(@__DIR__), "src", "FaceDetection.jl"))
 
@@ -20,7 +21,7 @@ using Printf: @printf
 using Images: imresize
 using Serialization: deserialize
 
-println("...done\n")
+@info("...done\n")
 
 function main(;
     smart_choose_feats::Bool=false,
@@ -44,7 +45,7 @@ function main(;
 	votes, features = deserialize(data_file)
 	classifiers = FD.learn(pos_training_path, neg_training_path, features, votes, num_classifiers)
 
-	FD.notify_user("Testing selected classifiers...")
+	@info("Testing selected classifiers...")
 	num_faces = length(filtered_ls(pos_testing_path))
 	num_non_faces = length(filtered_ls(neg_testing_path))
 	
@@ -58,8 +59,8 @@ function main(;
     non_faces_frac = string(correct_non_faces, "/", num_non_faces)
     non_faces_percent = string("(", correct_non_faces_percent, "% of non-faces were identified as non-faces)")
 
-    println("...done.\n")
-    FD.notify_user("Result:\n")
+    @info("...done.\n")
+    @info("Result:\n")
 
     @printf("%10.9s %10.15s %15s\n", "Faces:", faces_frac, faces_percent)
     @printf("%10.9s %10.15s %15s\n\n", "Non-faces:", non_faces_frac, non_faces_percent)

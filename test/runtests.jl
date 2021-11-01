@@ -1,15 +1,10 @@
-#!/usr/bin/env bash
-    #=
-    exec julia --project="$(realpath $(dirname $(realpath $(dirname $0))))/examples/" "${BASH_SOURCE[0]}" "$@" -e "include(popfirst!(ARGS))" \
-    "${BASH_SOURCE[0]}" "$@"
-    =#
+# include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl")) # ../src/FaceDetection.jl
 
-include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl")) # ../src/FaceDetection.jl
-
-using .FaceDetection
+using FaceDetection
 using Test: @testset, @test
-using Suppressor: @suppress
+using Logging
 # using BenchmarkTools: @btime
+Logging.disable_logging(Logging.Info)
 
 @time @testset "FaceDetection.jl" begin
 	# constants and variables
@@ -21,11 +16,11 @@ using Suppressor: @suppress
 	a, b, c, d, e, f = tuple(rand(Int), rand(Int)), tuple(rand(Int), rand(Int)), rand(Int), rand(Int), rand((0, 1)), rand((0, 1))
     arr = rand(Int, 100, 100)
 	int_img = load_image(rand(vcat(filtered_ls.([pos_training_path, neg_training_path, pos_testing_path, neg_testing_path])...)), scale = true, scale_to = (24, 24))
-	feature_2v = HaarLikeObject(feature_types.two_vertical, (1, 1), 10, 10, 100000, 1)
-	feature_2h = HaarLikeObject(feature_types.two_horizontal, (1, 1), 10, 10, 100000, 1)
-	feature_3h = HaarLikeObject(feature_types.three_horizontal, (1, 1), 10, 10, 100000, 1)
-	feature_3v = HaarLikeObject(feature_types.two_vertical, (1, 1), 10, 10, 100000, 1)
-	feature_4 = HaarLikeObject(feature_types.four, (1, 1), 10, 10, 100000, 1)
+	feature_2v = HaarLikeObject(FEATURE_TYPES.two_vertical, (1, 1), 10, 10, 100000, 1)
+	feature_2h = HaarLikeObject(FEATURE_TYPES.two_horizontal, (1, 1), 10, 10, 100000, 1)
+	feature_3h = HaarLikeObject(FEATURE_TYPES.three_horizontal, (1, 1), 10, 10, 100000, 1)
+	feature_3v = HaarLikeObject(FEATURE_TYPES.two_vertical, (1, 1), 10, 10, 100000, 1)
+	feature_4 = HaarLikeObject(FEATURE_TYPES.four, (1, 1), 10, 10, 100000, 1)
 	left_area = sum_region(int_img, (1, 1), (24, 12))
 	right_area = sum_region(int_img, (1, 12), (24, 24))
 	left_area_3h = sum_region(int_img, (1, 1), (8, 24))
@@ -75,21 +70,17 @@ using Suppressor: @suppress
 	@test get_vote(feature_4, int_img) == expected_4
 
     # AdaBoost.jl
-	@suppress begin
-	    classifiers = learn(pos_training_path, neg_training_path, 10, 8, 10, 8, 10)
-		features = FaceDetection.create_features(19, 19, 8, 10, 8, 10)
-	end
+    classifiers = learn(pos_training_path, neg_training_path, 10, 8, 10, 8, 10; show_progress = false)
+	features = FaceDetection.create_features(19, 19, 8, 10, 8, 10)
 	@test length(features) == 4520
 	
     # Utils.jl
 	@test determine_feature_size(pos_training_path, neg_training_path) == (10, 10, 8, 8, (19, 19))
 	@test get_faceness(classifiers[rand(1:length(classifiers))], random_img) isa Real
-	@suppress begin
-		num_faces = length(filtered_ls(pos_testing_path))
-		num_non_faces = length(filtered_ls(neg_testing_path))
-		p = sum(ensemble_vote_all(pos_testing_path, classifiers)) / num_faces
-		n = (num_non_faces - sum(ensemble_vote_all(neg_testing_path, classifiers))) / num_non_faces
-	end
+	num_faces = length(filtered_ls(pos_testing_path))
+	num_non_faces = length(filtered_ls(neg_testing_path))
+	p = sum(ensemble_vote_all(pos_testing_path, classifiers)) / num_faces
+	n = (num_non_faces - sum(ensemble_vote_all(neg_testing_path, classifiers))) / num_non_faces
 	@test isapprox(p, 0.496, atol=1e-1) # these tests implicitly test the whole algorithm
 	@test isapprox(n, 0.536, atol=1e-1)
 end # end tests

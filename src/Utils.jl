@@ -1,11 +1,3 @@
-#!/usr/bin/env bash
-    #=
-    exec julia --project="$(realpath $(dirname $0))/../" "${BASH_SOURCE[0]}" "$@" -e 'include(popfirst!(ARGS))' \
-    "${BASH_SOURCE[0]}" "$@"
-    =#
-
-
-
 using Images: save, load, Colors, clamp01nan, Gray, imresize
 using ImageDraw: draw, Polygon, Point
 
@@ -21,10 +13,10 @@ A function to pretty print a message to the user
 # Returns
 - `A::String`: A message to print to the user
 =#
-function notify_user(io::IO, message::String)
-    return println(io, "\033[1;34m===>\033[0;38m\033[1;38m\t", message, "\033[0;38m")
-end
-notify_user(msg::String) = notify_user(stdout, msg)
+# function notify_user(io::IO, message::String)
+#     return println(io, "\033[1;34m===>\033[0;38m\033[1;38m\t", message, "\033[0;38m")
+# end
+# notify_user(msg::String) = notify_user(stdout, msg)
 
 #=
     filtered_ls(path::String) -> Vector{String}
