@@ -122,10 +122,10 @@ function learn(
     _neg1 = -_1
     labels = Vector{Int8}(undef, num_imgs)
     for i in 1:num_pos
-        labels[i] = _1
+        @inbounds labels[i] = _1
     end
     for j in (num_pos + 1):num_imgs
-        labels[j] = _neg1
+        @inbounds labels[j] = _neg1
     end
     
     # get number of features
@@ -146,7 +146,7 @@ function learn(
         weights .*= inv(sum(weights))
         
         # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
-        @threads for j in 1:length(feature_indices)
+        @inbounds @threads for j in 1:length(feature_indices)
             feature_idx = feature_indices[j]
             classification_errors[j] = sum(weights[img_idx] for img_idx in 1:num_imgs if labels[img_idx] !== votes[img_idx, feature_idx])
         end
