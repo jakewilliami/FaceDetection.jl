@@ -21,3 +21,10 @@ Platform Info:
   LIBM: libopenlibm
   LLVM: libLLVM-9.0.1 (ORCJIT, skylake)
 ```
+
+## 1.6 Update
+
+A few months after the release of Julia 1.6, I did some performance considerations (there are already quite a few nice features that come with 1.6).  Now these are the benchmarking results (see [`benchmark/basic.jl`](https://github.com/jakewilliami/FaceDetection.jl/blob/master/benchmark/basic.jl))
+Language of Implementation | Commit | Run Time in Seconds | Number of Allocations | Memory Usage
+--- | --- | --- | --- | ---
+[Julia](https://github.com/jakewilliami/FaceDetection.jl/) | [???]() | 8.165 | 249021919 | 5.01 GiB

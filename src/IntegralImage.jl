@@ -12,6 +12,7 @@ Original    Integral
 struct IntegralArray{T, N, A} <: AbstractArray{T, N}
 	data::A
 end
+IntegralArray{T, N}(A::U) where {T, N, U <: AbstractArray{T, N}} = IntegralArray{T, N, U}(A)
 
 """
 	to_integral_image(img_arr::AbstractArray) -> AbstractArray
@@ -35,7 +36,7 @@ function to_integral_image(img_arr::AbstractArray{T, N}) where {T, N}
         cumsum!(integral_image_arr, integral_image_arr; dims=sd[i])
     end
 	
-    return Array{T, N}(integral_image_arr)
+    return IntegralArray{T, N}(integral_image_arr)
 end
 
 LinearIndices(A::IntegralArray) = Base.LinearFast()
