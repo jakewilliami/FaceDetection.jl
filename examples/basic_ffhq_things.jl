@@ -11,20 +11,23 @@ using Images: imresize
 
 @info("...done")
 
+function takerand!(list::Vector{T}) where {T}
+    j = rand(1:length(list))
+    rand_elem = list[j]
+    deleteat!(list, j)
+    return rand_elem
+end
+
+rand_subset!(list::Vector{T}, n::Int) where {T} = 
+    String[takerand!(list) for _ in 1:n]
+
 "Return a random subset of the contents of directory `path` of size `n`."
 function rand_subset_ls(path::String, n::Int)
 	dir_contents = readdir(path, join=true, sort=false)
 	filter!(f -> !occursin(r".*\.DS_Store", f), dir_contents)
 	@assert(length(dir_contents) >= n, "Not enough files in given directory to select `n` random.")
 	
-	subset_ls = Vector{String}(undef, n)
-	for i in 1:n
-		j = rand(1:length(dir_contents))
-		subset_ls[i] = dir_contents[j]
-		deleteat!(dir_contents, j)
-	end
-	
-    return subset_ls
+    return rand_subset!(dir_contents, n)
 end
 
 function main(
@@ -57,7 +60,8 @@ function main(
 	    
 	    @info("...done.  Maximum feature width selected is $max_feature_width pixels; minimum feature width is $min_feature_width; maximum feature height is $max_feature_height pixels; minimum feature height is $min_feature_height.\n")
 	else
-		max_feature_width, max_feature_height, min_feature_height, min_feature_width = (67, 67, 65, 65)
+		# max_feature_width, max_feature_height, min_feature_height, min_feature_width = (67, 67, 65, 65)
+		max_feature_width, max_feature_height, min_feature_height, min_feature_width = (100, 100, 30, 30)
 		min_size_img = (128, 128)
 	end
 
