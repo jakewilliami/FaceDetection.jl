@@ -200,6 +200,7 @@ Get facelikeness for a given feature.
 - `score::Number`: Score for given feature
 """
 function get_faceness(feature::HaarLikeObject{I, F}, int_img::IntegralArray{T, N}) where {I, F, T, N}
+    error("not implemented")
     score, faceness = get_score(feature, int_img)
     return (feature.weight * score) < (feature.polarity * feature.threshold) ? faceness : zero(T)
 end
