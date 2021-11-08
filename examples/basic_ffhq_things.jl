@@ -74,7 +74,7 @@ function main(
 	pos_testing_images = all_pos_images[(num_pos + 1):2num_pos]
 	neg_testing_images = all_neg_images[(num_neg + 1):2num_neg]
 	num_faces = length(pos_testing_images)
-	num_non_faces = length(neg_testing_images)
+    num_non_faces = length(neg_testing_images)
 	
 	correct_faces = sum(ensemble_vote_all(pos_testing_images, classifiers, scale=scale, scale_to=scale_to))
 	correct_non_faces = num_non_faces - sum(ensemble_vote_all(neg_testing_images, classifiers, scale=scale, scale_to=scale_to))

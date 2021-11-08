@@ -1,10 +1,3 @@
-#!/usr/bin/env bash
-    #=
-    exec julia --project="$(realpath $(dirname $0))/" "${BASH_SOURCE[0]}" "$@" -e "include(popfirst!(ARGS))" \
-    "${BASH_SOURCE[0]}" "$@"
-    =#
-
-# println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
 @info "Loading required libraries (it will take a moment to precompile if it is your first time doing this)..."
 
 include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl"))
@@ -18,21 +11,65 @@ using HypothesisTests: UnequalVarianceTTest
 using Serialization: deserialize
 
 @info("...done")
+function takerand!(list::Vector{T}) where {T}
+    j = rand(1:length(list))
+    rand_elem = list[j]
+    deleteat!(list, j)
+    return rand_elem
+end
 
-function main(;
-	smart_choose_feats::Bool=false,
-	scale::Bool=false,
-	scale_to::Tuple=(200, 200))
+rand_subset!(list::Vector{T}, n::Int) where {T} = 
+    String[takerand!(list) for _ in 1:n]
+
+"Return a random subset of the contents of directory `path` of size `n`."
+function rand_subset_ls(path::String, n::Int)
+	dir_contents = readdir(path, join=true, sort=false)
+	filter!(f -> !occursin(r".*\.DS_Store", f), dir_contents)
+	@assert(length(dir_contents) >= n, "Not enough files in given directory to select `n` random.")
 	
-	include("constants.jl")
-	include("main_data.jl")
-    pos_testing_path = "/Users/jakeireland/projects/FaceDetection.jl/data/lizzie-testset/faces/"
-	neg_testing_path = "/Users/jakeireland/projects/FaceDetection.jl/data/lizzie-testset/nonfaces/"
-    
-    # read classifiers from file
-	classifiers = deserialize("/Users/jakeireland/Desktop/classifiers_100_577_577_fixed_1idx")
+    return rand_subset!(dir_contents, n)
+end
 
-    num_classifiers = length(classifiers)
+function main(
+	num_pos::Int,
+	num_neg::Int;
+	smart_choose_feats::Bool=false,
+	scale::Bool=true,
+	scale_to::Tuple=(128, 128)
+)
+	data_path = joinpath(dirname(@__DIR__), "data")
+	
+	pos_training_path = joinpath(data_path, "ffhq", "thumbnails128x128")
+	neg_training_path = joinpath(data_path, "things", "object_images")
+	
+	all_pos_images = rand_subset_ls(pos_training_path, 2num_pos)
+	all_neg_images = rand_subset_ls(neg_training_path, 2num_neg)
+	
+	pos_training_images = all_pos_images[1:num_pos]
+	neg_training_images = all_neg_images[1:num_neg]
+	
+	num_classifiers = 10
+	local min_size_img::Tuple{Int, Int}
+	
+	if smart_choose_feats
+	    # For performance reasons restricting feature size
+	    @info("Selecting best feature width and height...")
+	    
+	    max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img =
+			determine_feature_size(vcat(pos_training_images, neg_training_images); scale = scale, scale_to = scale_to, show_progress = true)
+	    
+	    @info("...done.  Maximum feature width selected is $max_feature_width pixels; minimum feature width is $min_feature_width; maximum feature height is $max_feature_height pixels; minimum feature height is $min_feature_height.\n")
+	else
+		# max_feature_width, max_feature_height, min_feature_height, min_feature_width = (67, 67, 65, 65)
+		max_feature_width, max_feature_height, min_feature_height, min_feature_width = (100, 100, 30, 30)
+		min_size_img = (128, 128)
+	end
+
+    # classifiers are haar like features
+    classifiers = learn(pos_training_images, neg_training_images, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width; scale = scale, scale_to = scale_to)
+
+    @info("Testing selected classifiers...")
+	sleep(3) # sleep here because sometimes the threads from `learn` are still catching up and then `ensemble_vote_all` errors
 	
     @info("Calculating test face scores and constructing dataset...")
     
