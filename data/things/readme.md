@@ -10,13 +10,13 @@ Now that you have the dataset, please run
 $ julia object_categories.jl
 ```
 
-This will create two text files; one will have all unique categories of images (`all_categories.txt`); the other will contain that list, removing categories that are (`all_categories_filtered.txt`):
+This will create two text files; one will have all unique categories of images (`all_categories.txt`); the other will contain that list (`all_categories_filtered.txt`), removing categories that are:
   - Animals;
   - Hat or hair related objects;
   - Human-like objects;
   - Specific parts of faces;
   - Activities requiring humans.
 
-The Julia script will filter these categories out of the downloaded images, as they contain too many faces/facial features.
+The Julia script will filter these categories out of the downloaded images, as they contain too many faces/facial features.  Beyond animals, this filter process uses a list of categories manually selected from `misc_filter_categories.txt`.
 
 After filtering all the potentially interfering images out of the THINGS dataset, we are left with 22,558 images.

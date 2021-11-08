@@ -1,8 +1,11 @@
+get_category_from_image_name(s::String) = join(split(basename(s), '_')[1:(end - 1)], ' ')
+
 # Return a list of object categories from the images
 function get_object_categories(object_images::Vector{String})
     object_categories = String[]
     for object_image in object_images
-        object_category = join(split(object_image, '_')[1:end-1], ' ')
+        object_image = basename(object_image)
+        object_category = get_category_from_image_name(object_image)
         if object_category ∉ object_categories
             push!(object_categories, object_category)
         end
@@ -18,10 +21,10 @@ function filter_out_animals(object_image_categories::Vector{String})
     animals = String[string(lowercase(animal)) for animal in animals]
     filtered_categories = String[]
     for image_category in object_image_categories
-        if image_category ∉ animals || !any(startswith(image_category, animal) for animal in animals)
+        category_is_animal = image_category ∈ animals
+        # category_starts_with_animal = any(startswith(image_category, animal) for animal in animals)
+        if !category_is_animal # || !category_starts_with_animal
             push!(filtered_categories, image_category)
-        else
-            @info "$image_category is being filtered out"
         end
     end
     return filtered_categories
@@ -30,21 +33,47 @@ filter_out_animals(object_image_dir::String) =
     filter_out_animals(get_object_categories(object_image_dir))
 
 # Get the category lists and write them to file
-function main()
-    all_categories = get_object_categories(joinpath(@__DIR__, "object_images"))
-    all_categories_minus_animals = filter_out_animals(all_categories)
+function main(all_object_image_dir::String)
+    outfile_all_categories_list = "all_categories.txt"
+    outfile_all_categories_filtered_list = "all_categories_filtered.txt"
+    misc_filter_categories_list = "misc_filter_categories.txt"
     
-    open("all_categories.txt", "w") do io
+    all_object_images = readdir(all_object_image_dir, sort = true, join = true)
+    
+    all_categories = get_object_categories(all_object_images)
+    all_categories_filtered = filter_out_animals(all_categories)
+    misc_filter_categories = readlines(misc_filter_categories_list)
+    filter!(category -> category ∉ misc_filter_categories, all_categories_filtered)
+    
+    open(outfile_all_categories_list, "w") do io
         for category in all_categories
             write(io, category, '\n')
         end
     end
     
-    open("all_categories_animals_filtered.txt", "w") do io
-        for category in all_categories_minus_animals
+    open(outfile_all_categories_filtered_list, "w") do io
+        for category in all_categories_filtered
             write(io, category, '\n')
         end
     end
     
-    return ("all_categories.txt", "all_categories_animals_filtered.txt")
+    @info "There are currently $(length(all_object_images)) images in your object directory"
+    categories_warned = String[]
+    removed = 0
+    for object_image in all_object_images
+        object_category = get_category_from_image_name(object_image)
+        if object_category ∉ all_categories_filtered
+            if object_category ∉ categories_warned
+                @warn("Removing images of the category \"$object_category\"")
+                push!(categories_warned, object_category)
+            end
+            rm(object_image)
+            removed += 1
+        end
+    end
+    @info "We have removed all of the images that needed removing, and are left with $(length(all_object_images) - removed) images in your object directory"
+    
+    return nothing
 end
+
+main("object_images/")
