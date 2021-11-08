@@ -46,4 +46,7 @@ data/ffhq/LICENSE.txt
 data/ffhq/*.py
 data/ffhq/*.json
 data/things/object_images/
+data/things/object_images_all/
 data/things/password.txt
+data/things/all_categories.txt
+data/things/all_categories_filtered.txt
