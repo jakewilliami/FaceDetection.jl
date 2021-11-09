@@ -6,7 +6,7 @@ using ProgressMeter: Progress, next!
 using Base.Threads: @threads
 using Base.Iterators: partition
 
-export to_integral_image, sum_region
+export IntegralArray, to_integral_image, sum_region
 export learn, get_feature_votes
 export FEATURE_TYPES, HaarLikeObject, get_score, get_vote
 export displaymatrix, filtered_ls, load_image, ensemble_vote_all,
