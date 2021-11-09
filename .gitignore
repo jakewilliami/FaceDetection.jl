@@ -32,6 +32,8 @@ Manifest.toml
 
 # output data
 examples/data/
+data/*.csv
+data/*.pdf
 data/all-non-faces/
 data/alt/
 data/classifiers_*
