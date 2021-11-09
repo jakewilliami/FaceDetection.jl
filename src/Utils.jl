@@ -123,6 +123,26 @@ function determine_feature_size(
     
 end
 
+function _ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLikeObject}) where {T, N}
+    classifiers = sort(classifiers, by = c -> c.weight, rev = true)
+    vote = 0
+    summed_vote = sum(get_vote(c, int_img) for c in classifiers) ≥ zero(Int8) ? one(Int8) : zero(Int8)
+    faceness = 0
+    for c in classifiers
+        vote = get_vote(c, int_img)
+        if vote < 0
+            # then no face is found using this classifier
+            # we reject this face
+            return summed_vote, faceness
+            return zero(Int8), faceness
+        end
+        # otherwise, keep looking
+        faceness += 1
+    end
+    return summed_vote, faceness
+    return one(Int8), faceness
+end
+
 @doc raw"""
     ensemble_vote(int_img::IntegralArray, classifiers::AbstractArray) -> Integer
 
@@ -149,8 +169,8 @@ h(x) = \begin{cases}
     1       ⟺ sum of classifier votes > 0
     0       otherwise
 """
-ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLikeObject}) where {T, N} =
-    sum(get_vote(c, int_img) for c in classifiers) ≥ zero(Int8) ? one(Int8) : zero(Int8)
+ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLikeObject}) where {T, N} = 
+    first(_ensemble_vote(int_img, classifiers))
 
 """
     ensemble_vote_all(images::Vector{String}, classifiers::Vector{HaarLikeObject}) -> Vector{Int8}
@@ -204,6 +224,8 @@ function get_faceness(feature::HaarLikeObject{I, F}, int_img::IntegralArray{T, N
     score, faceness = get_score(feature, int_img)
     return (feature.weight * score) < (feature.polarity * feature.threshold) ? faceness : zero(T)
 end
+get_faceness(classifiers::Vector{HaarLikeObject}, int_img::IntegralArray{T, N}) where {T, N} = 
+    last(_ensemble_vote(int_img, classifiers))
 
 #=
     reconstruct(classifiers::Vector, img_size::Tuple) -> AbstractArray

@@ -131,7 +131,7 @@ Get vote of this feature for given integral image.
 
 # Arguments
 
-- `feature::HaarLikeObject`: given Haar-like feature (parameterised replacement of Python's `self`)
+- `feature::HaarLikeObject`: given Haar-like feature
 - `int_img::IntegralArray`: Integral image array
 
 # Returns
@@ -142,8 +142,5 @@ Get vote of this feature for given integral image.
 """
 function get_vote(feature::HaarLikeObject{I, F}, int_img::IntegralArray{T, N}) where {I, F, T, N}
     score = get_score(feature, int_img)
-    # return (feature.weight * score) < (feature.polarity * feature.threshold) ? one(Int8) : -one(Int8)
-    # return feature.weight * (score < feature.polarity * feature.threshold ? one(Int8) : -one(Int8))
     return score < feature.polarity * feature.threshold ? feature.weight : -feature.weight
-    # self.weight * (1 if score < self.polarity * self.threshold else -1)
 end
