@@ -264,9 +264,14 @@ function create_features(
     min_feature_height::Int,
     max_feature_height::Int
 )
-    if img_width < max_feature_width || img_height < max_feature_height
-        error("""
-        Cannot possibly find classifiers whose size is greater than the image itself [(width,height) = ($img_width,$img_height)].
+    width_capacity_reached = img_width < max_feature_width
+    height_capacity_reached = img_height < max_feature_height
+    if width_capacity_reached || height_capacity_reached
+        width_capacity_reached && (max_feature_width = img_width)
+        height_capacity_reached && (max_feature_height = img_height)
+        @warn("""
+            Cannot possibly find classifiers whose size is greater than the image itself ((width, height) = ($img_width, $img_height)).
+            Limiting the maximum feature score by image size; (width, height) = ($max_feature_width, $max_feature_height)
         """)
     end
     
@@ -280,8 +285,9 @@ function create_features(
             for feature_height in feature_start_height:feature_last:max_feature_height
                 for x in 1:(img_width - feature_width)
                     for y in 1:(img_height - feature_height)
-                        push!(features, HaarLikeObject((feature_first, feature_last), (x, y), feature_width, feature_height, 0, 1))
-                        push!(features, HaarLikeObject((feature_first, feature_last), (x, y), feature_width, feature_height, 0, -1))
+                        #               HaarLikeObject( feature_type,                  position, width,         height,         threshold, polarity)
+                        push!(features, HaarLikeObject((feature_first, feature_last), (x, y),   feature_width, feature_height, 0,         1 ))
+                        push!(features, HaarLikeObject((feature_first, feature_last), (x, y),   feature_width, feature_height, 0,         -1))
                     end # end for y
                 end # end for x
             end # end for feature height
