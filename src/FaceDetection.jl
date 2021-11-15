@@ -13,6 +13,8 @@ export displaymatrix, filtered_ls, load_image, ensemble_vote_all,
     reconstruct, get_random_image, generate_validation_image,
     get_faceness, determine_feature_size
 
+ENV["FACE_DETECTION_DISPLAY_LOGGING"] = "true"
+
 include("IntegralImage.jl")
 include("HaarLikeFeature.jl")
 include("Utils.jl") # Utils.jl exports HaarLikeFeature.jl functions

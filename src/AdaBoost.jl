@@ -15,7 +15,7 @@ function get_feature_votes(
     max_feature_height::Integer=-one(Int32);
     scale::Bool = false,
     scale_to::Tuple = (Int32(200), Int32(200)),
-    show_progress::Bool = true
+    show_progress::Bool = ENV["FACE_DETECTION_DISPLAY_LOGGING"] == "true"
 )
     #this transforms everything to maintain type stability
     s₁, s₂ = scale_to
@@ -104,7 +104,7 @@ function learn(
     features::Array{HaarLikeObject, 1},
     votes::Matrix{Int8},
     num_classifiers::Integer=-one(Int32);
-    show_progress::Bool = true
+    show_progress::Bool = ENV["FACE_DETECTION_DISPLAY_LOGGING"] == "true"
 )
 
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
@@ -192,7 +192,7 @@ function learn(
     max_feature_height::Int=-1;
     scale::Bool = false,
     scale_to::Tuple = (200, 200),
-    show_progress::Bool = true
+    show_progress::Bool =  ENV["FACE_DETECTION_DISPLAY_LOGGING"] == "true"
 )
     
     votes, features = get_feature_votes(
@@ -219,7 +219,7 @@ function learn(
     max_feature_height::Int=-1;
     scale::Bool = false,
     scale_to::Tuple = (200, 200),
-    show_progress::Bool = true
+    show_progress::Bool =  ENV["FACE_DETECTION_DISPLAY_LOGGING"] == "true"
 )
     
     return learn(
