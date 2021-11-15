@@ -124,23 +124,33 @@ function determine_feature_size(
 end
 
 function _ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLikeObject}) where {T, N}
-    classifiers = sort(classifiers, by = c -> c.weight, rev = true)
-    vote = 0
-    summed_vote = sum(get_vote(c, int_img) for c in classifiers) ≥ zero(Int8) ? one(Int8) : zero(Int8)
+    F = typeof(first(classifiers).weight)
+    all_votes = F[get_vote(c, int_img) for c in classifiers]
     faceness = 0
-    for c in classifiers
-        vote = get_vote(c, int_img)
+    for vote in all_votes
         if vote < 0
             # then no face is found using this classifier
             # we reject this face
-            return summed_vote, faceness
-            return zero(Int8), faceness
+            break
         end
-        # otherwise, keep looking
         faceness += 1
     end
+    summed_vote = sum(all_votes) ≥ zero(Int8) ? one(Int8) : zero(Int8)
     return summed_vote, faceness
+    
+    #=
+    # TODO: check if the original vote algorithm works okay
+    F = typeof(first(classifiers).weight)
+    all_votes = F[get_vote(c, int_img) for c in classifiers]
+    faceness = 0
+    for vote in all_votes
+        if vote < 0
+            return zero(Int8), faceness
+        end
+        faceness += 1
+    end
     return one(Int8), faceness
+    =#
 end
 
 @doc raw"""
