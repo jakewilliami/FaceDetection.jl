@@ -39,7 +39,7 @@ function to_integral_image(img_arr::AbstractArray{T, N}) where {T, N}
     return IntegralArray{T, N}(integral_image_arr)
 end
 
-LinearIndices(A::IntegralArray) = Base.LinearFast()
+# LinearIndices(A::IntegralArray) = Base.LinearFast() # TODO: fix this line # use IndexLinear?
 @inline size(A::IntegralArray) = size(A.data)
 @inline getindex(A::IntegralArray, i::Int...) = A.data[i...]
 @inline getindex(A::IntegralArray, ids::Tuple...) = getindex(A, first(ids)...)
