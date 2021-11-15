@@ -62,6 +62,7 @@ function main(
 	else
 		# max_feature_width, max_feature_height, min_feature_height, min_feature_width = (67, 67, 65, 65)
 		max_feature_width, max_feature_height, min_feature_height, min_feature_width = (100, 100, 30, 30)
+        # max_feature_width, max_feature_height, min_feature_height, min_feature_width = (70, 70, 50, 50)
 		min_size_img = (128, 128)
 	end
 
@@ -93,7 +94,7 @@ function main(
     @printf("%10.9s %10.15s %15s\n\n", "Non-faces:", non_faces_frac, non_faces_percent)
 end
 
-@time main(2000, 2000; smart_choose_feats = false, scale = true, scale_to = (128, 128))
+@time main(200, 200; smart_choose_feats = false, scale = true, scale_to = (128, 128))
 
 #=
 [ Info: Loading required libraries (it will take a moment to precompile if it is your first time doing this)...
