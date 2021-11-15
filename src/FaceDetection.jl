@@ -14,6 +14,7 @@ export displaymatrix, filtered_ls, load_image, ensemble_vote_all,
     get_faceness, determine_feature_size
 
 ENV["FACE_DETECTION_DISPLAY_LOGGING"] = "true"
+ENV["FACE_DETECTION_DISPLAY_WARN"]    = "true"
 
 include("IntegralImage.jl")
 include("HaarLikeFeature.jl")

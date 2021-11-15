@@ -50,7 +50,7 @@ function get_feature_votes(
     max_feature_width = max_feature_width == -_1 ? img_height : max_feature_width
     
     # Create features for all sizes and locations
-    features = create_features(img_height, img_width, min_feature_width, max_feature_width, min_feature_height, max_feature_height)
+    features = create_features(img_height, img_width, min_feature_width, max_feature_width, min_feature_height, max_feature_height, display_logging = show_progress)
     num_features = length(features)
     num_classifiers = num_classifiers == -_1 ? num_features : num_classifiers
     
@@ -262,20 +262,22 @@ function create_features(
     min_feature_width::Int,
     max_feature_width::Int,
     min_feature_height::Int,
-    max_feature_height::Int
+    max_feature_height::Int;
+    display_logging::Bool = ENV["FACE_DETECTION_DISPLAY_LOGGING"] == "true"
+    display_warn::Bool = ENV["FACE_DETECTION_DISPLAY_WARN"] == "true"
 )
     width_capacity_reached = img_width < max_feature_width
     height_capacity_reached = img_height < max_feature_height
     if width_capacity_reached || height_capacity_reached
         width_capacity_reached && (max_feature_width = img_width)
         height_capacity_reached && (max_feature_height = img_height)
-        @warn("""
+        display_warn && @warn("""
             Cannot possibly find classifiers whose size is greater than the image itself ((width, height) = ($img_width, $img_height)).
             Limiting the maximum feature score by image size; (width, height) = ($max_feature_width, $max_feature_height)
         """)
     end
     
-    @info("Creating Haar-like features...")
+    display_logging && @info("Creating Haar-like features...")
     features = HaarLikeObject[]
     
     for (feature_first, feature_last) in values(FEATURE_TYPES) # (feature_types are just tuples)
@@ -294,7 +296,7 @@ function create_features(
         end # end for feature width
     end # end for feature in feature types
     
-    @info("...finished processing; $(length(features)) features created.")
+    display_logging && @info("...finished processing; $(length(features)) features created.")
     
     return features
 end
