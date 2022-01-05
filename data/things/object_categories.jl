@@ -67,7 +67,8 @@ function main(all_object_image_dir::String)
                 @warn("Removing images of the category \"$object_category\"")
                 push!(categories_warned, object_category)
             end
-            rm(object_image)
+	    @info "rm $object_image"
+            try rm(object_image) catch e @warn(e) end
             removed += 1
         end
     end

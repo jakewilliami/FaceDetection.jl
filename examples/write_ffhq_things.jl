@@ -37,29 +37,29 @@ function main(
 	scale::Bool=true,
 	scale_to::Tuple=(128, 128)
 )
-	data_path = joinpath(dirname(@__DIR__), "data")
+    data_path = joinpath(dirname(@__DIR__), "data")
 	
-	pos_training_path = joinpath(data_path, "ffhq", "thumbnails128x128")
-	neg_training_path = joinpath(data_path, "things", "object_images")
+    pos_training_path = joinpath(data_path, "ffhq", "thumbnails128x128")
+    neg_training_path = joinpath(data_path, "things", "object_images")
+
+    all_pos_images = rand_subset_ls(pos_training_path, 2num_pos)
+    all_neg_images = rand_subset_ls(neg_training_path, 2num_neg)
+
+    pos_training_images = all_pos_images[1:num_pos]
+    neg_training_images = all_neg_images[1:num_neg]
 	
-	all_pos_images = rand_subset_ls(pos_training_path, 2num_pos)
-	all_neg_images = rand_subset_ls(neg_training_path, 2num_neg)
+    num_classifiers = 10
 	
-	pos_training_images = all_pos_images[1:num_pos]
-	neg_training_images = all_neg_images[1:num_neg]
-	
-	num_classifiers = 10
-	
-	max_feature_width, max_feature_height, min_feature_height, min_feature_width = (67, 67, 65, 65)
-	# max_feature_width, max_feature_height, min_feature_height, min_feature_width = (100, 100, 30, 30)
+    # max_feature_width, max_feature_height, min_feature_height, min_feature_width = (67, 67, 65, 65)
     # max_feature_width, max_feature_height, min_feature_height, min_feature_width = (70, 70, 50, 50)
-	min_size_img = (128, 128)
+    max_feature_width, max_feature_height, min_feature_height, min_feature_width = (100, 100, 30, 30)
+    min_size_img = (128, 128)
 
     # classifiers are haar like features
     classifiers = learn(pos_training_images, neg_training_images, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width; scale = scale, scale_to = scale_to)
 
-    data_file = joinpath(@__DIR__, "data", "2021", "feature_votes_$(img_size)")
-	serialize(data_file, votes)
+    data_file = joinpath(@__DIR__, "data", "2021", "classifiers_$(num_classifiers)_from_$(num_pos)_pos_$(num_neg)_neg_($(join(min_size_img, ',')))_($max_feature_width,$max_feature_height,$min_feature_height,$min_feature_width)")
+    serialize(data_file, classifiers)
 end
 
-@time main(200, 200; scale = true, scale_to = (128, 128))
+@time main(2000, 2000; scale = true, scale_to = (128, 128))
