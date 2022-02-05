@@ -37,7 +37,7 @@ function main(
 	scale::Bool=true,
 	scale_to::Tuple=(128, 128)
 )
-	data_path = joinpath(dirname(@__DIR__), "data")
+	data_path = joinpath(dirname(dirname(@__DIR__)), "data")
 	
 	pos_training_path = joinpath(data_path, "ffhq", "thumbnails128x128")
 	neg_training_path = joinpath(data_path, "things", "object_images")
@@ -61,8 +61,8 @@ function main(
 	    @info("...done.  Maximum feature width selected is $max_feature_width pixels; minimum feature width is $min_feature_width; maximum feature height is $max_feature_height pixels; minimum feature height is $min_feature_height.\n")
 	else
 		# max_feature_width, max_feature_height, min_feature_height, min_feature_width = (67, 67, 65, 65)
-		max_feature_width, max_feature_height, min_feature_height, min_feature_width = (100, 100, 30, 30)
-        # max_feature_width, max_feature_height, min_feature_height, min_feature_width = (70, 70, 50, 50)
+		# max_feature_width, max_feature_height, min_feature_height, min_feature_width = (100, 100, 30, 30)
+        max_feature_width, max_feature_height, min_feature_height, min_feature_width = (70, 70, 50, 50)
 		min_size_img = (128, 128)
 	end
 
