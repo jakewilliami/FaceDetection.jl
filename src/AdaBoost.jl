@@ -263,7 +263,7 @@ function create_features(
     max_feature_width::Int,
     min_feature_height::Int,
     max_feature_height::Int;
-    display_logging::Bool = ENV["FACE_DETECTION_DISPLAY_LOGGING"] == "true"
+    display_logging::Bool = ENV["FACE_DETECTION_DISPLAY_LOGGING"] == "true",
     display_warn::Bool = ENV["FACE_DETECTION_DISPLAY_WARN"] == "true"
 )
     width_capacity_reached = img_width < max_feature_width
