@@ -8,7 +8,7 @@ using Base.Iterators: partition
 using IntegralArrays # , IntervalSets
 
 # export IntegralArray, to_integral_image, sum_region
-export sum_region
+export IntegralArray, sum_region
 export learn, get_feature_votes
 export FEATURE_TYPES, HaarLikeObject, get_score, get_vote
 export displaymatrix, filtered_ls, load_image, ensemble_vote, 
