@@ -17,7 +17,7 @@
 
 - `sum::T` The sum of all pixels in the given rectangle defined by the parameters `top_left` and `bottom_right`
 """
-sum_region(iA::IntegralArray{T, N}, top_left::CartesianIndex{N}, bottom_right::::CartesianIndex{N}) where {T, N} = 
+sum_region(iA::IntegralArray{T, N}, top_left::CartesianIndex{N}, bottom_right::CartesianIndex{N}) where {T, N} = 
     iA[top_left..bottom_right]
 sum_region(iA::IntegralArray{T, N}, top_left::NTuple{N, Int}, bottom_right::NTuple{N, Int}) where {T, N} = 
     iA[CartesianIndex(top_left)..CartesianIndex(bottom_right)]
