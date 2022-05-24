@@ -27,7 +27,7 @@ Loads an image as gray_scale
 
 # Returns
 
- - `Array{Float64, N}`: An array of floating point values representing the image
+ - `IntegralArray{Float64, N}`: An array of floating point values representing the image
 """
 function load_image(
     image_path::String;
@@ -39,9 +39,10 @@ function load_image(
     if scale
         img = imresize(img, scale_to)
     end
-    img = convert(Array{Float64}, Gray.(img))
+    # img = convert(Array{Float64}, Gray.(img))
     
-    return to_integral_image(img)
+    # return to_integral_image(img)
+    return IntegralArray(Gray.(img))
 end
 
 """
@@ -124,7 +125,8 @@ function determine_feature_size(
 end
 
 function _ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLikeObject}) where {T, N}
-    
+    #=
+    # Algorithm b
     F = typeof(first(classifiers).weight)
     all_votes = F[get_vote(c, int_img) for c in classifiers]
     faceness = 0
@@ -138,9 +140,9 @@ function _ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLi
     end
     summed_vote = sum(all_votes) ≥ zero(Int8) ? one(Int8) : zero(Int8)
     return summed_vote, faceness
+    =#
     
-    
-    #=
+    # Algorithm c
     F = typeof(first(classifiers).weight)
     all_votes = F[get_vote(c, int_img) for c in classifiers]
     faceness = 0
@@ -152,9 +154,9 @@ function _ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLi
     end
     summed_vote = sum(all_votes) ≥ zero(Int8) ? one(Int8) : zero(Int8)
     return summed_vote, faceness
-    =#
     
     #=
+    # Algorithm a
     # TODO: check if the original vote algorithm works okay
     F = typeof(first(classifiers).weight)
     all_votes = F[get_vote(c, int_img) for c in classifiers]

@@ -45,10 +45,13 @@ Logging.disable_logging(Logging.Info)
 	random_img = load_image(rand(vcat(filtered_ls.([pos_training_path, neg_training_path, pos_testing_path, neg_testing_path])...)))
 	
     # IntegralImage.jl
+    A = [1 7 4 2 9; 7 2 3 8 2; 1 8 7 9 1; 3 2 3 1 5; 2 9 5 6 6]
+    iA = IntegralArray(A)
     @test isequal(to_integral_image([17 24 1 8 15; 23 5 7 14 16; 4 6 13 20 22; 10 12 19 21 3; 11 18 25 2 9]), [17 41 42 50 65; 40 69 77 99 130; 44 79 100 142 195; 54 101 141 204 260; 65 130 195 260 325])
-    @test isequal(sum_region(to_integral_image([1 7 4 2 9; 7 2 3 8 2; 1 8 7 9 1; 3 2 3 1 5; 2 9 5 6 6]), (4,4), (5,5)), 18)
-    @test typeof(sum_region(to_integral_image([1 7 4 2 9.9; 7 2 3 8 2; 1 8 7 9 1; 3 2 3 1 5; 2 9 5 6 6]), (4,4), (5,5))) <: AbstractFloat
-    @test sum_region(to_integral_image([1 7 4 2 9.9; 7 2 3 8 2; 1 8 7 9 1; 3 2 3 1 5; 2 9 5 6 6]), (4,4), (5,5)) isa AbstractFloat
+    @test isequal(sum_region(iA, (4,4), (5,5)), 18)
+    @test typeof(sum_region(iA, (4,4), (5,5))) <: AbstractFloat
+    @test sum_region(iA, (4,4), (5,5)) isa AbstractFloat
+    @test isequal(sum_region(iA, CartesianIndex(1, 2), CartesianIndex(3, 4)), 50)
 
     # HaarLikeFeature.jl
     @test HaarLikeObject(a, b, c, d, e, f) isa HaarLikeObject
