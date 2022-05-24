@@ -71,8 +71,8 @@ function main(
     @printf("%10.9s %10.15s %15s\n\n", "Non-faces:", non_faces_frac, non_faces_percent)
 end
 
-# data_file = joinpath(dirname(@__DIR__), "data", "classifiers_10_from_2000_pos_2000_neg_(128,128)_(100,100,30,30)")
-data_file = joinpath(dirname(@__DIR__), "data", "classifiers_10_from_5000_pos_5000_neg_(128,128)_(100,100,30,30)")
+data_file = joinpath(dirname(@__DIR__), "data", "classifiers_10_from_2000_pos_2000_neg_(128,128)_(100,100,30,30)")
+# data_file = joinpath(dirname(@__DIR__), "data", "classifiers_10_from_5000_pos_5000_neg_(128,128)_(100,100,30,30)")
 # data_file = joinpath(dirname(@__DIR__), "data", "classifiers_10_from_1500_pos_1500_neg_(128,128)_(128,128,1,1)")
 # data_file = joinpath(dirname(@__DIR__), "data", "classifiers_10_from_200_pos_200_neg_(128,128)_(70,70,50,50)")
 # data_file = joinpath(dirname(@__DIR__), "data", "classifiers_10_from_200_pos_200_neg_(24,24)_(-1,-1,1,1)")
