@@ -248,8 +248,9 @@ Get facelikeness for a given feature.
 - `score::Number`: Score for given feature
 """
 function get_faceness(feature::HaarLikeObject{I, F}, int_img::IntegralArray{T, N}) where {I, F, T, N}
-    error("not implemented")
-    score, faceness = get_score(feature, int_img)
+    error("Not implemented: as `get_score` no longer returns `faceness` (error in calculation; see 3a17220), it does not make sense to calculate the faceness of an image using a single feature.  You should use the other method of `get_faceness`, which calculates the faceness given potentially many classifiers.")
+    # _, faceness = _ensemble_vote(int_img, [feature])
+    score = get_score(feature, int_img)
     return (feature.weight * score) < (feature.polarity * feature.threshold) ? faceness : zero(T)
 end
 get_faceness(classifiers::Vector{HaarLikeObject}, int_img::IntegralArray{T, N}) where {T, N} = 

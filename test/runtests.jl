@@ -43,7 +43,7 @@ Logging.disable_logging(Logging.Info)
 	features = []
 	p, n = 0, 0
 	random_img = load_image(rand(vcat(filtered_ls.([pos_training_path, neg_training_path, pos_testing_path, neg_testing_path])...)))
-	
+
     # IntegralImage.jl
     A = [1 7 4 2 9; 7 2 3 8 2; 1 8 7 9 1; 3 2 3 1 5; 2 9 5 6 6]
     iA = IntegralArray(A)
@@ -71,7 +71,7 @@ Logging.disable_logging(Logging.Info)
 	@test get_vote(feature_3h, int_img) == expected_3h
 	@test get_vote(feature_3v, int_img) == expected_3v
 	@test get_vote(feature_4, int_img) == expected_4
-
+    
     # AdaBoost.jl
     classifiers = learn(pos_training_path, neg_training_path, 10, 8, 10, 8, 10; show_progress = false)
 	features = FaceDetection.create_features(19, 19, 8, 10, 8, 10)
@@ -79,11 +79,11 @@ Logging.disable_logging(Logging.Info)
 	
     # Utils.jl
 	@test determine_feature_size(pos_training_path, neg_training_path) == (10, 10, 8, 8, (19, 19))
-	@test get_faceness(classifiers[rand(1:length(classifiers))], random_img) isa Real
+	@test get_faceness(classifiers, random_img) isa Real
 	num_faces = length(filtered_ls(pos_testing_path))
 	num_non_faces = length(filtered_ls(neg_testing_path))
 	p = sum(ensemble_vote_all(pos_testing_path, classifiers)) / num_faces
 	n = (num_non_faces - sum(ensemble_vote_all(neg_testing_path, classifiers))) / num_non_faces
 	@test isapprox(p, 0.496, atol=1e-1) # these tests implicitly test the whole algorithm
-	@test isapprox(n, 0.536, atol=1e-1)
+	@test isapprox(n, 0.536, atol=1e-1) # ibid.
 end # end tests
