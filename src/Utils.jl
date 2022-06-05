@@ -27,7 +27,7 @@ Loads an image as gray_scale
 
 # Returns
 
- - `Array{Float64, N}`: An array of floating point values representing the image
+ - `IntegralArray{Float64, N}`: An array of floating point values representing the image
 """
 function load_image(
     image_path::String;
@@ -39,9 +39,10 @@ function load_image(
     if scale
         img = imresize(img, scale_to)
     end
-    img = convert(Array{Float64}, Gray.(img))
+    # img = convert(Array{Float64}, Gray.(img))
     
-    return to_integral_image(img)
+    # return to_integral_image(img)
+    return IntegralArray(Gray.(img))
 end
 
 """
@@ -123,6 +124,54 @@ function determine_feature_size(
     
 end
 
+function _ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLikeObject}) where {T, N}
+    @debug("This function (`_ensemble_vote`) needs review to verify its correctness!  See FaceDetection.jl#56.")
+    #=
+    # Algorithm b
+    F = typeof(first(classifiers).weight)
+    all_votes = F[get_vote(c, int_img) for c in classifiers]
+    faceness = 0
+    for vote in all_votes
+        if vote < 0
+            # then no face is found using this classifier
+            # we reject this face
+            break
+        end
+        faceness += 1
+    end
+    summed_vote = sum(all_votes) ≥ zero(Int8) ? one(Int8) : zero(Int8)
+    return summed_vote, faceness
+    =#
+    
+    # Algorithm c
+    F = typeof(first(classifiers).weight)
+    all_votes = F[get_vote(c, int_img) for c in classifiers]
+    faceness = 0
+    for vote in all_votes
+        # faceness += vote < 0 ? -1 : 1
+        if vote >= 0
+            faceness += 1
+        end
+    end
+    summed_vote = sum(all_votes) ≥ zero(Int8) ? one(Int8) : zero(Int8)
+    return summed_vote, faceness
+    
+    #=
+    # Algorithm a
+    # TODO: check if the original vote algorithm works okay
+    F = typeof(first(classifiers).weight)
+    all_votes = F[get_vote(c, int_img) for c in classifiers]
+    faceness = 0
+    for vote in all_votes
+        if vote < 0
+            return zero(Int8), faceness
+        end
+        faceness += 1
+    end
+    return one(Int8), faceness
+    =#
+end
+
 @doc raw"""
     ensemble_vote(int_img::IntegralArray, classifiers::AbstractArray) -> Integer
 
@@ -149,8 +198,8 @@ h(x) = \begin{cases}
     1       ⟺ sum of classifier votes > 0
     0       otherwise
 """
-ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLikeObject}) where {T, N} =
-    sum(get_vote(c, int_img) for c in classifiers) ≥ zero(Int8) ? one(Int8) : zero(Int8)
+ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLikeObject}) where {T, N} = 
+    first(_ensemble_vote(int_img, classifiers))
 
 """
     ensemble_vote_all(images::Vector{String}, classifiers::Vector{HaarLikeObject}) -> Vector{Int8}
@@ -200,9 +249,13 @@ Get facelikeness for a given feature.
 - `score::Number`: Score for given feature
 """
 function get_faceness(feature::HaarLikeObject{I, F}, int_img::IntegralArray{T, N}) where {I, F, T, N}
-    score, faceness = get_score(feature, int_img)
+    error("Not implemented: as `get_score` no longer returns `faceness` (error in calculation; see 3a17220), it does not make sense to calculate the faceness of an image using a single feature.  You should use the other method of `get_faceness`, which calculates the faceness given potentially many classifiers.")
+    # _, faceness = _ensemble_vote(int_img, [feature])
+    score = get_score(feature, int_img)
     return (feature.weight * score) < (feature.polarity * feature.threshold) ? faceness : zero(T)
 end
+get_faceness(classifiers::Vector{HaarLikeObject}, int_img::IntegralArray{T, N}) where {T, N} = 
+    last(_ensemble_vote(int_img, classifiers))
 
 #=
     reconstruct(classifiers::Vector, img_size::Tuple) -> AbstractArray

@@ -31,4 +31,25 @@ docs/site/
 Manifest.toml
 
 # output data
-data/
+examples/data/
+data/*.csv
+data/*.pdf
+data/all-non-faces/
+data/alt/
+data/classifiers_*
+data/faceness-scores-*
+data/haarcascades
+data/lfw-all
+data/lizzie-testset
+data/main
+data/scores
+data/wider
+data/ffhq/thumbnails128x128/
+data/ffhq/LICENSE.txt
+data/ffhq/*.py
+data/ffhq/*.json
+data/things/object_images/
+data/things/object_images_all/
+data/things/password.txt
+data/things/all_categories.txt
+data/things/all_categories_filtered.txt

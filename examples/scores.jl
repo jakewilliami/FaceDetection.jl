@@ -10,7 +10,6 @@
 include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl"))
 
 using .FaceDetection
-const FD = FaceDetection
 using Images: imresize
 using StatsPlots  # StatsPlots required for box plots # plot boxplot @layout :origin savefig
 using CSV: write
@@ -32,6 +31,7 @@ function main(;
     
     # read classifiers from file
 	classifiers = deserialize("/Users/jakeireland/Desktop/classifiers_100_577_577_fixed_1idx")
+
     num_classifiers = length(classifiers)
 	
     @info("Calculating test face scores and constructing dataset...")
@@ -39,8 +39,8 @@ function main(;
     faces_scores = Vector{Real}(undef, length(filtered_ls(pos_testing_path)))
     non_faces_scores = Vector{Real}(undef, length(filtered_ls(neg_testing_path)))
     
-    faces_scores[:] .= [sum([FD.get_faceness(c, load_image(face, scale=scale, scale_to=scale_to)) for c in classifiers]) / num_classifiers for face in filtered_ls(pos_testing_path)]
-	non_faces_scores[:] .= [sum([FD.get_faceness(c, load_image(non_face, scale=scale, scale_to=scale_to)) for c in classifiers]) / num_classifiers for non_face in filtered_ls(neg_testing_path)]
+    faces_scores[:] .= [sum([get_faceness(c, load_image(face, scale=scale, scale_to=scale_to)) for c in classifiers]) / num_classifiers for face in filtered_ls(pos_testing_path)]
+	non_faces_scores[:] .= [sum([get_faceness(c, load_image(non_face, scale=scale, scale_to=scale_to)) for c in classifiers]) / num_classifiers for non_face in filtered_ls(neg_testing_path)]
 	
 	face_names = basename.(filtered_ls(pos_testing_path))
 	non_face_names = basename.(filtered_ls(neg_testing_path))
@@ -86,7 +86,7 @@ function main(;
     
     # save plot
     StatsPlots.savefig(plot, joinpath(dirname(dirname(@__FILE__)), "figs", "scores.pdf"))
-    @ingo("...done.  Plot created at ", joinpath(dirname(dirname(@__FILE__)), "figs", "scores.pdf"), "\n")
+    @info("...done.  Plot created at $(joinpath(dirname(dirname(@__FILE__)), "figs", "scores.pdf"))")
 end
 
 @time main(smart_choose_feats=true, scale=true, scale_to=(577, 577))

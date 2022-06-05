@@ -15,7 +15,7 @@ function get_feature_votes(
     max_feature_height::Integer=-one(Int32);
     scale::Bool = false,
     scale_to::Tuple = (Int32(200), Int32(200)),
-    show_progress::Bool = true
+    show_progress::Bool = get(ENV, "FACE_DETECTION_DISPLAY_LOGGING", "true") != "false"
 )
     #this transforms everything to maintain type stability
     s₁, s₂ = scale_to
@@ -50,7 +50,7 @@ function get_feature_votes(
     max_feature_width = max_feature_width == -_1 ? img_height : max_feature_width
     
     # Create features for all sizes and locations
-    features = create_features(img_height, img_width, min_feature_width, max_feature_width, min_feature_height, max_feature_height)
+    features = create_features(img_height, img_width, min_feature_width, max_feature_width, min_feature_height, max_feature_height, display_logging = show_progress)
     num_features = length(features)
     num_classifiers = num_classifiers == -_1 ? num_features : num_classifiers
     
@@ -84,7 +84,7 @@ function get_feature_votes(
     max_feature_height::Integer=-one(Int32);
     scale::Bool = false,
     scale_to::Tuple = (Int32(200), Int32(200)),
-    show_progress::Bool = true
+    show_progress::Bool = get(ENV, "FACE_DETECTION_DISPLAY_LOGGING", "true") != "false"
 )
     positive_files = filtered_ls(positive_path)
     negative_files = filtered_ls(negative_path)
@@ -104,7 +104,7 @@ function learn(
     features::Array{HaarLikeObject, 1},
     votes::Matrix{Int8},
     num_classifiers::Integer=-one(Int32);
-    show_progress::Bool = true
+    show_progress::Bool = get(ENV, "FACE_DETECTION_DISPLAY_LOGGING", "true") != "false"
 )
 
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
@@ -192,7 +192,7 @@ function learn(
     max_feature_height::Int=-1;
     scale::Bool = false,
     scale_to::Tuple = (200, 200),
-    show_progress::Bool = true
+    show_progress::Bool =  get(ENV, "FACE_DETECTION_DISPLAY_LOGGING", "true") != "false"
 )
     
     votes, features = get_feature_votes(
@@ -219,7 +219,7 @@ function learn(
     max_feature_height::Int=-1;
     scale::Bool = false,
     scale_to::Tuple = (200, 200),
-    show_progress::Bool = true
+    show_progress::Bool =  get(ENV, "FACE_DETECTION_DISPLAY_LOGGING", "true") != "false"
 )
     
     return learn(
@@ -262,15 +262,22 @@ function create_features(
     min_feature_width::Int,
     max_feature_width::Int,
     min_feature_height::Int,
-    max_feature_height::Int
+    max_feature_height::Int;
+    display_logging::Bool = get(ENV, "FACE_DETECTION_DISPLAY_LOGGING", "true") != "false",
+    display_warn::Bool = get(ENV, "FACE_DETECTION_DISPLAY_WARN", "true") != "false"
 )
-    if img_width < max_feature_width || img_height < max_feature_height
-        error("""
-        Cannot possibly find classifiers whose size is greater than the image itself [(width,height) = ($img_width,$img_height)].
+    width_capacity_reached = img_width < max_feature_width
+    height_capacity_reached = img_height < max_feature_height
+    if width_capacity_reached || height_capacity_reached
+        width_capacity_reached && (max_feature_width = img_width)
+        height_capacity_reached && (max_feature_height = img_height)
+        display_warn && @warn("""
+            Cannot possibly find classifiers whose size is greater than the image itself ((width, height) = ($img_width, $img_height)).
+            Limiting the maximum feature score by image size; (width, height) = ($max_feature_width, $max_feature_height)
         """)
     end
     
-    @info("Creating Haar-like features...")
+    display_logging && @info("Creating Haar-like features...")
     features = HaarLikeObject[]
     
     for (feature_first, feature_last) in values(FEATURE_TYPES) # (feature_types are just tuples)
@@ -280,15 +287,16 @@ function create_features(
             for feature_height in feature_start_height:feature_last:max_feature_height
                 for x in 1:(img_width - feature_width)
                     for y in 1:(img_height - feature_height)
-                        push!(features, HaarLikeObject((feature_first, feature_last), (x, y), feature_width, feature_height, 0, 1))
-                        push!(features, HaarLikeObject((feature_first, feature_last), (x, y), feature_width, feature_height, 0, -1))
+                        #               HaarLikeObject( feature_type,                  position, width,         height,         threshold, polarity)
+                        push!(features, HaarLikeObject((feature_first, feature_last), (x, y),   feature_width, feature_height, 0,         1 ))
+                        push!(features, HaarLikeObject((feature_first, feature_last), (x, y),   feature_width, feature_height, 0,         -1))
                     end # end for y
                 end # end for x
             end # end for feature height
         end # end for feature width
     end # end for feature in feature types
     
-    @info("...finished processing; $(length(features)) features created.")
+    display_logging && @info("...finished processing; $(length(features)) features created.")
     
     return features
 end

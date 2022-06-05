@@ -86,7 +86,6 @@ Get score for given integral image array.  This is the feature cascade.
 """
 function get_score(feature::HaarLikeObject{I, F}, int_img::IntegralArray{T, N}) where {I, F, T, N}
     score = zero(I)
-    faceness = zero(I)
     _2f = F(2)
     _3f = F(3)
     _half = F(0.5)
@@ -96,24 +95,20 @@ function get_score(feature::HaarLikeObject{I, F}, int_img::IntegralArray{T, N}) 
         _first = sum_region(int_img, feature.top_left, (first(feature.top_left) + feature.width, round(I, last(feature.top_left) + feature.height / 2)))
         second = sum_region(int_img, (first(feature.top_left), round(I, last(feature.top_left) + feature.height / 2)), feature.bottom_right)
         score = _first - second
-        faceness = I(1)
     elseif feature.feature_type == FEATURE_TYPES.two_horizontal
         _first = sum_region(int_img, feature.top_left, (round(I, first(feature.top_left) + feature.width / 2), last(feature.top_left) + feature.height))
         second = sum_region(int_img, (round(I, first(feature.top_left) + feature.width / 2), last(feature.top_left)), feature.bottom_right)
         score = _first - second
-        faceness = I(2)
     elseif feature.feature_type == FEATURE_TYPES.three_horizontal
         _first = sum_region(int_img, feature.top_left, (round(I, first(feature.top_left) + feature.width / 3), last(feature.top_left) + feature.height))
         second = sum_region(int_img, (round(I, first(feature.top_left) + feature.width / 3), last(feature.top_left)), (round(I, first(feature.top_left) + 2 * feature.width / 3), last(feature.top_left) + feature.height))
         third = sum_region(int_img, (round(I, first(feature.top_left) + 2 * feature.width / 3), last(feature.top_left)), feature.bottom_right)
         score = _first - second + third
-        faceness = I(3)
     elseif feature.feature_type == FEATURE_TYPES.three_vertical
         _first = sum_region(int_img, feature.top_left, (first(feature.bottom_right), round(I, last(feature.top_left) + feature.height / 3)))
         second = sum_region(int_img, (first(feature.top_left), round(I, last(feature.top_left) + feature.height / 3)), (first(feature.bottom_right), round(I, last(feature.top_left) + 2 * feature.height / 3)))
         third = sum_region(int_img, (first(feature.top_left), round(I, last(feature.top_left) + 2 * feature.height / 3)), feature.bottom_right)
         score = _first - second + third
-        faceness  = I(4)
     elseif feature.feature_type == FEATURE_TYPES.four
         # top left area
         _first = sum_region(int_img, feature.top_left, (round(I, first(feature.top_left) + feature.width / 2), round(I, last(feature.top_left) + feature.height / 2)))
@@ -124,10 +119,9 @@ function get_score(feature::HaarLikeObject{I, F}, int_img::IntegralArray{T, N}) 
         # bottom right area
         fourth = sum_region(int_img, (round(I, first(feature.top_left) + feature.width / 2), round(I, last(feature.top_left) + feature.height / 2)), feature.bottom_right)
         score = _first - second - third + fourth
-        faceness = I(5)
     end
     
-    return score, faceness
+    return score
 end
 
 """
@@ -137,7 +131,7 @@ Get vote of this feature for given integral image.
 
 # Arguments
 
-- `feature::HaarLikeObject`: given Haar-like feature (parameterised replacement of Python's `self`)
+- `feature::HaarLikeObject`: given Haar-like feature
 - `int_img::IntegralArray`: Integral image array
 
 # Returns
@@ -147,9 +141,6 @@ Get vote of this feature for given integral image.
     -1      otherwise
 """
 function get_vote(feature::HaarLikeObject{I, F}, int_img::IntegralArray{T, N}) where {I, F, T, N}
-    score, _ = get_score(feature, int_img) # we only care about score here, not faceness
-    # return (feature.weight * score) < (feature.polarity * feature.threshold) ? one(Int8) : -one(Int8)
-    # return feature.weight * (score < feature.polarity * feature.threshold ? one(Int8) : -one(Int8))
+    score = get_score(feature, int_img)
     return score < feature.polarity * feature.threshold ? feature.weight : -feature.weight
-    # self.weight * (1 if score < self.polarity * self.threshold else -1)
 end

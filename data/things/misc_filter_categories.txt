@@ -1,0 +1,83 @@
+baby
+bandanna
+beanie
+beard
+blindfold
+bobsled
+bowler hat
+braid
+breathalyzer
+chick
+chicken2
+chihuahua
+cockatoo
+costume
+dalmatian
+denture
+doll
+duckling
+ear
+earplug
+eye
+eye patch
+eyeliner
+face
+figurine
+football helmet
+gargoyle
+gas mask
+gingerbread man
+girl
+glasses
+goggles
+gondola
+groundhog
+hair
+hairnet
+hat
+headband
+headdress
+headlamp
+headscarf
+hearing aid
+helmet
+hood
+jetski
+kitten
+lamb
+man
+mannequin
+mascara
+mask
+mouth
+mouthpiece
+mustache
+piggy bank
+piglet
+playpen
+pogo stick
+poodle
+poster
+pug
+puppet
+puppy
+racehorse
+ram
+rickshaw
+robot
+sarcophagus
+scarecrow
+scarf
+seagull
+seal
+skeleton
+skull
+snorkel
+snowman
+statue
+tadpole
+teddy bear
+totem pole
+toy
+warthog
+woman

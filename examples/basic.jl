@@ -69,4 +69,4 @@ function main(;
     @printf("%10.9s %10.15s %15s\n\n", "Non-faces:", non_faces_frac, non_faces_percent)
 end
 
-@time main(smart_choose_feats=true, scale=true, scale_to=(20, 20))
+@time main(smart_choose_feats=false, scale=true, scale_to=(20, 20))
