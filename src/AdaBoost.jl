@@ -15,7 +15,7 @@ function get_feature_votes(
     max_feature_height::Integer=-one(Int32);
     scale::Bool = false,
     scale_to::Tuple = (Int32(200), Int32(200)),
-    show_progress::Bool = ENV["FACE_DETECTION_DISPLAY_LOGGING"] == "true"
+    show_progress::Bool = get(ENV, "FACE_DETECTION_DISPLAY_LOGGING", "true") != "false"
 )
     #this transforms everything to maintain type stability
     s₁, s₂ = scale_to
@@ -84,7 +84,7 @@ function get_feature_votes(
     max_feature_height::Integer=-one(Int32);
     scale::Bool = false,
     scale_to::Tuple = (Int32(200), Int32(200)),
-    show_progress::Bool = true
+    show_progress::Bool = get(ENV, "FACE_DETECTION_DISPLAY_LOGGING", "true") != "false"
 )
     positive_files = filtered_ls(positive_path)
     negative_files = filtered_ls(negative_path)
@@ -104,7 +104,7 @@ function learn(
     features::Array{HaarLikeObject, 1},
     votes::Matrix{Int8},
     num_classifiers::Integer=-one(Int32);
-    show_progress::Bool = ENV["FACE_DETECTION_DISPLAY_LOGGING"] == "true"
+    show_progress::Bool = get(ENV, "FACE_DETECTION_DISPLAY_LOGGING", "true") != "false"
 )
 
     # get number of positive and negative images (and create a global variable of the total number of images——global for the @everywhere scope)
@@ -192,7 +192,7 @@ function learn(
     max_feature_height::Int=-1;
     scale::Bool = false,
     scale_to::Tuple = (200, 200),
-    show_progress::Bool =  ENV["FACE_DETECTION_DISPLAY_LOGGING"] == "true"
+    show_progress::Bool =  get(ENV, "FACE_DETECTION_DISPLAY_LOGGING", "true") != "false"
 )
     
     votes, features = get_feature_votes(
@@ -219,7 +219,7 @@ function learn(
     max_feature_height::Int=-1;
     scale::Bool = false,
     scale_to::Tuple = (200, 200),
-    show_progress::Bool =  ENV["FACE_DETECTION_DISPLAY_LOGGING"] == "true"
+    show_progress::Bool =  get(ENV, "FACE_DETECTION_DISPLAY_LOGGING", "true") != "false"
 )
     
     return learn(
@@ -263,8 +263,8 @@ function create_features(
     max_feature_width::Int,
     min_feature_height::Int,
     max_feature_height::Int;
-    display_logging::Bool = ENV["FACE_DETECTION_DISPLAY_LOGGING"] == "true",
-    display_warn::Bool = ENV["FACE_DETECTION_DISPLAY_WARN"] == "true"
+    display_logging::Bool = get(ENV, "FACE_DETECTION_DISPLAY_LOGGING", "true") != "false",
+    display_warn::Bool = get(ENV, "FACE_DETECTION_DISPLAY_WARN", "true") != "false"
 )
     width_capacity_reached = img_width < max_feature_width
     height_capacity_reached = img_height < max_feature_height
