@@ -125,6 +125,7 @@ function determine_feature_size(
 end
 
 function _ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLikeObject}) where {T, N}
+    @debug("This function (`_ensemble_vote`) needs review to verify its correctness!  See FaceDetection.jl#56.")
     #=
     # Algorithm b
     F = typeof(first(classifiers).weight)
