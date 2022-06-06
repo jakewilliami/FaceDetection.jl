@@ -41,6 +41,31 @@ In an over-simplified manner, the Viola-Jones algorithm has some four stages:
  
 For a better explanation, read [the paper from 2001](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.10.6807), or see [the Wikipedia page](https://en.wikipedia.org/wiki/Viola%E2%80%93Jones_object_detection_framework) on this algorithm.
 
+## Quick Start
+
+```julia
+using FaceDetection
+
+# Constants
+pos_training_path, neg_training_path = "...", "..."
+num_faces, num_non_faces = length(filtered_ls(pos_testing_path)), length(filtered_ls(neg_testing_path))  # You can also just put in a simple number here, if you know how many training images you have
+num_classifiers = 10
+min_feature_height, max_feature_height = 0, 19
+min_feature_width, max_feature_width = 0, 19
+scale, scale_to = true, (19, 19)  # we want all training images to be standardised to size 19x19
+
+# Train a model
+classifiers = FaceDetection.learn(pos_training_path, neg_training_path, num_classifiers, min_feature_height, max_feature_height, min_feature_width, max_feature_width; scale = scale, scale_to = scale_to)
+
+# Results
+correct_faces = sum(ensemble_vote_all(pos_testing_path, classifiers, scale=scale, scale_to=scale_to))
+correct_non_faces = num_non_faces - sum(ensemble_vote_all(neg_testing_path, classifiers, scale=scale, scale_to=scale_to))
+println((correct_faces / num_faces) * 100, "% of faces were recognised as faces")
+println((correct_non_faces / num_non_faces) * 100, "% of non-faces were identified as non-faces")
+```
+
+For more examples like this, see [`examples/`](examples/).
+
 ## Miscellaneous Notes
 
 ### Timeline of Progression
