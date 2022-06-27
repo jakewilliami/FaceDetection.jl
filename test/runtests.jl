@@ -2,9 +2,9 @@
 
 using FaceDetection
 using Test: @testset, @test
-using Logging
+# using Logging
 # using BenchmarkTools: @btime
-Logging.disable_logging(Logging.Info)
+# Logging.disable_logging(Logging.Info)
 
 @time @testset "FaceDetection.jl" begin
 	# Test initialisation: constants and variables
