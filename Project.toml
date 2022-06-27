@@ -18,6 +18,7 @@ QuartzImageIO = "dca85d43-d64c-5e67-8c65-017450d5d020"
 
 [compat]
 ImageView = "0.11"
+QuartzImageIO = "0.7"
 julia = "1"
 
 [extras]
