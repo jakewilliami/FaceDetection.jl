@@ -38,7 +38,7 @@ In an over-simplified manner, the Viola-Jones algorithm has some four stages:
       - Stacking trains a learning algorithm to combine the predictions of several other learning algorithms.
   Despite this method being developed at the start of the century, it is blazingly fast compared to some machine learning algorithms, and still widely used.
  4. Finally, this algorithm uses [Cascading Classifiers](https://en.wikipedia.org/wiki/Cascading_classifiers) to identify faces.  (See page 12 of the original paper for the specific cascade).
- 
+
 For a better explanation, read [the paper from 2001](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.10.6807), or see [the Wikipedia page](https://en.wikipedia.org/wiki/Viola%E2%80%93Jones_object_detection_framework) on this algorithm.
 
 ## Quick Start
@@ -90,6 +90,7 @@ Thank you to:
  - [**Michael Jones**](https://www.merl.com/people/mjones) for (along with [Tirta Susilo](https://people.wgtn.ac.nz/tirta.susilo)) suggesting the method for a *facelike-ness* measure;
  - [**Mahdi Rezaei**](https://environment.leeds.ac.uk/staff/9408/dr-mahdi-rezaei) for helping me understand the full process of Viola-Jones' object detection;
  - [**Ying Bi**](https://ecs.wgtn.ac.nz/Main/GradYingBi) for always being happy to answer questions (which mainly turned out to be a lack of programming knowledge rather than conceptual; also with help from [**Bing Xue**](https://homepages.ecs.vuw.ac.nz/~xuebing/index.html));
+ - [**Rainer Lienhart**](https://www.uni-augsburg.de/en/fakultaet/fai/informatik/prof/mmc/team/lienhart_eng/) for helping me to understand how OpenCV Haar data is serialised;
  - **Mr. H. Lockwood** and **Mr. D. Peck** are Comp. Sci. students who have answered a few questions of mine;
  - Finally, the people in the Julia slack channel, for dealing with many (probably stupid) questions.  Just a few who come to mind: Micket, David Sanders, Eric Forgy, Jakob Nissen, and Roel.
 
