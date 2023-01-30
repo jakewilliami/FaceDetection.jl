@@ -72,7 +72,7 @@ function get_feature_votes(
     batch_size = 10
     # get votes for images
     map(partition(image_files, batch_size)) do batch
-        @threads for t = 1:length(batch)
+        @threads for t in 1:length(batch)
             img_arr = load_image(batch[t]; scale = scale, scale_to = scale_to)
             votes[num_processed + t, :] .= (get_vote(f, img_arr) for f in features)
             next!(p) # increment progress bar
@@ -134,10 +134,10 @@ function learn(
     _1 = one(Int8)
     _neg1 = -_1
     labels = Vector{Int8}(undef, num_imgs)
-    for i = 1:num_pos
+    for i in 1:num_pos
         @inbounds labels[i] = _1
     end
-    for j = (num_pos + 1):num_imgs
+    for j in (num_pos + 1):num_imgs
         @inbounds labels[j] = _neg1
     end
 
@@ -154,16 +154,16 @@ function learn(
     p = Progress(num_classifiers, enabled = show_progress)
     p.dt = 1 # minimum update interval: 1 second
 
-    for t = 1:num_classifiers
+    for t in 1:num_classifiers
         # normalize the weights $w_{t,i}\gets \frac{w_{t,i}}{\sum_{j=1}^n w_{t,j}}$
         weights .*= inv(sum(weights))
 
         # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
-        @inbounds @threads for j = 1:length(feature_indices)
+        @inbounds @threads for j in 1:length(feature_indices)
             feature_idx = feature_indices[j]
             classification_errors[j] = sum(
                 weights[img_idx] for
-                img_idx = 1:num_imgs if labels[img_idx] !== votes[img_idx, feature_idx]
+                img_idx in 1:num_imgs if labels[img_idx] !== votes[img_idx, feature_idx]
             )
         end
 
@@ -181,7 +181,7 @@ function learn(
         # update image weights $w_{t+1,i}=w_{t,i}\beta_{t}^{1-e_i}$
         sqrt_best_error = @fastmath(sqrt(best_error / (one(best_error) - best_error)))
         inv_sqrt_best_error = @fastmath(sqrt((one(best_error) - best_error) / best_error))
-        @inbounds for i = 1:num_imgs
+        @inbounds for i in 1:num_imgs
             if labels[i] !== votes[i, best_feature_idx]
                 weights[i] *= inv_sqrt_best_error
             else
@@ -315,11 +315,11 @@ function create_features(
 
     for (feature_first, feature_last) in values(FEATURE_TYPES) # (feature_types are just tuples)
         feature_start_width = max(min_feature_width, feature_first)
-        for feature_width = feature_start_width:feature_first:max_feature_width
+        for feature_width in feature_start_width:feature_first:max_feature_width
             feature_start_height = max(min_feature_height, feature_last)
-            for feature_height = feature_start_height:feature_last:max_feature_height
-                for x = 1:(img_width - feature_width)
-                    for y = 1:(img_height - feature_height)
+            for feature_height in feature_start_height:feature_last:max_feature_height
+                for x in 1:(img_width - feature_width)
+                    for y in 1:(img_height - feature_height)
                         #               HaarLikeObject( feature_type,                  position, width,         height,         threshold, polarity)
                         push!(
                             features,

@@ -28,7 +28,7 @@ function takerand!(list::Vector{T}) where {T}
     return rand_elem
 end
 
-rand_subset!(list::Vector{T}, n::Int) where {T} = String[takerand!(list) for _ = 1:n]
+rand_subset!(list::Vector{T}, n::Int) where {T} = String[takerand!(list) for _ in 1:n]
 
 "Return a random subset of the contents of directory `path` of size `n`."
 function rand_subset_ls(path::String, n::Int)

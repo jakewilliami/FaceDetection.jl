@@ -314,9 +314,9 @@ function reconstruct(
         # map polarity: -1 -> 0, 1 -> 1
         polarity = ((1 + c.polarity)^2) / 4
         if c.feature_type == feature_types["two_vertical"]
-            for x = 1:(c.width)
+            for x in 1:(c.width)
                 sign = polarity
-                for y = 1:(c.height)
+                for y in 1:(c.height)
                     if y >= c.height / 2
                         sign = mod((sign + 1), 2)
                     end
@@ -325,28 +325,28 @@ function reconstruct(
             end
         elseif c.feature_type == feature_types["two_horizontal"]
             sign = polarity
-            for x = 1:(c.width)
+            for x in 1:(c.width)
                 if x >= c.width / 2
                     sign = mod((sign + 1), 2)
                 end
-                for y = 1:(c.height)
+                for y in 1:(c.height)
                     image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
         elseif c.feature_type == feature_types["three_horizontal"]
             sign = polarity
-            for x = 1:(c.width)
+            for x in 1:(c.width)
                 if iszero(mod(x, c.width / 3))
                     sign = mod((sign + 1), 2)
                 end
-                for y = 1:(c.height)
+                for y in 1:(c.height)
                     image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
         elseif c.feature_type == feature_types["three_vertical"]
-            for x = 1:(c.width)
+            for x in 1:(c.width)
                 sign = polarity
-                for y = 1:(c.height)
+                for y in 1:(c.height)
                     if iszero(mod(x, c.height / 3))
                         sign = mod((sign + 1), 2)
                     end
@@ -355,11 +355,11 @@ function reconstruct(
             end
         elseif c.feature_type == feature_types["four"]
             sign = polarity
-            for x = 1:(c.width)
+            for x in 1:(c.width)
                 if iszero(mod(x, c.width / 2))
                     sign = mod((sign + 1), 2)
                 end
-                for y = 1:(c.height)
+                for y in 1:(c.height)
                     if iszero(mod(x, c.height / 2))
                         sign = mod((sign + 1), 2)
                     end
