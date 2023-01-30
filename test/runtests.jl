@@ -5,11 +5,10 @@ using Test: @testset, @test
 # using Logging
 # using BenchmarkTools: @btime
 # Logging.disable_logging(Logging.Info)
-using Downloads
 
 # An example test face
 const TEST_FACE_URI = "https://raw.githubusercontent.com/INVASIS/Viola-Jones/583badfaa09c5b6dbfa23d55945c4a824124c7c0/data/trainset/faces/face00001.png"
-const TEST_FACE_PATH = Downloads.download(TEST_FACE_URI)
+const TEST_FACE_PATH = download(TEST_FACE_URI)
 const TEST_FACE_IMG = FaceDetection.load_image(TEST_FACE_PATH, scale = true, scale_to = (24, 24))
 
 @time @testset "FaceDetection.jl" begin
