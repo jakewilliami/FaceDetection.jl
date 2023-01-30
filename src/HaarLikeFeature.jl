@@ -12,7 +12,7 @@ abstract type AbstractHaarFeature end
     mutable struct HaarLikeObject{I <: Integer, F <: AbstractFloat}
 
         Struct representing a Haar-like feature.
-        
+
     feature_type::Tuple{I, I}
     position::Tuple{I, I}
     top_left::Tuple{I, I}
@@ -31,7 +31,7 @@ mutable struct HaarLikeObject{I <: Integer, F <: AbstractFloat} <: AbstractHaarF
     bottom_right::Tuple{I, I}
     width::I
     height::I
-    threshold::I
+    threshold::I  # TODO: this should be a float!
     polarity::I
     weight::F
 end # end structure
@@ -65,14 +65,14 @@ function HaarLikeObject(
     top_left = position
     bottom_right = (first(position) + width, last(position) + height)
     weight = float(one(p₁)) #to make a float of the same size
-    
+
 
     HaarLikeObject(feature_type, position, top_left, bottom_right, width, height, threshold, polarity, weight)
 end
 
 """
     get_score(feature::HaarLikeObject, int_img::AbstractArray) -> Tuple{Number, Number}
-    
+
 Get score for given integral image array.  This is the feature cascade.
 
 # Arguments
@@ -90,7 +90,7 @@ function get_score(feature::HaarLikeObject{I, F}, int_img::IntegralArray{T, N}) 
     _3f = F(3)
     _half = F(0.5)
     _one_third = F(1.0 / 3.0)
-    
+
     if feature.feature_type == FEATURE_TYPES.two_vertical
         _first = sum_region(int_img, feature.top_left, (first(feature.top_left) + feature.width, round(I, last(feature.top_left) + feature.height / 2)))
         second = sum_region(int_img, (first(feature.top_left), round(I, last(feature.top_left) + feature.height / 2)), feature.bottom_right)
@@ -120,7 +120,7 @@ function get_score(feature::HaarLikeObject{I, F}, int_img::IntegralArray{T, N}) 
         fourth = sum_region(int_img, (round(I, first(feature.top_left) + feature.width / 2), round(I, last(feature.top_left) + feature.height / 2)), feature.bottom_right)
         score = _first - second - third + fourth
     end
-    
+
     return score
 end
 
