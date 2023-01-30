@@ -3,7 +3,7 @@ using ImageDraw: draw, Polygon, Point
 
 #=
     filtered_ls(path::String) -> Vector{String}
-    
+
 A function to filter the output of readdir
 
 # Arguments
@@ -15,7 +15,10 @@ A function to filter the output of readdir
 - `Vector{String}`: An array of filtered files in the path
 =#
 function filtered_ls(path::String)
-    return filter!(f -> !occursin(r".*\.DS_Store", f), readdir(path, join=true, sort=false))
+    return filter!(
+        f -> !occursin(r".*\.DS_Store", f),
+        readdir(path, join = true, sort = false),
+    )
 end
 
 """
@@ -29,18 +32,14 @@ Loads an image as gray_scale
 
  - `IntegralArray{Float64, N}`: An array of floating point values representing the image
 """
-function load_image(
-    image_path::String;
-    scale::Bool=false,
-    scale_to::Tuple=(200,200)
-    )
+function load_image(image_path::String; scale::Bool = false, scale_to::Tuple = (200, 200))
 
     img = load(image_path)
     if scale
         img = imresize(img, scale_to)
     end
     # img = convert(Array{Float64}, Gray.(img))
-    
+
     # return to_integral_image(img)
     return IntegralArray(Gray.(img))
 end
@@ -73,24 +72,24 @@ OR
 """
 function determine_feature_size(
     pictures::Vector{String};
-    scale::Bool=false,
-    scale_to::Tuple=(200, 200),
-    show_progress::Bool = true
+    scale::Bool = false,
+    scale_to::Tuple = (200, 200),
+    show_progress::Bool = true,
 )
-    
+
     if scale
         # if we are scaling to something, then we already know the
         # minimum image size (the only image size)
         @goto determine_feature_parameters
     end
-    
+
     min_feature_height = 0
     min_feature_width = 0
     max_feature_height = 0
     max_feature_width = 0
-    
+
     min_size_img = (0, 0)
-    
+
     p = Progress(length(pictures), enabled = show_progress)
     p.dt = 1 # minimum update interval: 1 second
     @threads for picture in pictures
@@ -101,31 +100,47 @@ function determine_feature_size(
         end
         next!(p)
     end
-    
+
     @label determine_feature_parameters
-    
-    max_feature_height = round(Int, min_size_img[2]*(10/19))
-    max_feature_width = round(Int, min_size_img[1]*(10/19))
-    min_feature_height = round(Int, max_feature_height - max_feature_height*(2/max_feature_height))
-    min_feature_width = round(Int, max_feature_width - max_feature_width*(2/max_feature_width))
-    
-    return max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img
-    
+
+    max_feature_height = round(Int, min_size_img[2] * (10 / 19))
+    max_feature_width = round(Int, min_size_img[1] * (10 / 19))
+    min_feature_height =
+        round(Int, max_feature_height - max_feature_height * (2 / max_feature_height))
+    min_feature_width =
+        round(Int, max_feature_width - max_feature_width * (2 / max_feature_width))
+
+    return max_feature_width,
+    max_feature_height,
+    min_feature_height,
+    min_feature_width,
+    min_size_img
+
 end
 function determine_feature_size(
     pos_training_path::String,
     neg_training_path::String;
-    scale::Bool=false,
-    scale_to::Tuple=(200, 200),
-    show_progress::Bool = true
+    scale::Bool = false,
+    scale_to::Tuple = (200, 200),
+    show_progress::Bool = true,
 )
     pictures = vcat(filtered_ls(pos_training_path), filtered_ls(neg_training_path))
-    return determine_feature_size(pictures; scale = scale, scale_to = scale_to, show_progress = show_progress)
-    
+    return determine_feature_size(
+        pictures;
+        scale = scale,
+        scale_to = scale_to,
+        show_progress = show_progress,
+    )
+
 end
 
-function _ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLikeObject}) where {T, N}
-    @debug("This function (`_ensemble_vote`) needs review to verify its correctness!  See FaceDetection.jl#56.")
+function _ensemble_vote(
+    int_img::IntegralArray{T, N},
+    classifiers::Vector{HaarLikeObject},
+) where {T, N}
+    @debug(
+        "This function (`_ensemble_vote`) needs review to verify its correctness!  See FaceDetection.jl#56."
+    )
     #=
     # Algorithm b
     F = typeof(first(classifiers).weight)
@@ -142,7 +157,7 @@ function _ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLi
     summed_vote = sum(all_votes) ≥ zero(Int8) ? one(Int8) : zero(Int8)
     return summed_vote, faceness
     =#
-    
+
     # Algorithm c
     F = typeof(first(classifiers).weight)
     all_votes = F[get_vote(c, int_img) for c in classifiers]
@@ -155,7 +170,7 @@ function _ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLi
     end
     summed_vote = sum(all_votes) ≥ zero(Int8) ? one(Int8) : zero(Int8)
     return summed_vote, faceness
-    
+
     #=
     # Algorithm a
     # TODO: check if the original vote algorithm works okay
@@ -198,8 +213,10 @@ h(x) = \begin{cases}
     1       ⟺ sum of classifier votes > 0
     0       otherwise
 """
-ensemble_vote(int_img::IntegralArray{T, N}, classifiers::Vector{HaarLikeObject}) where {T, N} = 
-    first(_ensemble_vote(int_img, classifiers))
+ensemble_vote(
+    int_img::IntegralArray{T, N},
+    classifiers::Vector{HaarLikeObject},
+) where {T, N} = first(_ensemble_vote(int_img, classifiers))
 
 """
     ensemble_vote_all(images::Vector{String}, classifiers::Vector{HaarLikeObject}) -> Vector{Int8}
@@ -218,20 +235,28 @@ Given a path to images, loads images then classifies votes using given classifie
 function ensemble_vote_all(
     images::Vector{String},
     classifiers::Vector{HaarLikeObject};
-    scale::Bool=false,
-    scale_to::Tuple=(200, 200)
-    )
-    
-    return Int8[ensemble_vote(load_image(i, scale=scale, scale_to=scale_to), classifiers) for i in images]
+    scale::Bool = false,
+    scale_to::Tuple = (200, 200),
+)
+
+    return Int8[
+        ensemble_vote(load_image(i, scale = scale, scale_to = scale_to), classifiers) for
+        i in images
+    ]
 end
 function ensemble_vote_all(
     image_path::String,
     classifiers::Vector{HaarLikeObject};
-    scale::Bool=false,
-    scale_to::Tuple=(200, 200)
+    scale::Bool = false,
+    scale_to::Tuple = (200, 200),
+)
+
+    return ensemble_vote_all(
+        filtered_ls(image_path),
+        classifiers;
+        scale = scale,
+        scale_to = scale_to,
     )
-    
-    return ensemble_vote_all(filtered_ls(image_path), classifiers; scale = scale, scale_to = scale_to)
 end
 
 """
@@ -248,14 +273,22 @@ Get facelikeness for a given feature.
 
 - `score::Number`: Score for given feature
 """
-function get_faceness(feature::HaarLikeObject{I, F}, int_img::IntegralArray{T, N}) where {I, F, T, N}
-    error("Not implemented: as `get_score` no longer returns `faceness` (error in calculation; see 3a17220), it does not make sense to calculate the faceness of an image using a single feature.  You should use the other method of `get_faceness`, which calculates the faceness given potentially many classifiers.")
+function get_faceness(
+    feature::HaarLikeObject{I, F},
+    int_img::IntegralArray{T, N},
+) where {I, F, T, N}
+    error(
+        "Not implemented: as `get_score` no longer returns `faceness` (error in calculation; see 3a17220), it does not make sense to calculate the faceness of an image using a single feature.  You should use the other method of `get_faceness`, which calculates the faceness given potentially many classifiers.",
+    )
     # _, faceness = _ensemble_vote(int_img, [feature])
     score = get_score(feature, int_img)
-    return (feature.weight * score) < (feature.polarity * feature.threshold) ? faceness : zero(T)
+    return (feature.weight * score) < (feature.polarity * feature.threshold) ? faceness :
+           zero(T)
 end
-get_faceness(classifiers::Vector{HaarLikeObject}, int_img::IntegralArray{T, N}) where {T, N} = 
-    last(_ensemble_vote(int_img, classifiers))
+get_faceness(
+    classifiers::Vector{HaarLikeObject},
+    int_img::IntegralArray{T, N},
+) where {T, N} = last(_ensemble_vote(int_img, classifiers))
 
 #=
     reconstruct(classifiers::Vector, img_size::Tuple) -> AbstractArray
@@ -271,17 +304,20 @@ Creates an image by putting all given classifiers on top of each other producing
 
 - `result::AbstractArray`: Reconstructed image
 =#
-function reconstruct(classifiers::Vector{HaarLikeObject{I, F}}, img_size::Tuple{Int, Int}) where {I, F}
+function reconstruct(
+    classifiers::Vector{HaarLikeObject{I, F}},
+    img_size::Tuple{Int, Int},
+) where {I, F}
     image = zeros(img_size)
-    
+
     for c in classifiers
         # map polarity: -1 -> 0, 1 -> 1
-        polarity = ((1 + c.polarity)^2)/4
+        polarity = ((1 + c.polarity)^2) / 4
         if c.feature_type == feature_types["two_vertical"]
-            for x in 1:c.width
+            for x = 1:(c.width)
                 sign = polarity
-                for y in 1:c.height
-                    if y >= c.height/2
+                for y = 1:(c.height)
+                    if y >= c.height / 2
                         sign = mod((sign + 1), 2)
                     end
                     image[c.top_left[2] + y, c.top_left[1] + x] += 1 * sign * c.weight
@@ -289,29 +325,29 @@ function reconstruct(classifiers::Vector{HaarLikeObject{I, F}}, img_size::Tuple{
             end
         elseif c.feature_type == feature_types["two_horizontal"]
             sign = polarity
-            for x in 1:c.width
-                if x >= c.width/2
+            for x = 1:(c.width)
+                if x >= c.width / 2
                     sign = mod((sign + 1), 2)
                 end
-                for y in 1:c.height
+                for y = 1:(c.height)
                     image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
         elseif c.feature_type == feature_types["three_horizontal"]
             sign = polarity
-            for x in 1:c.width
-                if iszero(mod(x, c.width/3))
+            for x = 1:(c.width)
+                if iszero(mod(x, c.width / 3))
                     sign = mod((sign + 1), 2)
                 end
-                for y in 1:c.height
+                for y = 1:(c.height)
                     image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
                 end
             end
         elseif c.feature_type == feature_types["three_vertical"]
-            for x in 1:c.width
+            for x = 1:(c.width)
                 sign = polarity
-                for y in 1:c.height
-                    if iszero(mod(x, c.height/3))
+                for y = 1:(c.height)
+                    if iszero(mod(x, c.height / 3))
                         sign = mod((sign + 1), 2)
                     end
                     image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
@@ -319,12 +355,12 @@ function reconstruct(classifiers::Vector{HaarLikeObject{I, F}}, img_size::Tuple{
             end
         elseif c.feature_type == feature_types["four"]
             sign = polarity
-            for x in 1:c.width
-                if iszero(mod(x, c.width/2))
+            for x = 1:(c.width)
+                if iszero(mod(x, c.width / 2))
                     sign = mod((sign + 1), 2)
                 end
-                for y in 1:c.height
-                    if iszero(mod(x, c.height/2))
+                for y = 1:(c.height)
+                    if iszero(mod(x, c.height / 2))
                         sign = mod((sign + 1), 2)
                     end
                     image[c.top_left[1] + x, c.top_left[2] + y] += 1 * sign * c.weight
@@ -363,18 +399,25 @@ TODO: change this to check if `isempty(non_face_path)` instead of having another
 =#
 function get_random_image(
     face_path::String;
-    non_face_path::String="",
-    non_faces::Bool=false
+    non_face_path::String = "",
+    non_faces::Bool = false,
 )
     file_name = string()
-    
+
     if non_faces
         face = rand(Bool)
-        file_name = rand(filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(face ? face_path : non_face_path, join=true)))
+        file_name = rand(
+            filter!(
+                f -> !occursin(r".*\.DS_Store", f),
+                readdir(face ? face_path : non_face_path, join = true),
+            ),
+        )
     else
-        file_name = rand(filter!(f -> ! occursin(r".*\.DS_Store", f), readdir(face_path, join=true)))
+        file_name = rand(
+            filter!(f -> !occursin(r".*\.DS_Store", f), readdir(face_path, join = true)),
+        )
     end
-    
+
     return file_name
 end
 
@@ -406,25 +449,25 @@ function scale_box(
     top_left::Tuple{Integer, Integer},
     bottom_right::Tuple{Integer, Integer},
     genisis_size::Tuple{Integer, Integer},
-    img_size::Tuple{Integer, Integer}
+    img_size::Tuple{Integer, Integer},
 )
     T = typeof(first(top_left))
-    image_ratio = (img_size[1]/genisis_size[1], img_size[2]/genisis_size[2])
-    
+    image_ratio = (img_size[1] / genisis_size[1], img_size[2] / genisis_size[2])
+
     bottom_left = (top_left[1], bottom_right[2])
     top_right = (bottom_right[1], top_left[2])
-    
+
     top_left = convert.(T, round.(top_left .* image_ratio))
     bottom_right = convert.(T, round.(bottom_right .* image_ratio))
     bottom_left = convert.(T, round.(bottom_left .* image_ratio))
     top_right = convert.(T, round.(top_right .* image_ratio))
-    
+
     return top_left, bottom_left, bottom_right, top_right
 end
 
 #=
     generate_validation_image(image_path::String, classifiers::String) -> AbstractArray
-    
+
 Generates a bounding box around the face of a random image.
 
 # Arguments
@@ -437,12 +480,12 @@ Generates a bounding box around the face of a random image.
 - `validation_image::AbstractArray`: The new image with a bounding box
 =#
 function generate_validation_image(image_path::String, classifiers::Vector{HaarLikeObject})
-    
+
     # === TODO: THIS FUNCTION IS A WORK IN PROGRESS ===
-    
+
     img = load_image(image_path)
     img_size = size(img)
-    
+
     top_lefts = [c.top_left for c in classifiers]
     bottom_rights = [c.bottom_right for c in classifiers]
     x_coords = vcat([x[1] for x in top_lefts], [x[1] for x in bottom_rights])
@@ -451,8 +494,16 @@ function generate_validation_image(image_path::String, classifiers::Vector{HaarL
     min_y, max_y = extrema(y_coords)
     top_left = min_x, min_y
     bottom_right = max_x, max_y
-    
+
     box_dimensions = scale_box(top_left, bottom_right, (19, 19), img_size)
-    
-    return draw(load(image_path), Polygon([Point(box_dimensions[1]), Point(box_dimensions[2]), Point(box_dimensions[3]), Point(box_dimensions[4])]))
+
+    return draw(
+        load(image_path),
+        Polygon([
+            Point(box_dimensions[1]),
+            Point(box_dimensions[2]),
+            Point(box_dimensions[3]),
+            Point(box_dimensions[4]),
+        ]),
+    )
 end

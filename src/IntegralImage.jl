@@ -17,11 +17,17 @@
 
 - `sum::T` The sum of all pixels in the given rectangle defined by the parameters `top_left` and `bottom_right`
 """
-sum_region(iA::IntegralArray{T, N}, top_left::CartesianIndex{N}, bottom_right::CartesianIndex{N}) where {T, N} = 
-    iA[top_left..bottom_right]
-sum_region(iA::IntegralArray{T, N}, top_left::NTuple{N, Int}, bottom_right::NTuple{N, Int}) where {T, N} = 
-    iA[CartesianIndex(top_left)..CartesianIndex(bottom_right)]
-    
+sum_region(
+    iA::IntegralArray{T, N},
+    top_left::CartesianIndex{N},
+    bottom_right::CartesianIndex{N},
+) where {T, N} = iA[top_left .. bottom_right]
+sum_region(
+    iA::IntegralArray{T, N},
+    top_left::NTuple{N, Int},
+    bottom_right::NTuple{N, Int},
+) where {T, N} = iA[CartesianIndex(top_left) .. CartesianIndex(bottom_right)]
+
 #=
 sum_region(iA::IntegralArray{T, N}, top_left::NTuple{N, Int}, bottom_right::NTuple{N, Int}) where {T, N} = 
     iA[ntuple(i -> top_left[i]..bottom_right[i], N)...]
@@ -35,7 +41,7 @@ sum_region(iA::IntegralArray{T, N}, top_left::NTuple{N, Int}, bottom_right::NTup
 #=
 """
 	IntegralArray{T, N, A} <: AbstractArray{T, N}
-	
+
 Rectangle features can be computed very rapidly using an intermediate representation for the image, which we call the integral image.
 The integral image at location (x, y) contains the sum of the pixels above and to the left of (x, y) inclusive.
 Original    Integral
@@ -70,7 +76,7 @@ function to_integral_image(img_arr::AbstractArray{T, N}) where {T, N}
     for i = 2:length(sd)
         cumsum!(integral_image_arr, integral_image_arr; dims=sd[i])
     end
-	
+
     return IntegralArray{T, N}(integral_image_arr)
 end
 
@@ -118,7 +124,7 @@ function sum_region(
             _sum += integral_image_arr[last(top_left) - _1, first(top_left) - _1]
         end
     end
-    
+
     return _sum
 end
 
@@ -191,7 +197,7 @@ function sum_region(iX::IntegralArray, top_left::CartesianIndex{2}, bottom_right
     # top_left_outer = CartesianIndex(top_left.I .- 1)
     x₀, y₀ = top_left.I
     x₁, y₁ = bottom_right.I
-    
+
     a = _safe_bounds_get(iX, (x₀ - 1, y₀ - 1))
     b = _safe_bounds_get(iX, (x₀ - 1, y₁))
     c = _safe_bounds_get(iX, (x₁, y₀ - 1))

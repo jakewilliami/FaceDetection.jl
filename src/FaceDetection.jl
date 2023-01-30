@@ -11,9 +11,16 @@ using IntegralArrays # , IntervalSets
 export IntegralArray, sum_region
 export learn, get_feature_votes
 export FEATURE_TYPES, HaarLikeObject, get_score, get_vote
-export displaymatrix, filtered_ls, load_image, ensemble_vote, 
-    ensemble_vote_all, reconstruct, get_random_image, 
-    generate_validation_image, get_faceness, determine_feature_size
+export displaymatrix,
+    filtered_ls,
+    load_image,
+    ensemble_vote,
+    ensemble_vote_all,
+    reconstruct,
+    get_random_image,
+    generate_validation_image,
+    get_faceness,
+    determine_feature_size
 
 # Setting these environment variables here doesn't do anything to the environment for some reason.
 # Various functions in Adaboost will pull from the environment, defaulting to `"true"`.  If you
