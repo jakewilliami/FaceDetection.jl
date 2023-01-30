@@ -16,10 +16,8 @@ Documenter.makedocs(
         "Benchmarking Results" => "benchmarking.md",
         "Caveats" => "caveats.md",
         "Other Resources" => "resources.md",
-        "A Few Acknowledgements" => "acknowledgements.md"
-    ]
+        "A Few Acknowledgements" => "acknowledgements.md",
+    ],
 )
 
-deploydocs(;
-    repo  =  "github.com/jakewilliami/FaceDetection.jl.git",
-)
+deploydocs(; repo = "github.com/jakewilliami/FaceDetection.jl.git")
