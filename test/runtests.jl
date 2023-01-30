@@ -6,6 +6,12 @@ using Test: @testset, @test
 # using BenchmarkTools: @btime
 # Logging.disable_logging(Logging.Info)
 
+# An example test face
+const TEST_FACE_URI = "https://raw.githubusercontent.com/INVASIS/Viola-Jones/583badfaa09c5b6dbfa23d55945c4a824124c7c0/data/trainset/faces/face00001.png"
+const TEST_FACE_PATH = download(TEST_FACE_URI)
+const TEST_FACE_IMG =
+    FaceDetection.load_image(TEST_FACE_PATH, scale = true, scale_to = (24, 24))
+
 @time @testset "FaceDetection.jl" begin
     # Test initialisation: constants and variables
     main_data_path = joinpath(@__DIR__, "images")
@@ -124,6 +130,84 @@ using Test: @testset, @test
         @test get_vote(feature_3h, int_img) == expected_3h
         @test get_vote(feature_3v, int_img) == expected_3v
         @test get_vote(feature_4, int_img) == expected_4
+    end
+
+    @testset "Haar-Feature Integral Image Integration Tests" begin
+        # Test Haar features with integral images and voting
+        # https://github.com/Simon-Hohberg/Viola-Jones/blob/master/tests/HaarLikeFeatureTest.py
+
+        @testset "HaarLikeFeature.jl/TwoVertical" begin
+            #                        Feature type,               pos,    h,  w,  thresh,  polarity
+            feature = HaarLikeObject(FEATURE_TYPES.two_vertical, (0, 0), 24, 24, 100_000, 1)
+            left_area = sum_region(TEST_FACE_IMG, (0, 0), (24, 12))
+            right_area = sum_region(TEST_FACE_IMG, (0, 12), (24, 24))
+            expected =
+                (feature.threshold * feature.polarity) > (left_area - right_area) ?
+                one(Float64) : zero(Float64)
+            @test get_vote(feature, TEST_FACE_IMG) == expected
+        end
+
+        @testset "TwoVerticalFail" begin
+            #                        Feature type,               pos,    h,  w,  thresh,  polarity
+            feature = HaarLikeObject(FEATURE_TYPES.two_vertical, (0, 0), 24, 24, 100_000, 1)
+            left_area = sum_region(TEST_FACE_IMG, (0, 0), (24, 12))
+            right_area = sum_region(TEST_FACE_IMG, (0, 12), (24, 24))
+            expected =
+                -feature.threshold > (left_area - right_area) ? one(Float64) : zero(Float64)
+            @test get_vote(feature, TEST_FACE_IMG) != expected
+        end
+
+        @testset "TwoHorizontal" begin
+            #                        Feature type,               pos,    h,  w,  thresh,  polarity
+            feature =
+                HaarLikeObject(FEATURE_TYPES.two_horizontal, (0, 0), 24, 24, 100_000, 1)
+            left_area = sum_region(TEST_FACE_IMG, (0, 0), (24, 12))
+            right_area = sum_region(TEST_FACE_IMG, (0, 12), (24, 24))
+            expected =
+                (feature.threshold * feature.polarity) > (left_area - right_area) ?
+                one(Float64) : zero(Float64)
+            @test get_vote(feature, TEST_FACE_IMG) == expected
+        end
+
+        @testset "ThreeHorizontal" begin
+            #                        Feature type,               pos,    h,  w,  thresh,  polarity
+            feature =
+                HaarLikeObject(FEATURE_TYPES.three_horizontal, (0, 0), 24, 24, 100_000, 1)
+            left_area = sum_region(TEST_FACE_IMG, (0, 0), (8, 24))
+            middle_area = sum_region(TEST_FACE_IMG, (8, 0), (16, 24))
+            right_area = sum_region(TEST_FACE_IMG, (16, 0), (24, 24))
+            expected =
+                (feature.threshold * feature.polarity) >
+                (left_area - middle_area + right_area) ? one(Float64) : zero(Float64)
+            @test get_vote(feature, TEST_FACE_IMG) == expected
+        end
+
+        @testset "ThreeVertical" begin
+            #                        Feature type,               pos,    h,  w,  thresh,  polarity
+            feature =
+                HaarLikeObject(FEATURE_TYPES.three_vertical, (0, 0), 24, 24, 100_000, 1)
+            left_area = sum_region(TEST_FACE_IMG, (0, 0), (8, 24))
+            middle_area = sum_region(TEST_FACE_IMG, (8, 0), (16, 24))
+            right_area = sum_region(TEST_FACE_IMG, (16, 0), (24, 24))
+            expected =
+                (feature.threshold * feature.polarity) >
+                (left_area - middle_area + right_area) ? one(Float64) : zero(Float64)
+            @test get_vote(feature, TEST_FACE_IMG) == expected
+        end
+
+        @testset "Four" begin
+            #                        Feature type,               pos,    h,  w,  thresh,  polarity
+            feature = HaarLikeObject(FEATURE_TYPES.four, (0, 0), 24, 24, 100_000, 1)
+            top_left_area = sum_region(TEST_FACE_IMG, (0, 0), (12, 12))
+            top_right_area = sum_region(TEST_FACE_IMG, (12, 0), (24, 12))
+            bottom_left_area = sum_region(TEST_FACE_IMG, (0, 12), (12, 24))
+            bottom_right_area = sum_region(TEST_FACE_IMG, (12, 12), (24, 24))
+            expected =
+                (feature.threshold * feature.polarity) >
+                (top_left_area - top_right_area - bottom_left_area + bottom_right_area) ?
+                one(Float64) : zero(Float64)
+            @test get_vote(feature, TEST_FACE_IMG) == expected
+        end
     end
 
     @testset "AdaBoost.jl" begin
