@@ -3,16 +3,16 @@
    Resolving package versions...
    Installed CommonWorldInvalidations ─ v1.0.0
    Installed IfElse ─────────────────── v0.1.1
-   Installed Static ─────────────────── v1.1.1
    Installed EllipsisNotation ───────── v1.8.0
-   Installed StaticArrayInterface ───── v1.5.1
-   Installed ArrayInterface ─────────── v7.15.0
-   Installed Adapt ──────────────────── v4.0.4
+   Installed StaticArrayInterface ───── v1.6.0
    Installed StatsBase ──────────────── v0.33.21
+   Installed Static ─────────────────── v1.1.1
    Installed IntervalSets ───────────── v0.5.4
    Installed Reactive ───────────────── v0.8.3
-   Installed ImageView ──────────────── v0.10.15
+   Installed Adapt ──────────────────── v4.0.4
    Installed GtkReactive ────────────── v1.0.6
+   Installed ArrayInterface ─────────── v7.15.0
+   Installed ImageView ──────────────── v0.10.15
    Installed FaceDetection ──────────── v1.1.0
    Installed Interpolations ─────────── v0.14.0
     Updating `~/work/FaceDetection.jl/FaceDetection.jl/docs/Project.toml`
@@ -34,23 +34,21 @@
   [510215fc] - Observables v0.5.5
   [a223df75] + Reactive v0.8.3
   [aedffcd0] + Static v1.1.1
-  [0d7ed370] + StaticArrayInterface v1.5.1
+  [0d7ed370] + StaticArrayInterface v1.6.0
 ⌅ [2913bbd2] ↓ StatsBase v0.34.3 ⇒ v0.33.21
-  [4607b0f0] + SuiteSparse
         Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated -m`
 Precompiling project...
-  ✓ CommonWorldInvalidations
   ✓ IfElse
+  ✓ CommonWorldInvalidations
   ✓ Adapt
-  ✓ SuiteSparse
   ✓ Reactive
-  ✓ Static
   ✓ Adapt → AdaptStaticArraysExt
+  ✓ Static
   ✓ ArrayInterface
   ✓ StatsBase
   ✓ ArrayInterface → ArrayInterfaceSparseArraysExt
-  ✓ Interpolations
   ✓ ArrayInterface → ArrayInterfaceStaticArraysCoreExt
+  ✓ Interpolations
   ✓ StaticArrayInterface
   ✓ StaticArrayInterface → StaticArrayInterfaceStaticArraysExt
   ✓ StaticArrayInterface → StaticArrayInterfaceOffsetArraysExt
@@ -59,7 +57,7 @@ Precompiling project...
   ✗ GtkReactive
   ✗ ImageView
   ✓ FaceDetection
-  18 dependencies successfully precompiled in 28 seconds. 211 already precompiled.
+  17 dependencies successfully precompiled in 26 seconds. 211 already precompiled.
   5 dependencies precompiled but different versions are currently loaded. Restart julia to access the new versions
   1 dependency had output during precompilation:
 ┌ Interpolations
@@ -74,7 +72,7 @@ The following 1 direct dependency failed to precompile:
 
 ImageView [86fae568-95e7-573e-a6b2-d8a6b900c9ef]
 
-Failed to precompile ImageView [86fae568-95e7-573e-a6b2-d8a6b900c9ef] to &quot;/home/runner/.julia/compiled/v1.10/ImageView/jl_sJleAp&quot;.
+Failed to precompile ImageView [86fae568-95e7-573e-a6b2-d8a6b900c9ef] to &quot;/home/runner/.julia/compiled/v1.10/ImageView/jl_XeD9yO&quot;.
 ERROR: LoadError: InitError: Cannot open display: 
 Stacktrace:
   [1] error(s::String)
@@ -121,4 +119,4 @@ Stacktrace:
     @ stdin:3
 during initialization of module Gtk
 in expression starting at /home/runner/.julia/packages/ImageView/N01cp/src/ImageView.jl:1
-in expression starting at stdin:</code></pre><h2 id="Index"><a class="docs-heading-anchor" href="#Index">Index</a><a id="Index-1"></a><a class="docs-heading-anchor-permalink" href="#Index" title="Permalink"></a></h2><ul><li><a href="usage/#Main.FaceDetection.HaarLikeObject-Tuple{Tuple{Integer, Integer}, Tuple{Integer, Integer}, Vararg{Integer, 4}}"><code>Main.FaceDetection.HaarLikeObject</code></a></li><li><a href="usage/#Main.FaceDetection.HaarLikeObject"><code>Main.FaceDetection.HaarLikeObject</code></a></li><li><a href="usage/#Main.FaceDetection.create_features-NTuple{6, Int64}"><code>Main.FaceDetection.create_features</code></a></li><li><a href="usage/#Main.FaceDetection.determine_feature_size-Tuple{Vector{String}}"><code>Main.FaceDetection.determine_feature_size</code></a></li><li><a href="usage/#Main.FaceDetection.ensemble_vote-Union{Tuple{N}, Tuple{T}, Tuple{IntegralArray{T, N}, Vector{HaarLikeObject}}} where {T, N}"><code>Main.FaceDetection.ensemble_vote</code></a></li><li><a href="usage/#Main.FaceDetection.ensemble_vote_all-Tuple{Vector{String}, Vector{HaarLikeObject}}"><code>Main.FaceDetection.ensemble_vote_all</code></a></li><li><a href="usage/#Main.FaceDetection.get_faceness-Union{Tuple{N}, Tuple{T}, Tuple{F}, Tuple{I}, Tuple{HaarLikeObject{I, F}, IntegralArray{T, N}}} where {I, F, T, N}"><code>Main.FaceDetection.get_faceness</code></a></li><li><a href="usage/#Main.FaceDetection.get_score-Union{Tuple{N}, Tuple{T}, Tuple{F}, Tuple{I}, Tuple{HaarLikeObject{I, F}, IntegralArray{T, N}}} where {I, F, T, N}"><code>Main.FaceDetection.get_score</code></a></li><li><a href="usage/#Main.FaceDetection.get_vote-Union{Tuple{N}, Tuple{T}, Tuple{F}, Tuple{I}, Tuple{HaarLikeObject{I, F}, IntegralArray{T, N}}} where {I, F, T, N}"><code>Main.FaceDetection.get_vote</code></a></li><li><a href="usage/#Main.FaceDetection.load_image-Tuple{String}"><code>Main.FaceDetection.load_image</code></a></li><li><a href="usage/#Main.FaceDetection.sum_region-Union{Tuple{N}, Tuple{T}, Tuple{IntegralArray{T, N}, CartesianIndex{N}, CartesianIndex{N}}} where {T, N}"><code>Main.FaceDetection.sum_region</code></a></li></ul></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="usage/">Usage »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.5.0 on <span class="colophon-date" title="Thursday 8 August 2024 02:35">Thursday 8 August 2024</span>. Using Julia version 1.10.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+in expression starting at stdin:</code></pre><h2 id="Index"><a class="docs-heading-anchor" href="#Index">Index</a><a id="Index-1"></a><a class="docs-heading-anchor-permalink" href="#Index" title="Permalink"></a></h2><ul><li><a href="usage/#Main.FaceDetection.HaarLikeObject"><code>Main.FaceDetection.HaarLikeObject</code></a></li><li><a href="usage/#Main.FaceDetection.HaarLikeObject-Tuple{Tuple{Integer, Integer}, Tuple{Integer, Integer}, Vararg{Integer, 4}}"><code>Main.FaceDetection.HaarLikeObject</code></a></li><li><a href="usage/#Main.FaceDetection.create_features-NTuple{6, Int64}"><code>Main.FaceDetection.create_features</code></a></li><li><a href="usage/#Main.FaceDetection.determine_feature_size-Tuple{Vector{String}}"><code>Main.FaceDetection.determine_feature_size</code></a></li><li><a href="usage/#Main.FaceDetection.ensemble_vote-Union{Tuple{N}, Tuple{T}, Tuple{IntegralArray{T, N}, Vector{HaarLikeObject}}} where {T, N}"><code>Main.FaceDetection.ensemble_vote</code></a></li><li><a href="usage/#Main.FaceDetection.ensemble_vote_all-Tuple{Vector{String}, Vector{HaarLikeObject}}"><code>Main.FaceDetection.ensemble_vote_all</code></a></li><li><a href="usage/#Main.FaceDetection.get_faceness-Union{Tuple{N}, Tuple{T}, Tuple{F}, Tuple{I}, Tuple{HaarLikeObject{I, F}, IntegralArray{T, N}}} where {I, F, T, N}"><code>Main.FaceDetection.get_faceness</code></a></li><li><a href="usage/#Main.FaceDetection.get_score-Union{Tuple{N}, Tuple{T}, Tuple{F}, Tuple{I}, Tuple{HaarLikeObject{I, F}, IntegralArray{T, N}}} where {I, F, T, N}"><code>Main.FaceDetection.get_score</code></a></li><li><a href="usage/#Main.FaceDetection.get_vote-Union{Tuple{N}, Tuple{T}, Tuple{F}, Tuple{I}, Tuple{HaarLikeObject{I, F}, IntegralArray{T, N}}} where {I, F, T, N}"><code>Main.FaceDetection.get_vote</code></a></li><li><a href="usage/#Main.FaceDetection.load_image-Tuple{String}"><code>Main.FaceDetection.load_image</code></a></li><li><a href="usage/#Main.FaceDetection.sum_region-Union{Tuple{N}, Tuple{T}, Tuple{IntegralArray{T, N}, CartesianIndex{N}, CartesianIndex{N}}} where {T, N}"><code>Main.FaceDetection.sum_region</code></a></li></ul></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="usage/">Usage »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.5.0 on <span class="colophon-date" title="Friday 9 August 2024 02:36">Friday 9 August 2024</span>. Using Julia version 1.10.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
