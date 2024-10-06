@@ -38,7 +38,7 @@ In an over-simplified manner, the Viola-Jones algorithm has some four stages:
       - Stacking trains a learning algorithm to combine the predictions of several other learning algorithms.
   Despite this method being developed at the start of the century, it is blazingly fast compared to some machine learning algorithms, and still widely used.
  4. Finally, this algorithm uses [Cascading Classifiers](https://en.wikipedia.org/wiki/Cascading_classifiers) to identify faces.  (See page 12 of the original paper for the specific cascade).
- 
+
 For a better explanation, read [the paper from 2001](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.10.6807), or see [the Wikipedia page](https://en.wikipedia.org/wiki/Viola%E2%80%93Jones_object_detection_framework) on this algorithm.
 
 ## Quick Start
@@ -65,6 +65,10 @@ println((correct_non_faces / num_non_faces) * 100, "% of non-faces were identifi
 ```
 
 For more examples like this, see [`examples/`](examples/).
+
+## Citation
+
+If your research depends on FaceDetection.jl, please consider giving us a formal citation: [`citation.bib`](./citation.bib).
 
 ## Miscellaneous Notes
 
