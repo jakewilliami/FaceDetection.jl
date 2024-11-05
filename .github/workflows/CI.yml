@@ -1,12 +1,17 @@
 name: CI
 # Run on master, tags, or any pull request
 on:
-  schedule:
-    - cron: '0 2 * * *'  # Daily at 2 AM UTC (8 PM CST)
   push:
-    branches: [master]
-    tags: ["*"]
+    branches:
+      - master
+    tags: ['*']
   pull_request:
+  workflow_dispatch:
+concurrency:
+  # Skip intermediate builds: always.
+  # Cancel intermediate builds: only if it is a pull request build.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
@@ -55,19 +60,44 @@ jobs:
     name: Documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
-        with:
-          version: '1'
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@latest
+      - uses: extractions/setup-just@v1  # or taiki-e/install-action@just
       - run: |
-          git config --global user.name name
-          git config --global user.email email
-          git config --global github.user username
-      - run: |
-          julia --project=docs -e '
-            using Pkg;
-            Pkg.develop(PackageSpec(path=pwd()));
-            Pkg.instantiate();'
-      - run: julia --project=docs docs/make.jl
+          just docs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@latest
+      - uses: extractions/setup-just@v1  # or taiki-e/install-action@just
+      
+      # Adapted from:
+      #   github.com/FluxML/Flux.jl/blob/7be1ca7a/.github/workflows/JuliaFormatter.yml
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            julia_file_change:
+              - added|modified: '**/*.jl'
+      - name: Apply JuliaFormatter
+        run: |
+          just fmt
+      - name: Check formatting diff
+        if: steps.filter.outputs.julia_file_change == 'true'
+        run: |
+          git diff --color=always --exit-code
+
+  perf:
+    name: Performance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@latest
+      - uses: extractions/setup-just@v1  # or taiki-e/install-action@just
+      - run: |
+          just bench

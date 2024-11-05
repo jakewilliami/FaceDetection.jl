@@ -1,5 +1,4 @@
-include(joinpath(dirname(@__DIR__), "src", "FaceDetection.jl"))
-using Documenter, .FaceDetection
+using FaceDetection, Documenter
 
 Documenter.makedocs(
     clean = true,

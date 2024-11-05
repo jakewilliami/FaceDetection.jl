@@ -1,0 +1,4 @@
+[deps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+FaceDetection = "00808967-75e2-4046-a522-2ca211e35506"
+Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
