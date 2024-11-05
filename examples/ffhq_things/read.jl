@@ -23,7 +23,7 @@ rand_subset!(list::Vector{T}, n::Int) where {T} = String[takerand!(list) for _ i
 
 "Return a random subset of the contents of directory `path` of size `n`."
 function rand_subset_ls(path::String, n::Int)
-    dir_contents = readdir(path, join = true, sort = false)
+    dir_contents = readdir(path; join = true, sort = false)
     filter!(f -> !occursin(r".*\.DS_Store", f), dir_contents)
     @assert(
         length(dir_contents) >= n,
@@ -62,34 +62,23 @@ function main(
     num_faces = length(pos_testing_images)
     num_non_faces = length(neg_testing_images)
 
-    correct_faces = sum(
-        ensemble_vote_all(
-            pos_testing_images,
-            classifiers,
-            scale = scale,
-            scale_to = scale_to,
-        ),
-    )
+    correct_faces = sum(ensemble_vote_all(
+        pos_testing_images, classifiers; scale = scale, scale_to = scale_to
+    ))
     correct_non_faces =
-        num_non_faces - sum(
-            ensemble_vote_all(
-                neg_testing_images,
-                classifiers,
-                scale = scale,
-                scale_to = scale_to,
-            ),
-        )
+        num_non_faces - sum(ensemble_vote_all(
+            neg_testing_images, classifiers; scale = scale, scale_to = scale_to
+        ),)
     correct_faces_percent = (correct_faces / num_faces) * 100
     correct_non_faces_percent = (correct_non_faces / num_non_faces) * 100
 
     faces_frac = string(correct_faces, "/", num_faces)
-    faces_percent =
-        string("(", correct_faces_percent, "% of faces were recognised as faces)")
+    faces_percent = string(
+        "(", correct_faces_percent, "% of faces were recognised as faces)"
+    )
     non_faces_frac = string(correct_non_faces, "/", num_non_faces)
     non_faces_percent = string(
-        "(",
-        correct_non_faces_percent,
-        "% of non-faces were identified as non-faces)",
+        "(", correct_non_faces_percent, "% of non-faces were identified as non-faces)"
     )
 
     @info("...done.\n")
@@ -107,10 +96,5 @@ data_file = joinpath(
 # data_file = joinpath(dirname(@__DIR__), "data", "classifiers_10_from_5000_pos_5000_neg_(128,128)_(100,100,30,30)")
 # data_file = joinpath(dirname(@__DIR__), "data", "classifiers_10_from_1500_pos_1500_neg_(128,128)_(128,128,1,1)")
 @time main(
-    data_file,
-    2000,
-    2000;
-    smart_choose_feats = false,
-    scale = true,
-    scale_to = (128, 128),
+    data_file, 2000, 2000; smart_choose_feats = false, scale = true, scale_to = (128, 128)
 )

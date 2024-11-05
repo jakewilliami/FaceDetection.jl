@@ -1,13 +1,10 @@
-Threads.nthreads() > 1 || @warn(
-    "You are currently only using one thread, when the programme supports multithreading"
-)
+Threads.nthreads() > 1 ||
+    @warn("You are currently only using one thread, when the programme supports multithreading")
 @info "Loading required libraries (it will take a moment to precompile if it is your first time doing this)..."
 
 using Serialization: deserialize
 
-include(joinpath(dirname(dirname(@__DIR__)), "src", "FaceDetection.jl"))
-
-using .FaceDetection
+using FaceDetection
 using Images: imresize
 using StatsPlots  # StatsPlots required for box plots # plot boxplot @layout :origin savefig
 using CSV: write
@@ -34,7 +31,7 @@ rand_subset!(list::Vector{T}, n::Int) where {T} = String[takerand!(list) for _ i
 
 "Return a random subset of the contents of directory `path` of size `n`."
 function rand_subset_ls(path::String, n::Int)
-    dir_contents = readdir(path, join = true, sort = false)
+    dir_contents = readdir(path; join = true, sort = false)
     filter!(f -> !occursin(r".*\.DS_Store", f), dir_contents)
     @assert(
         length(dir_contents) >= n,
@@ -52,7 +49,7 @@ function main(
     scale_to::Tuple = (128, 128),
 )
     classifiers = deserialize(classifiers_file)
-    sort!(classifiers, by = c -> c.weight, rev = true)
+    sort!(classifiers; by = c -> c.weight, rev = true)
     println(classifiers)
 
     @info("Calculating test face scores and constructing dataset...")
@@ -81,14 +78,18 @@ function main(
     @printf("%10.9s %10.15s %15s\n", "Faces:", faces_frac, faces_percent)
     @printf("%10.9s %10.15s %15s\n\n", "Non-faces:", non_faces_frac, non_faces_percent)
     =#
-    face_testing_image_paths =
-        readdir(joinpath(testing_path, "Faces"), join = true, sort = false)
-    pareidolia_testing_image_paths =
-        readdir(joinpath(testing_path, "Pareidolia"), join = true, sort = false)
-    flower_testing_image_paths =
-        readdir(joinpath(testing_path, "Flowers"), join = true, sort = false)
-    object_testing_image_paths =
-        readdir(joinpath(testing_path, "Objects"), join = true, sort = false)
+    face_testing_image_paths = readdir(
+        joinpath(testing_path, "Faces"); join = true, sort = false
+    )
+    pareidolia_testing_image_paths = readdir(
+        joinpath(testing_path, "Pareidolia"); join = true, sort = false
+    )
+    flower_testing_image_paths = readdir(
+        joinpath(testing_path, "Flowers"); join = true, sort = false
+    )
+    object_testing_image_paths = readdir(
+        joinpath(testing_path, "Objects"); join = true, sort = false
+    )
 
     face_testing_images =
         load_image.(face_testing_image_paths, scale = scale, scale_to = scale_to)
@@ -105,34 +106,41 @@ function main(
     num_objects = length(object_testing_images)
 
     face_scores = Float64[ensemble_vote(img, classifiers) for img in face_testing_images]
-    pareidolia_scores =
-        Float64[ensemble_vote(img, classifiers) for img in pareidolia_testing_images]
-    flower_scores =
-        Float64[ensemble_vote(img, classifiers) for img in flower_testing_images]
-    object_scores =
-        Float64[ensemble_vote(img, classifiers) for img in object_testing_images]
+    pareidolia_scores = Float64[
+        ensemble_vote(img, classifiers) for img in pareidolia_testing_images
+    ]
+    flower_scores = Float64[
+        ensemble_vote(img, classifiers) for img in flower_testing_images
+    ]
+    object_scores = Float64[
+        ensemble_vote(img, classifiers) for img in object_testing_images
+    ]
 
-    face_faceness_scores =
-        Float64[get_faceness(classifiers, img) for img in face_testing_images]
-    pareidolia_faceness_scores =
-        Float64[get_faceness(classifiers, img) for img in pareidolia_testing_images]
-    flower_faceness_scores =
-        Float64[get_faceness(classifiers, img) for img in flower_testing_images]
-    object_faceness_scores =
-        Float64[get_faceness(classifiers, img) for img in object_testing_images]
+    face_faceness_scores = Float64[
+        get_faceness(classifiers, img) for img in face_testing_images
+    ]
+    pareidolia_faceness_scores = Float64[
+        get_faceness(classifiers, img) for img in pareidolia_testing_images
+    ]
+    flower_faceness_scores = Float64[
+        get_faceness(classifiers, img) for img in flower_testing_images
+    ]
+    object_faceness_scores = Float64[
+        get_faceness(classifiers, img) for img in object_testing_images
+    ]
 
     face_names = String[basename(img) for img in face_testing_image_paths]
     pareidolia_names = String[basename(img) for img in pareidolia_testing_image_paths]
     flower_names = String[basename(img) for img in flower_testing_image_paths]
     object_names = String[basename(img) for img in object_testing_image_paths]
 
-    scores_df = DataFrame(
+    scores_df = DataFrame(;
         image_name = String[],
         image_type = Int[],
         image_score_binary = Int8[],
         faceness_score = Float64[],
     )
-    anova_df = DataFrame(image_type = Int[], faceness_score = Float64[])
+    anova_df = DataFrame(; image_type = Int[], faceness_score = Float64[])
     for (image_type, image_names, image_scores, faceness_scores) in (
         (FACE, face_names, face_scores, face_faceness_scores),
         (PAREIDOLIA, pareidolia_names, pareidolia_scores, pareidolia_faceness_scores),
@@ -147,7 +155,7 @@ function main(
 
     # write score data
     data_file = joinpath(dirname(dirname(@__DIR__)), "data", "faceness-scores.csv")
-    write(data_file, scores_df, writeheader = true)
+    write(data_file, scores_df; writeheader = true)
     @info("...done.  Dataset written to $(data_file).\n")
 
     ### FACES VS OBJECTS
@@ -160,8 +168,8 @@ function main(
     gr() # set plot backend
     theme(:solarized)
     plot = StatsPlots.plot(
-        StatsPlots.boxplot(face_faceness_scores, xaxis = false, label = false),
-        StatsPlots.boxplot(object_faceness_scores, xaxis = false, label = false),
+        StatsPlots.boxplot(face_faceness_scores; xaxis = false, label = false),
+        StatsPlots.boxplot(object_faceness_scores; xaxis = false, label = false);
         title = ["Facenesses of Faces" "Facenesses of Objects"],
         fontfamily = font("Times"),
         layout = @layout([a b]),
@@ -170,14 +178,10 @@ function main(
     StatsPlots.savefig(
         plot,
         joinpath(
-            dirname(dirname(@__DIR__)),
-            "figs",
-            "faceness_of_faces_versus_objects.pdf",
+            dirname(dirname(@__DIR__)), "figs", "faceness_of_faces_versus_objects.pdf"
         ),
     )
-    @info(
-        "...done.  Plot created at $(joinpath(dirname(dirname(@__DIR__)), "figs", "faceness_of_faces_versus_objects.pdf"))"
-    )
+    @info("...done.  Plot created at $(joinpath(dirname(dirname(@__DIR__)), "figs", "faceness_of_faces_versus_objects.pdf"))")
 
     ### PAREIDOLIA VS OBJECTS
 
@@ -187,8 +191,8 @@ function main(
     @info("Constructing box plot with said dataset...")
 
     plot = StatsPlots.plot(
-        StatsPlots.boxplot(pareidolia_faceness_scores, xaxis = false, label = false),
-        StatsPlots.boxplot(object_faceness_scores, xaxis = false, label = false),
+        StatsPlots.boxplot(pareidolia_faceness_scores; xaxis = false, label = false),
+        StatsPlots.boxplot(object_faceness_scores; xaxis = false, label = false);
         title = ["Facenesses of Pareidolia" "Facenesses of Objects"],
         fontfamily = font("Times"),
         layout = @layout([a b]),
@@ -197,14 +201,10 @@ function main(
     StatsPlots.savefig(
         plot,
         joinpath(
-            dirname(dirname(@__DIR__)),
-            "figs",
-            "faceness_of_pareidolia_versus_objects.pdf",
+            dirname(dirname(@__DIR__)), "figs", "faceness_of_pareidolia_versus_objects.pdf"
         ),
     )
-    @info(
-        "...done.  Plot created at $(joinpath(dirname(dirname(@__DIR__)), "figs", "faceness_of_pareidolia_versus_objects.pdf"))"
-    )
+    @info("...done.  Plot created at $(joinpath(dirname(dirname(@__DIR__)), "figs", "faceness_of_pareidolia_versus_objects.pdf"))")
 
     ### FACES VS FLOWERS
 
@@ -214,8 +214,8 @@ function main(
     @info("Constructing box plot with said dataset...")
 
     plot = StatsPlots.plot(
-        StatsPlots.boxplot(face_faceness_scores, xaxis = false, label = false),
-        StatsPlots.boxplot(flower_faceness_scores, xaxis = false, label = false),
+        StatsPlots.boxplot(face_faceness_scores; xaxis = false, label = false),
+        StatsPlots.boxplot(flower_faceness_scores; xaxis = false, label = false);
         title = ["Facenesses of Faces" "Facenesses of Flowers"],
         fontfamily = font("Times"),
         layout = @layout([a b]),
@@ -224,14 +224,10 @@ function main(
     StatsPlots.savefig(
         plot,
         joinpath(
-            dirname(dirname(@__DIR__)),
-            "figs",
-            "faceness_of_faces_versus_flowers.pdf",
+            dirname(dirname(@__DIR__)), "figs", "faceness_of_faces_versus_flowers.pdf"
         ),
     )
-    @info(
-        "...done.  Plot created at $(joinpath(dirname(dirname(@__DIR__)), "figs", "faceness_of_faces_versus_flowers.pdf"))"
-    )
+    @info("...done.  Plot created at $(joinpath(dirname(dirname(@__DIR__)), "figs", "faceness_of_faces_versus_flowers.pdf"))")
 
     ### PAREIDOLIA VS FLOWERS
 
@@ -241,8 +237,8 @@ function main(
     @info("Constructing box plot with said dataset...")
 
     plot = StatsPlots.plot(
-        StatsPlots.boxplot(pareidolia_faceness_scores, xaxis = false, label = false),
-        StatsPlots.boxplot(flower_faceness_scores, xaxis = false, label = false),
+        StatsPlots.boxplot(pareidolia_faceness_scores; xaxis = false, label = false),
+        StatsPlots.boxplot(flower_faceness_scores; xaxis = false, label = false);
         title = ["Facenesses of Pareidolia" "Facenesses of Flowers"],
         fontfamily = font("Times"),
         layout = @layout([a b]),
@@ -251,14 +247,10 @@ function main(
     StatsPlots.savefig(
         plot,
         joinpath(
-            dirname(dirname(@__DIR__)),
-            "figs",
-            "faceness_of_pareidolia_versus_flowers.pdf",
+            dirname(dirname(@__DIR__)), "figs", "faceness_of_pareidolia_versus_flowers.pdf"
         ),
     )
-    @info(
-        "...done.  Plot created at $(joinpath(dirname(dirname(@__DIR__)), "figs", "faceness_of_pareidolia_versus_flowers.pdf"))"
-    )
+    @info("...done.  Plot created at $(joinpath(dirname(dirname(@__DIR__)), "figs", "faceness_of_pareidolia_versus_flowers.pdf"))")
 end
 
 # data_file = joinpath(dirname(@__DIR__), "data", "classifiers_10_from_2000_pos_2000_neg_(128,128)_(100,100,30,30)")

@@ -1,10 +1,3 @@
-#!/usr/bin/env bash
-#=
-exec julia --project="$(realpath $(dirname $0))/" "${BASH_SOURCE[0]}" "$@" -e "include(popfirst!(ARGS))" \
-"${BASH_SOURCE[0]}" "$@"
-=#
-
-
 #=
 Adapted from https://github.com/Simon-Hohberg/Viola-Jones/
 =#
@@ -12,9 +5,7 @@ Adapted from https://github.com/Simon-Hohberg/Viola-Jones/
 # println("\033[1;34m===>\033[0;38m\033[1;38m\tLoading required libraries (it will take a moment to precompile if it is your first time doing this)...\033[0;38m")
 @info "Loading required libraries (it will take a moment to precompile if it is your first time doing this)..."
 
-include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl"))
-
-using .FaceDetection
+using FaceDetection
 const FD = FaceDetection
 using Printf: @printf
 using Images: Gray, clamp01nan, save, imresize, load
@@ -32,21 +23,12 @@ function main(;
     include("constants.jl")
     include("main_data.jl")
 
-    max_feature_width,
-    max_feature_height,
-    min_feature_height,
-    min_feature_width,
-    min_size_img = determine_feature_size(
-        pos_testing_path,
-        neg_testing_path;
-        scale = scale,
-        scale_to = scale_to,
+    max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = determine_feature_size(
+        pos_testing_path, neg_testing_path; scale = scale, scale_to = scale_to
     )
     img_size = scale ? scale_to : min_size_img
     data_file = joinpath(
-        dirname(@__FILE__),
-        "data",
-        "haar-like_features_c$(num_classifiers)_$(img_size)",
+        dirname(@__FILE__), "data", "haar-like_features_c$(num_classifiers)_$(img_size)"
     )
 
     # read classifiers from file

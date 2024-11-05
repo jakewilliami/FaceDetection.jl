@@ -1,6 +1,6 @@
 using FaceDetection, Documenter
 
-Documenter.makedocs(
+Documenter.makedocs(;
     clean = true,
     doctest = true,
     modules = Module[FaceDetection],

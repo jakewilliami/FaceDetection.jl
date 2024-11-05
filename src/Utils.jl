@@ -16,8 +16,7 @@ A function to filter the output of readdir
 =#
 function filtered_ls(path::String)
     return filter!(
-        f -> !occursin(r".*\.DS_Store", f),
-        readdir(path, join = true, sort = false),
+        f -> !occursin(r".*\.DS_Store", f), readdir(path, join = true, sort = false)
     )
 end
 
@@ -33,7 +32,6 @@ Loads an image as gray_scale
  - `IntegralArray{Float64, N}`: An array of floating point values representing the image
 """
 function load_image(image_path::String; scale::Bool = false, scale_to::Tuple = (200, 200))
-
     img = load(image_path)
     if scale
         img = imresize(img, scale_to)
@@ -76,7 +74,6 @@ function determine_feature_size(
     scale_to::Tuple = (200, 200),
     show_progress::Bool = true,
 )
-
     if scale
         # if we are scaling to something, then we already know the
         # minimum image size (the only image size)
@@ -105,17 +102,16 @@ function determine_feature_size(
 
     max_feature_height = round(Int, min_size_img[2] * (10 / 19))
     max_feature_width = round(Int, min_size_img[1] * (10 / 19))
-    min_feature_height =
-        round(Int, max_feature_height - max_feature_height * (2 / max_feature_height))
-    min_feature_width =
-        round(Int, max_feature_width - max_feature_width * (2 / max_feature_width))
+    min_feature_height = round(
+        Int, max_feature_height - max_feature_height * (2 / max_feature_height)
+    )
+    min_feature_width = round(
+        Int, max_feature_width - max_feature_width * (2 / max_feature_width)
+    )
 
     return max_feature_width,
-    max_feature_height,
-    min_feature_height,
-    min_feature_width,
+    max_feature_height, min_feature_height, min_feature_width,
     min_size_img
-
 end
 function determine_feature_size(
     pos_training_path::String,
@@ -126,21 +122,14 @@ function determine_feature_size(
 )
     pictures = vcat(filtered_ls(pos_training_path), filtered_ls(neg_training_path))
     return determine_feature_size(
-        pictures;
-        scale = scale,
-        scale_to = scale_to,
-        show_progress = show_progress,
+        pictures; scale = scale, scale_to = scale_to, show_progress = show_progress
     )
-
 end
 
 function _ensemble_vote(
-    int_img::IntegralArray{T, N},
-    classifiers::Vector{HaarLikeObject},
+    int_img::IntegralArray{T, N}, classifiers::Vector{HaarLikeObject}
 ) where {T, N}
-    @debug(
-        "This function (`_ensemble_vote`) needs review to verify its correctness!  See FaceDetection.jl#56."
-    )
+    @debug("This function (`_ensemble_vote`) needs review to verify its correctness!  See FaceDetection.jl#56.")
     #=
     # Algorithm b
     F = typeof(first(classifiers).weight)
@@ -214,8 +203,7 @@ h(x) = \begin{cases}
     0       otherwise
 """
 ensemble_vote(
-    int_img::IntegralArray{T, N},
-    classifiers::Vector{HaarLikeObject},
+    int_img::IntegralArray{T, N}, classifiers::Vector{HaarLikeObject}
 ) where {T, N} = first(_ensemble_vote(int_img, classifiers))
 
 """
@@ -238,7 +226,6 @@ function ensemble_vote_all(
     scale::Bool = false,
     scale_to::Tuple = (200, 200),
 )
-
     return Int8[
         ensemble_vote(load_image(i, scale = scale, scale_to = scale_to), classifiers) for
         i in images
@@ -250,12 +237,8 @@ function ensemble_vote_all(
     scale::Bool = false,
     scale_to::Tuple = (200, 200),
 )
-
     return ensemble_vote_all(
-        filtered_ls(image_path),
-        classifiers;
-        scale = scale,
-        scale_to = scale_to,
+        filtered_ls(image_path), classifiers; scale = scale, scale_to = scale_to
     )
 end
 
@@ -274,20 +257,16 @@ Get facelikeness for a given feature.
 - `score::Number`: Score for given feature
 """
 function get_faceness(
-    feature::HaarLikeObject{I, F},
-    int_img::IntegralArray{T, N},
+    feature::HaarLikeObject{I, F}, int_img::IntegralArray{T, N}
 ) where {I, F, T, N}
-    error(
-        "Not implemented: as `get_score` no longer returns `faceness` (error in calculation; see 3a17220), it does not make sense to calculate the faceness of an image using a single feature.  You should use the other method of `get_faceness`, which calculates the faceness given potentially many classifiers.",
-    )
+    error("Not implemented: as `get_score` no longer returns `faceness` (error in calculation; see 3a17220), it does not make sense to calculate the faceness of an image using a single feature.  You should use the other method of `get_faceness`, which calculates the faceness given potentially many classifiers.",)
     # _, faceness = _ensemble_vote(int_img, [feature])
     score = get_score(feature, int_img)
     return (feature.weight * score) < (feature.polarity * feature.threshold) ? faceness :
            zero(T)
 end
 get_faceness(
-    classifiers::Vector{HaarLikeObject},
-    int_img::IntegralArray{T, N},
+    classifiers::Vector{HaarLikeObject}, int_img::IntegralArray{T, N}
 ) where {T, N} = last(_ensemble_vote(int_img, classifiers))
 
 #=
@@ -305,8 +284,7 @@ Creates an image by putting all given classifiers on top of each other producing
 - `result::AbstractArray`: Reconstructed image
 =#
 function reconstruct(
-    classifiers::Vector{HaarLikeObject{I, F}},
-    img_size::Tuple{Int, Int},
+    classifiers::Vector{HaarLikeObject{I, F}}, img_size::Tuple{Int, Int}
 ) where {I, F}
     image = zeros(img_size)
 
@@ -398,24 +376,20 @@ Chooses a random image from a given two directories.
 TODO: change this to check if `isempty(non_face_path)` instead of having another parameter
 =#
 function get_random_image(
-    face_path::String;
-    non_face_path::String = "",
-    non_faces::Bool = false,
+    face_path::String; non_face_path::String = "", non_faces::Bool = false
 )
     file_name = string()
 
     if non_faces
         face = rand(Bool)
-        file_name = rand(
-            filter!(
-                f -> !occursin(r".*\.DS_Store", f),
-                readdir(face ? face_path : non_face_path, join = true),
-            ),
-        )
+        file_name = rand(filter!(
+            f -> !occursin(r".*\.DS_Store", f),
+            readdir(face ? face_path : non_face_path, join = true),
+        ),)
     else
-        file_name = rand(
-            filter!(f -> !occursin(r".*\.DS_Store", f), readdir(face_path, join = true)),
-        )
+        file_name = rand(filter!(
+            f -> !occursin(r".*\.DS_Store", f), readdir(face_path, join = true)
+        ),)
     end
 
     return file_name

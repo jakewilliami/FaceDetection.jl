@@ -1,11 +1,8 @@
-Threads.nthreads() > 1 || @warn(
-    "You are currently only using one thread, when the programme supports multithreading"
-)
+Threads.nthreads() > 1 ||
+    @warn("You are currently only using one thread, when the programme supports multithreading")
 @info "Loading required libraries (it will take a moment to precompile if it is your first time doing this)..."
 
-include(joinpath(dirname(dirname(@__FILE__)), "src", "FaceDetection.jl"))
-
-using .FaceDetection
+using FaceDetection
 using Images: imresize
 using StatsPlots  # StatsPlots required for box plots # plot boxplot @layout :origin savefig
 using CSV: write
@@ -25,7 +22,7 @@ rand_subset!(list::Vector{T}, n::Int) where {T} = String[takerand!(list) for _ i
 
 "Return a random subset of the contents of directory `path` of size `n`."
 function rand_subset_ls(path::String, n::Int)
-    dir_contents = readdir(path, join = true, sort = false)
+    dir_contents = readdir(path; join = true, sort = false)
     filter!(f -> !occursin(r".*\.DS_Store", f), dir_contents)
     @assert(
         length(dir_contents) >= n,
@@ -60,25 +57,20 @@ function main(
         # For performance reasons restricting feature size
         @info("Selecting best feature width and height...")
 
-        max_feature_width,
-        max_feature_height,
-        min_feature_height,
-        min_feature_width,
-        min_size_img = determine_feature_size(
+        max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = determine_feature_size(
             vcat(pos_training_images, neg_training_images);
             scale = scale,
             scale_to = scale_to,
             show_progress = true,
         )
 
-        @info(
-            "...done.  Maximum feature width selected is $max_feature_width pixels; minimum feature width is $min_feature_width; maximum feature height is $max_feature_height pixels; minimum feature height is $min_feature_height.\n"
-        )
+        @info("...done.  Maximum feature width selected is $max_feature_width pixels; minimum feature width is $min_feature_width; maximum feature height is $max_feature_height pixels; minimum feature height is $min_feature_height.\n")
     else
         # max_feature_width, max_feature_height, min_feature_height, min_feature_width = (67, 67, 65, 65)
         # max_feature_width, max_feature_height, min_feature_height, min_feature_width = (100, 100, 30, 30)
-        max_feature_width, max_feature_height, min_feature_height, min_feature_width =
-            (70, 70, 50, 50)
+        max_feature_width, max_feature_height, min_feature_height, min_feature_width = (
+            70, 70, 50, 50
+        )
         min_size_img = (128, 128)
     end
 
@@ -108,13 +100,12 @@ function main(
 
     # faces_scores[:] .= (sum(get_faceness(c, load_image(face, scale=scale, scale_to=scale_to)) for c in classifiers) / num_classifiers for face in pos_testing_images)
     # non_faces_scores[:] .= (sum(get_faceness(c, load_image(non_face, scale=scale, scale_to=scale_to)) for c in classifiers) / num_classifiers for non_face in neg_testing_images)
-    faces_scores[:] .= (
-        get_faceness(classifiers, load_image(face, scale = scale, scale_to = scale_to)) for
-        face in pos_testing_images
-    )
-    non_faces_scores[:] .= (
-        get_faceness(classifiers, load_image(non_face, scale = scale, scale_to = scale_to)) for non_face in neg_testing_images
-    )
+    faces_scores[:] .= (get_faceness(
+        classifiers, load_image(face; scale = scale, scale_to = scale_to)
+    ) for face in pos_testing_images)
+    non_faces_scores[:] .= (get_faceness(
+        classifiers, load_image(non_face; scale = scale, scale_to = scale_to)
+    ) for non_face in neg_testing_images)
 
     face_names = String[basename(i) for i in pos_testing_images]
     non_face_names = String[basename(i) for i in neg_testing_images]
@@ -129,8 +120,9 @@ function main(
     elseif length(faces_scores) >= length(non_faces_scores)
         to_add = num_faces - num_non_faces
         df_non_faces = vcat(df_non_faces, Matrix{Union{Float64, Missing}}(undef, to_add, 1))
-        non_face_names =
-            vcat(non_face_names, Matrix{Union{Float64, Missing}}(undef, to_add, 1))
+        non_face_names = vcat(
+            non_face_names, Matrix{Union{Float64, Missing}}(undef, to_add, 1)
+        )
     else
         error("unreachable")
     end
@@ -139,7 +131,7 @@ function main(
     data_file = joinpath(dirname(@__DIR__), "data", "faceness-scores.csv")
     write(
         data_file,
-        DataFrame(hcat(face_names, df_faces, non_face_names, df_non_faces), :auto),
+        DataFrame(hcat(face_names, df_faces, non_face_names, df_non_faces), :auto);
         writeheader = false,
     )
 
@@ -154,8 +146,8 @@ function main(
     gr() # set plot backend
     theme(:solarized)
     plot = StatsPlots.plot(
-        StatsPlots.boxplot(faces_scores, xaxis = false, label = false),
-        StatsPlots.boxplot(non_faces_scores, xaxis = false, label = false),
+        StatsPlots.boxplot(faces_scores; xaxis = false, label = false),
+        StatsPlots.boxplot(non_faces_scores; xaxis = false, label = false);
         title = ["Scores of Faces" "Scores of Non-Faces"],
         # label = ["faces" "non-faces"],
         fontfamily = font("Times"),

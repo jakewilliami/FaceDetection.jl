@@ -5,9 +5,7 @@
 
 @info "Loading required libraries (it will take a moment to precompile if it is your first time doing this)..."
 
-include(joinpath(dirname(dirname(@__DIR__)), "src", "FaceDetection.jl"))
-
-using .FaceDetection
+using FaceDetection
 using Serialization: serialize
 using Random: shuffle
 
@@ -24,7 +22,7 @@ rand_subset!(list::Vector{T}, n::Int) where {T} = String[takerand!(list) for _ i
 
 "Return a random subset of the contents of directory `path` of size `n`."
 function rand_subset_ls(path::String, n::Int)
-    dir_contents = readdir(path, join = true, sort = false)
+    dir_contents = readdir(path; join = true, sort = false)
     filter!(f -> !occursin(r".*\.DS_Store", f), dir_contents)
 
     if n == -1
@@ -60,8 +58,9 @@ function main(num_pos::Int, num_neg::Int; scale::Bool = true, scale_to::Tuple = 
     # max_feature_width, max_feature_height, min_feature_height, min_feature_width = (67, 67, 65, 65)
     # max_feature_width, max_feature_height, min_feature_height, min_feature_width = (70, 70, 50, 50)
     # max_feature_width, max_feature_height, min_feature_height, min_feature_width = (100, 100, 30, 30)
-    max_feature_width, max_feature_height, min_feature_height, min_feature_width =
-        (-1, -1, 1, 1)
+    max_feature_width, max_feature_height, min_feature_height, min_feature_width = (
+        -1, -1, 1, 1
+    )
 
     sleep(3)
 
@@ -83,7 +82,7 @@ function main(num_pos::Int, num_neg::Int; scale::Bool = true, scale_to::Tuple = 
         "data",
         "classifiers_$(num_classifiers)_from_$(num_pos)_pos_$(num_neg)_neg_($(join(scale_to, ',')))_($max_feature_width,$max_feature_height,$min_feature_height,$min_feature_width)",
     )
-    serialize(data_file, classifiers)
+    return serialize(data_file, classifiers)
 end
 
 @time main(8000, 8000; scale = true, scale_to = (24, 24))

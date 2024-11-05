@@ -22,7 +22,7 @@ rand_subset!(list::Vector{T}, n::Int) where {T} = String[takerand!(list) for _ i
 
 "Return a random subset of the contents of directory `path` of size `n`."
 function rand_subset_ls(path::String, n::Int)
-    dir_contents = readdir(path, join = true, sort = false)
+    dir_contents = readdir(path; join = true, sort = false)
     filter!(f -> !occursin(r".*\.DS_Store", f), dir_contents)
     @assert(
         length(dir_contents) >= n,
@@ -57,25 +57,20 @@ function main(
         # For performance reasons restricting feature size
         @info("Selecting best feature width and height...")
 
-        max_feature_width,
-        max_feature_height,
-        min_feature_height,
-        min_feature_width,
-        min_size_img = determine_feature_size(
+        max_feature_width, max_feature_height, min_feature_height, min_feature_width, min_size_img = determine_feature_size(
             vcat(pos_training_images, neg_training_images);
             scale = scale,
             scale_to = scale_to,
             show_progress = true,
         )
 
-        @info(
-            "...done.  Maximum feature width selected is $max_feature_width pixels; minimum feature width is $min_feature_width; maximum feature height is $max_feature_height pixels; minimum feature height is $min_feature_height.\n"
-        )
+        @info("...done.  Maximum feature width selected is $max_feature_width pixels; minimum feature width is $min_feature_width; maximum feature height is $max_feature_height pixels; minimum feature height is $min_feature_height.\n")
     else
         # max_feature_width, max_feature_height, min_feature_height, min_feature_width = (67, 67, 65, 65)
         # max_feature_width, max_feature_height, min_feature_height, min_feature_width = (100, 100, 30, 30)
-        max_feature_width, max_feature_height, min_feature_height, min_feature_width =
-            (70, 70, 50, 50)
+        max_feature_width, max_feature_height, min_feature_height, min_feature_width = (
+            70, 70, 50, 50
+        )
         min_size_img = (128, 128)
     end
 
@@ -100,34 +95,23 @@ function main(
     num_faces = length(pos_testing_images)
     num_non_faces = length(neg_testing_images)
 
-    correct_faces = sum(
-        ensemble_vote_all(
-            pos_testing_images,
-            classifiers,
-            scale = scale,
-            scale_to = scale_to,
-        ),
-    )
+    correct_faces = sum(ensemble_vote_all(
+        pos_testing_images, classifiers; scale = scale, scale_to = scale_to
+    ))
     correct_non_faces =
-        num_non_faces - sum(
-            ensemble_vote_all(
-                neg_testing_images,
-                classifiers,
-                scale = scale,
-                scale_to = scale_to,
-            ),
-        )
+        num_non_faces - sum(ensemble_vote_all(
+            neg_testing_images, classifiers; scale = scale, scale_to = scale_to
+        ),)
     correct_faces_percent = (correct_faces / num_faces) * 100
     correct_non_faces_percent = (correct_non_faces / num_non_faces) * 100
 
     faces_frac = string(correct_faces, "/", num_faces)
-    faces_percent =
-        string("(", correct_faces_percent, "% of faces were recognised as faces)")
+    faces_percent = string(
+        "(", correct_faces_percent, "% of faces were recognised as faces)"
+    )
     non_faces_frac = string(correct_non_faces, "/", num_non_faces)
     non_faces_percent = string(
-        "(",
-        correct_non_faces_percent,
-        "% of non-faces were identified as non-faces)",
+        "(", correct_non_faces_percent, "% of non-faces were identified as non-faces)"
     )
 
     @info("...done.\n")

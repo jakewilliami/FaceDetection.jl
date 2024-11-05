@@ -1,3 +1,4 @@
+#!/bin/bash
 echo "Please ensure you have followed the Google Drive API instructions listed here: https://docs.iterative.ai/PyDrive2/quickstart/"
 sleep 5
 

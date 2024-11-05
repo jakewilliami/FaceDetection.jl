@@ -19,15 +19,9 @@ function get_feature_votes(
 )
     #this transforms everything to maintain type stability
     s₁, s₂ = scale_to
-    min_feature_width, max_feature_width, min_feature_height, max_feature_height, s₁, s₂ =
-        promote(
-            min_feature_width,
-            max_feature_width,
-            min_feature_height,
-            max_feature_height,
-            s₁,
-            s₂,
-        )
+    min_feature_width, max_feature_width, min_feature_height, max_feature_height, s₁, s₂ = promote(
+        min_feature_width, max_feature_width, min_feature_height, max_feature_height, s₁, s₂
+    )
     scale_to = (s₁, s₂)
     _Int = typeof(max_feature_width)
     _1 = _Int(1)
@@ -63,9 +57,7 @@ function get_feature_votes(
     # create an empty array with dimensions (num_imgs, num_feautures) (I benchmarked transposing this in case column-major Julia is faster the other way, but this way is significantly faster)
     votes = Matrix{Int8}(undef, num_imgs, num_features)
 
-    @info(
-        "Loading images ($(num_pos) positive and $(num_neg) negative images) and calculating their scores..."
-    )
+    @info("Loading images ($(num_pos) positive and $(num_neg) negative images) and calculating their scores...")
     p = Progress(num_imgs, enabled = show_progress) # minimum update interval: 1 second
     p.dt = 1
     num_processed = 0
@@ -161,10 +153,8 @@ function learn(
         # For each feature j, train a classifier $h_j$ which is restricted to using a single feature.  The error is evaluated with respect to $w_j,\varepsilon_j = \sum_i w_i\left|h_j\left(x_i\right)-y_i\right|$
         @inbounds @threads for j in 1:length(feature_indices)
             feature_idx = feature_indices[j]
-            classification_errors[j] = sum(
-                weights[img_idx] for
-                img_idx in 1:num_imgs if labels[img_idx] !== votes[img_idx, feature_idx]
-            )
+            classification_errors[j] = sum(weights[img_idx] for img_idx in 1:num_imgs if
+                                           labels[img_idx] !== votes[img_idx, feature_idx])
         end
 
         # choose the classifier $h_t$ with the lowest error $\varepsilon_t$
@@ -210,7 +200,6 @@ function learn(
     scale_to::Tuple = (200, 200),
     show_progress::Bool = get(ENV, "FACE_DETECTION_DISPLAY_LOGGING", "true") != "false",
 )
-
     votes, features = get_feature_votes(
         positive_files,
         negative_files,
@@ -227,12 +216,7 @@ function learn(
     num_pos, num_neg = length(positive_files), length(negative_files)
 
     return learn(
-        num_pos,
-        num_neg,
-        features,
-        votes,
-        num_classifiers;
-        show_progress = show_progress,
+        num_pos, num_neg, features, votes, num_classifiers; show_progress = show_progress
     )
 end
 
@@ -248,7 +232,6 @@ function learn(
     scale_to::Tuple = (200, 200),
     show_progress::Bool = get(ENV, "FACE_DETECTION_DISPLAY_LOGGING", "true") != "false",
 )
-
     return learn(
         filtered_ls(positive_path),
         filtered_ls(negative_path),
@@ -302,12 +285,10 @@ function create_features(
     if width_capacity_reached || height_capacity_reached
         width_capacity_reached && (max_feature_width = img_width)
         height_capacity_reached && (max_feature_height = img_height)
-        display_warn && @warn(
-            """
-    Cannot possibly find classifiers whose size is greater than the image itself ((width, height) = ($img_width, $img_height)).
-    Limiting the maximum feature score by image size; (width, height) = ($max_feature_width, $max_feature_height)
-"""
-        )
+        display_warn && @warn("""
+                      Cannot possibly find classifiers whose size is greater than the image itself ((width, height) = ($img_width, $img_height)).
+                      Limiting the maximum feature score by image size; (width, height) = ($max_feature_width, $max_feature_height)
+                  """)
     end
 
     display_logging && @info("Creating Haar-like features...")

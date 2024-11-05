@@ -1,6 +1,5 @@
-Threads.nthreads() == 1 && @warn(
-    "You are currently only using one thread, when the programme supports multithreading"
-)
+Threads.nthreads() == 1 &&
+    @warn("You are currently only using one thread, when the programme supports multithreading")
 
 using FaceDetection
 using Printf: @printf

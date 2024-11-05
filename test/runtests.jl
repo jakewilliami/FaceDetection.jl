@@ -9,8 +9,9 @@ using Test: @testset, @test
 # An example test face
 const TEST_FACE_URI = "https://raw.githubusercontent.com/INVASIS/Viola-Jones/583badfaa09c5b6dbfa23d55945c4a824124c7c0/data/trainset/faces/face00001.png"
 const TEST_FACE_PATH = download(TEST_FACE_URI)
-const TEST_FACE_IMG =
-    FaceDetection.load_image(TEST_FACE_PATH, scale = true, scale_to = (24, 24))
+const TEST_FACE_IMG = FaceDetection.load_image(
+    TEST_FACE_PATH, scale = true, scale_to = (24, 24)
+)
 
 @time @testset "FaceDetection.jl" begin
     # Test initialisation: constants and variables
@@ -20,23 +21,13 @@ const TEST_FACE_IMG =
     pos_testing_path = joinpath(main_data_path, "pos_testing")
     neg_testing_path = joinpath(main_data_path, "neg_testing")
     a, b, c, d, e, f = tuple(rand(Int), rand(Int)),
-    tuple(rand(Int), rand(Int)),
-    rand(Int),
-    rand(Int),
-    rand((0, 1)),
+    tuple(rand(Int), rand(Int)), rand(Int), rand(Int), rand((0, 1)),
     rand((0, 1))
     arr = FaceDetection.IntegralArray{Int, 2, Matrix{Int}}(rand(Int, 100, 100))
     int_img = load_image(
-        rand(
-            vcat(
-                filtered_ls.([
-                    pos_training_path,
-                    neg_training_path,
-                    pos_testing_path,
-                    neg_testing_path,
-                ])...,
-            ),
-        ),
+        rand(vcat(filtered_ls.([
+            pos_training_path, neg_training_path, pos_testing_path, neg_testing_path
+        ])...,),),
         scale = true,
         scale_to = (24, 24),
     )
@@ -74,26 +65,21 @@ const TEST_FACE_IMG =
     classifiers = []
     features = []
     p, n = 0, 0
-    random_img = load_image(
-        rand(
-            vcat(
-                filtered_ls.([
-                    pos_training_path,
-                    neg_training_path,
-                    pos_testing_path,
-                    neg_testing_path,
-                ])...,
-            ),
-        ),
-    )
+    random_img = load_image(rand(vcat(filtered_ls.([
+        pos_training_path, neg_training_path, pos_testing_path, neg_testing_path
+    ])...,),),)
 
     @testset "IntegralImage.jl" begin
         A = [1 7 4 2 9; 7 2 3 8 2; 1 8 7 9 1; 3 2 3 1 5; 2 9 5 6 6]
         iA = IntegralArray(A)
         @test isequal(
-            IntegralArray(
-                [17 24 1 8 15; 23 5 7 14 16; 4 6 13 20 22; 10 12 19 21 3; 11 18 25 2 9],
-            ),
+            IntegralArray([
+                17 24 1 8 15
+                23 5 7 14 16
+                4 6 13 20 22
+                10 12 19 21 3
+                11 18 25 2 9
+            ],),
             [
                 17 41 42 50 65
                 40 69 77 99 130
@@ -111,13 +97,13 @@ const TEST_FACE_IMG =
     @testset "HaarLikeFeature.jl" begin
         @test HaarLikeObject(a, b, c, d, e, f) isa HaarLikeObject
         @test HaarLikeObject((1, 3), (1, 3), 10, 8, 0, 1).feature_type isa
-              Tuple{Integer, Integer}
+            Tuple{Integer, Integer}
         @test HaarLikeObject((1, 3), (1, 3), 10, 8, 0, 1).position isa
-              Tuple{Integer, Integer}
+            Tuple{Integer, Integer}
         @test HaarLikeObject((1, 3), (1, 3), 10, 8, 0, 1).top_left isa
-              Tuple{Integer, Integer}
+            Tuple{Integer, Integer}
         @test HaarLikeObject((1, 3), (1, 3), 10, 8, 0, 1).bottom_right isa
-              Tuple{Integer, Integer}
+            Tuple{Integer, Integer}
         @test HaarLikeObject((1, 3), (1, 3), 10, 8, 0, 1).width isa Integer
         @test HaarLikeObject((1, 3), (1, 3), 10, 8, 0, 1).height isa Integer
         @test HaarLikeObject((1, 3), (1, 3), 10, 8, 0, 1).threshold ∈ [0, 1]
@@ -159,8 +145,9 @@ const TEST_FACE_IMG =
 
         @testset "TwoHorizontal" begin
             #                        Feature type,               pos,    h,  w,  thresh,  polarity
-            feature =
-                HaarLikeObject(FEATURE_TYPES.two_horizontal, (0, 0), 24, 24, 100_000, 1)
+            feature = HaarLikeObject(
+                FEATURE_TYPES.two_horizontal, (0, 0), 24, 24, 100_000, 1
+            )
             left_area = sum_region(TEST_FACE_IMG, (0, 0), (24, 12))
             right_area = sum_region(TEST_FACE_IMG, (0, 12), (24, 24))
             expected =
@@ -171,8 +158,9 @@ const TEST_FACE_IMG =
 
         @testset "ThreeHorizontal" begin
             #                        Feature type,               pos,    h,  w,  thresh,  polarity
-            feature =
-                HaarLikeObject(FEATURE_TYPES.three_horizontal, (0, 0), 24, 24, 100_000, 1)
+            feature = HaarLikeObject(
+                FEATURE_TYPES.three_horizontal, (0, 0), 24, 24, 100_000, 1
+            )
             left_area = sum_region(TEST_FACE_IMG, (0, 0), (8, 24))
             middle_area = sum_region(TEST_FACE_IMG, (8, 0), (16, 24))
             right_area = sum_region(TEST_FACE_IMG, (16, 0), (24, 24))
@@ -184,8 +172,9 @@ const TEST_FACE_IMG =
 
         @testset "ThreeVertical" begin
             #                        Feature type,               pos,    h,  w,  thresh,  polarity
-            feature =
-                HaarLikeObject(FEATURE_TYPES.three_vertical, (0, 0), 24, 24, 100_000, 1)
+            feature = HaarLikeObject(
+                FEATURE_TYPES.three_vertical, (0, 0), 24, 24, 100_000, 1
+            )
             left_area = sum_region(TEST_FACE_IMG, (0, 0), (8, 24))
             middle_area = sum_region(TEST_FACE_IMG, (8, 0), (16, 24))
             right_area = sum_region(TEST_FACE_IMG, (16, 0), (24, 24))
@@ -212,14 +201,7 @@ const TEST_FACE_IMG =
 
     @testset "AdaBoost.jl" begin
         classifiers = learn(
-            pos_training_path,
-            neg_training_path,
-            10,
-            8,
-            10,
-            8,
-            10;
-            show_progress = false,
+            pos_training_path, neg_training_path, 10, 8, 10, 8, 10; show_progress = false
         )
         features = FaceDetection.create_features(19, 19, 8, 10, 8, 10)
         @test length(features) == 4520
@@ -227,7 +209,7 @@ const TEST_FACE_IMG =
 
     @testset "Utils.jl" begin
         @test determine_feature_size(pos_training_path, neg_training_path) ==
-              (10, 10, 8, 8, (19, 19))
+            (10, 10, 8, 8, (19, 19))
         @test get_faceness(classifiers, random_img) isa Real
         num_faces = length(filtered_ls(pos_testing_path))
         num_non_faces = length(filtered_ls(neg_testing_path))

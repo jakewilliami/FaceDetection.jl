@@ -18,7 +18,6 @@ function main(
     scale::Bool = true,
     scale_to::Tuple = (128, 128),
 )
-
     @info("Calculating test face scores and constructing dataset...")
     sleep(0.5)
 
@@ -30,21 +29,25 @@ function main(
     data_path = joinpath(dirname(dirname(@__DIR__)), "data")
 
     classifiers = deserialize(classifiers_file)
-    sort!(classifiers, by = c -> c.weight, rev = true)
+    sort!(classifiers; by = c -> c.weight, rev = true)
 
     @info("Testing selected classifiers...")
     sleep(3) # sleep here because sometimes the threads from `learn` are still catching up and then `ensemble_vote_all` errors
 
-    face_testing_images =
-        readdir(joinpath(testing_path, "Faces"), join = true, sort = false)
+    face_testing_images = readdir(
+        joinpath(testing_path, "Faces"); join = true, sort = false
+    )
     # face_testing_images       = readdir(joinpath(data_path, "lizzie-testset", "2022-unshined", "Selected faces"), join=true, sort=false)
     # face_testing_images       = readdir(joinpath(data_path, "lizzie-testset", "2022-unshined", "All "), join=true, sort=false)
-    pareidolia_testing_images =
-        readdir(joinpath(testing_path, "Pareidolia"), join = true, sort = false)
-    flower_testing_images =
-        readdir(joinpath(testing_path, "Flowers"), join = true, sort = false)
-    object_testing_images =
-        readdir(joinpath(testing_path, "Objects"), join = true, sort = false)
+    pareidolia_testing_images = readdir(
+        joinpath(testing_path, "Pareidolia"); join = true, sort = false
+    )
+    flower_testing_images = readdir(
+        joinpath(testing_path, "Flowers"); join = true, sort = false
+    )
+    object_testing_images = readdir(
+        joinpath(testing_path, "Objects"); join = true, sort = false
+    )
 
     num_faces = length(face_testing_images)
     num_pareidolia = length(pareidolia_testing_images)
@@ -58,34 +61,23 @@ function main(
     num_non_faces = num_objects
 
     # determining how many were correctly classified
-    correct_faces = sum(
-        ensemble_vote_all(
-            pos_testing_images,
-            classifiers,
-            scale = scale,
-            scale_to = scale_to,
-        ),
-    )
+    correct_faces = sum(ensemble_vote_all(
+        pos_testing_images, classifiers; scale = scale, scale_to = scale_to
+    ))
     correct_non_faces =
-        num_non_faces - sum(
-            ensemble_vote_all(
-                neg_testing_images,
-                classifiers,
-                scale = scale,
-                scale_to = scale_to,
-            ),
-        )
+        num_non_faces - sum(ensemble_vote_all(
+            neg_testing_images, classifiers; scale = scale, scale_to = scale_to
+        ),)
     correct_faces_percent = (correct_faces / num_faces) * 100
     correct_non_faces_percent = (correct_non_faces / num_non_faces) * 100
 
     faces_frac = string(correct_faces, "/", num_faces)
-    faces_percent =
-        string("(", correct_faces_percent, "% of faces were recognised as faces)")
+    faces_percent = string(
+        "(", correct_faces_percent, "% of faces were recognised as faces)"
+    )
     non_faces_frac = string(correct_non_faces, "/", num_non_faces)
     non_faces_percent = string(
-        "(",
-        correct_non_faces_percent,
-        "% of non-faces were identified as non-faces)",
+        "(", correct_non_faces_percent, "% of non-faces were identified as non-faces)"
     )
 
     @info("...done.\n")

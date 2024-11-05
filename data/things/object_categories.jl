@@ -12,16 +12,13 @@ function get_object_categories(object_images::Vector{String})
     end
     return object_categories
 end
-get_object_categories(object_image_dir::String) =
-    get_object_categories(readdir(object_image_dir))
+function get_object_categories(object_image_dir::String)
+    return get_object_categories(readdir(object_image_dir))
+end
 
 # Filter out animals from the categories
 function filter_out_animals(object_image_categories::Vector{String})
-    animals = readlines(
-        download(
-            "https://gist.githubusercontent.com/atduskgreg/3cf8ef48cb0d29cf151bedad81553a54/raw/82f142562cf50b0f6fb8010f890b2f934093553e/animals.txt",
-        ),
-    )
+    animals = readlines(download("https://gist.githubusercontent.com/atduskgreg/3cf8ef48cb0d29cf151bedad81553a54/raw/82f142562cf50b0f6fb8010f890b2f934093553e/animals.txt",),)
     animals = String[string(lowercase(animal)) for animal in animals]
     filtered_categories = String[]
     for image_category in object_image_categories
@@ -33,8 +30,9 @@ function filter_out_animals(object_image_categories::Vector{String})
     end
     return filtered_categories
 end
-filter_out_animals(object_image_dir::String) =
-    filter_out_animals(get_object_categories(object_image_dir))
+function filter_out_animals(object_image_dir::String)
+    return filter_out_animals(get_object_categories(object_image_dir))
+end
 
 # Get the category lists and write them to file
 function main(all_object_image_dir::String)
@@ -42,7 +40,7 @@ function main(all_object_image_dir::String)
     outfile_all_categories_filtered_list = "all_categories_filtered.txt"
     misc_filter_categories_list = "misc_filter_categories.txt"
 
-    all_object_images = readdir(all_object_image_dir, sort = true, join = true)
+    all_object_images = readdir(all_object_image_dir; sort = true, join = true)
 
     all_categories = get_object_categories(all_object_images)
     all_categories_filtered = filter_out_animals(all_categories)

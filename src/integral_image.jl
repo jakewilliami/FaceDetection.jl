@@ -18,14 +18,10 @@
 - `sum::T` The sum of all pixels in the given rectangle defined by the parameters `top_left` and `bottom_right`
 """
 sum_region(
-    iA::IntegralArray{T, N},
-    top_left::CartesianIndex{N},
-    bottom_right::CartesianIndex{N},
+    iA::IntegralArray{T, N}, top_left::CartesianIndex{N}, bottom_right::CartesianIndex{N}
 ) where {T, N} = iA[top_left .. bottom_right]
 sum_region(
-    iA::IntegralArray{T, N},
-    top_left::NTuple{N, Int},
-    bottom_right::NTuple{N, Int},
+    iA::IntegralArray{T, N}, top_left::NTuple{N, Int}, bottom_right::NTuple{N, Int}
 ) where {T, N} = iA[CartesianIndex(top_left) .. CartesianIndex(bottom_right)]
 
 #=
@@ -145,7 +141,6 @@ end
 function sum_region(iX::IntegralArray, top_left::CartesianIndex, bottom_right::CartesianIndex)
     # @assert(length(top_left.I) == length(bottom_right.I), "Opposing Cartesian coordinates must have the same dimension")
     # each_vertex_itr = foldr((itr1, itr2) -> ((v, w...) for w in itr2 for v in itr1), ((t1[i], t2[i]) for i in eachindex(t1)))
-
 
     top_right = CartesianIndex(first(top_left.I), last())
     total = iX[last(bottom_right.I), first(bottom_right.I)]

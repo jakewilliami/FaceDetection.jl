@@ -29,9 +29,9 @@ export displaymatrix,
 # ENV["FACE_DETECTION_DISPLAY_LOGGING"] = "true"
 # ENV["FACE_DETECTION_DISPLAY_WARN"]    = "true"
 
-include("IntegralImage.jl")
-include("HaarLikeFeature.jl")
-include("Utils.jl") # Utils.jl exports HaarLikeFeature.jl functions
-include("AdaBoost.jl")
+include("integral_image.jl")
+include("haar_like_feature.jl")
+include("utils.jl") # utils.jl exports haar_like_feature.jl functions
+include("adaboost.jl")
 
 end # end module

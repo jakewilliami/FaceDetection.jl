@@ -58,16 +58,16 @@ function HaarLikeObject(
     # make sure that everything is of the same size
     p₁, p₂ = position
     f₁, f₂ = feature_type
-    p₁, p₂, f₁, f₂, width, height, threshold, polarity =
-        promote(p₁, p₂, f₁, f₂, width, height, threshold, polarity)
+    p₁, p₂, f₁, f₂, width, height, threshold, polarity = promote(
+        p₁, p₂, f₁, f₂, width, height, threshold, polarity
+    )
     position = (p₁, p₂)
     feature_type = (f₁, f₂)
     top_left = position
     bottom_right = (first(position) + width, last(position) + height)
     weight = float(one(p₁)) #to make a float of the same size
 
-
-    HaarLikeObject(
+    return HaarLikeObject(
         feature_type,
         position,
         top_left,
@@ -95,8 +95,7 @@ Get score for given integral image array.  This is the feature cascade.
 - `score::Number`: Score for given feature
 """
 function get_score(
-    feature::HaarLikeObject{I, F},
-    int_img::IntegralArray{T, N},
+    feature::HaarLikeObject{I, F}, int_img::IntegralArray{T, N}
 ) where {I, F, T, N}
     score = zero(I)
     _2f = F(2)
@@ -255,8 +254,7 @@ Get vote of this feature for given integral image.
     -1      otherwise
 """
 function get_vote(
-    feature::HaarLikeObject{I, F},
-    int_img::IntegralArray{T, N},
+    feature::HaarLikeObject{I, F}, int_img::IntegralArray{T, N}
 ) where {I, F, T, N}
     score = get_score(feature, int_img)
     return score < feature.polarity * feature.threshold ? feature.weight : -feature.weight
