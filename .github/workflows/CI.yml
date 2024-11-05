@@ -20,8 +20,8 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - "1.4"       # Old version: requires 1.4 for kwargs in readdir
           - "1.6"       # Current LTS
+          - "1.11"      # Newer Version
           - "nightly"   # Latest Release
         os:
           - ubuntu-latest
