@@ -6,6 +6,3 @@ HypothesisTests = "09f84164-cd44-5f33-b23f-e6b0d136a0d5"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
 LightXML = "9c8b4983-aa76-5018-a973-4c85ecc9e179"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
-
-[sources]
-FaceDetection = { path = "../" }
