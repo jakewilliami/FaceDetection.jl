@@ -4,7 +4,7 @@
 
 <!-- [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://jakewilliami.github.io/FaceDetection.jl/stable) -->
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://jakewilliami.github.io/FaceDetection.jl/dev)
-[![CI](https://github.com/invenia/PkgTemplates.jl/workflows/CI/badge.svg)](https://github.com/jakewilliami/FaceDetection.jl/actions?query=workflow%3ACI)
+[![CI](https://github.com/jakewilliami/FaceDetection.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/jakewilliami/FaceDetection.jl/actions/workflows/CI.yml?query=branch%3Amaster)
 [![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle)
 ![Project Status](https://img.shields.io/badge/status-maturing-green)
 
