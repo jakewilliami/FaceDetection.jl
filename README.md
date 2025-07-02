@@ -43,7 +43,7 @@ For a better explanation, read [the paper from 2001](http://citeseerx.ist.psu.ed
 
 ## Quick Start
 
-```julia
+```julia-repl
 using FaceDetection
 
 # Constants
